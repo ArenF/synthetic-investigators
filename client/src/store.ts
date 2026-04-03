@@ -147,16 +147,19 @@ export const useStore = create<AppState>((set) => ({
   setSavedSessions: (sessions) => set({ savedSessions: sessions }),
   setAvailableCharacters: (chars) => set({ availableCharacters: chars }),
   setPendingSetup: (setup) => set({ pendingSetup: setup }),
-  reset: () => set({
-    sessionId: null,
-    sessionName: null,
-    characters: [],
-    turnOrder: [],
-    chatMessages: [],
-    isProcessingTurn: false,
-    npcs: [],
-    ws: null,
-    wsReady: false,
-    pendingSetup: null,
+  reset: () => set((state) => {
+    state.ws?.close()
+    return {
+      sessionId: null,
+      sessionName: null,
+      characters: [],
+      turnOrder: [],
+      chatMessages: [],
+      isProcessingTurn: false,
+      npcs: [],
+      ws: null,
+      wsReady: false,
+      pendingSetup: null,
+    }
   }),
 }))

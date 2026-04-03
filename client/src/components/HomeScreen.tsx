@@ -1,20 +1,18 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useStore } from '../store'
 
 export default function HomeScreen() {
-  const { setScreen, savedSessions, setSavedSessions, setSession } = useStore()
+  const { setScreen } = useStore()
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/sessions')
-      .then(r => r.json())
-      .then(setSavedSessions)
-      .catch(() => {})
+    // Preload check — verify API is reachable
+    fetch('/api/characters')
+      .then(r => {
+        if (!r.ok) throw new Error('API 서버에 연결할 수 없습니다')
+      })
+      .catch((err: Error) => setError(err.message))
   }, [])
-
-  function resumeSession(id: string, name: string) {
-    setSession(id, name)
-    setScreen('game')
-  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8">
@@ -26,6 +24,12 @@ export default function HomeScreen() {
           AI-Powered Call of Cthulhu TRPG Platform
         </p>
       </div>
+
+      {error && (
+        <div className="w-full max-w-3xl mb-6 bg-red-900/30 border border-red-700 rounded-lg px-4 py-3 text-red-300 text-sm">
+          {error}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-3xl mb-12">
         <button
@@ -67,33 +71,6 @@ export default function HomeScreen() {
           </p>
         </button>
       </div>
-
-      {savedSessions.length > 0 && (
-        <div className="w-full max-w-3xl">
-          <h2 className="text-coc-muted text-sm font-semibold uppercase tracking-wider mb-3">
-            저장된 세션
-          </h2>
-          <div className="space-y-2">
-            {savedSessions.slice(0, 5).map(sess => (
-              <button
-                key={sess.id}
-                onClick={() => resumeSession(sess.id, sess.name)}
-                className="w-full bg-coc-panel border border-coc-border hover:border-coc-accent rounded-lg px-4 py-3 flex items-center justify-between transition-all"
-              >
-                <div className="text-left">
-                  <span className="text-coc-text font-medium">{sess.name}</span>
-                  <span className="text-coc-muted text-xs ml-3">
-                    턴 {sess.turnCount}개 · {sess.characters?.join(', ')}
-                  </span>
-                </div>
-                <span className="text-coc-muted text-xs">
-                  {new Date(sess.lastUpdatedAt).toLocaleDateString('ko-KR')}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   )
 }

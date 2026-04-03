@@ -10,13 +10,13 @@ import { createServer } from 'http'
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
-import type { CoCCharacter, TurnContext, TurnRecord } from './characters/types.js'
+import type { CoCCharacter, TurnContext } from './characters/types.js'
 import { createPlayer, type BasePlayer } from './players/index.js'
 import { GameState } from './game/state.js'
 import { ScenarioManager } from './game/scenario.js'
 import { ExperimentLogger } from './game/logger.js'
-import { skillCheck, outcomeLabel, d100 } from './game/dice.js'
-import { generateSystemPrompt, buildTurnMessage, parseResponse } from './characters/prompt-generator.js'
+import { d100 } from './game/dice.js'
+import { buildContextMessages } from './game/context.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -72,6 +72,8 @@ export interface GameSession {
   turnOrder: string[]
   chatLog: ChatMessage[]
   clients: Set<WebSocket>
+  isProcessing: boolean
+  pendingStatsBefore: Map<string, { hp: number; san: number; luck: number }> | null
 }
 
 export interface ChatMessage {
@@ -105,17 +107,12 @@ const sessions = new Map<string, GameSession>()
 // ─────────────────────────────────────────
 
 function loadCharacter(id: string): CoCCharacter {
-  const paths = [
-    join(ROOT, 'characters', `${id}.json`),
-    join(ROOT, 'src', 'characters', 'templates', `${id}.json`),
-  ]
-  for (const p of paths) {
-    if (existsSync(p)) {
-      try {
-        return JSON.parse(readFileSync(p, 'utf-8')) as CoCCharacter
-      } catch {
-        throw new Error(`Failed to parse character file: ${p}`)
-      }
+  const charPath = join(ROOT, 'characters', `${id}.json`)
+  if (existsSync(charPath)) {
+    try {
+      return JSON.parse(readFileSync(charPath, 'utf-8')) as CoCCharacter
+    } catch {
+      throw new Error(`Failed to parse character file: ${charPath}`)
     }
   }
   throw new Error(`Character file not found for: ${id}`)
@@ -162,6 +159,27 @@ function getCharacterStates(session: GameSession): CharacterState[] {
 }
 
 // ─────────────────────────────────────────
+// Helper: capture stat snapshot for all characters
+// ─────────────────────────────────────────
+
+function captureStatSnapshot(session: GameSession, charIds: string[]): Map<string, { hp: number; san: number; luck: number }> {
+  const snapshot = new Map<string, { hp: number; san: number; luck: number }>()
+  for (const charId of charIds) {
+    const s = session.state.getState(charId)
+    snapshot.set(charId, { hp: s.hp, san: s.san, luck: s.luck })
+  }
+  return snapshot
+}
+
+// ─────────────────────────────────────────
+// Helper: save session to disk
+// ─────────────────────────────────────────
+
+function saveSession(session: GameSession): void {
+  session.scenario.save()
+}
+
+// ─────────────────────────────────────────
 // Create new session from setup data
 // ─────────────────────────────────────────
 
@@ -199,38 +217,12 @@ function createSession(sessionId: string, setup: SessionSetupData): GameSession 
     turnOrder: setup.characterIds,
     chatLog: [],
     clients: new Set(),
+    isProcessing: false,
+    pendingStatsBefore: null,
   }
 
   sessions.set(sessionId, session)
   return session
-}
-
-// ─────────────────────────────────────────
-// Resume session from saved scenario
-// ─────────────────────────────────────────
-
-function resumeSession(sessionId: string): GameSession | null {
-  const path = join(ROOT, 'scenarios', `${sessionId}.json`)
-  if (!existsSync(path)) return null
-
-  let saved: any
-  try {
-    saved = JSON.parse(readFileSync(path, 'utf-8'))
-  } catch {
-    console.error(`Failed to parse session file: ${path}`)
-    return null
-  }
-  const characterIds: string[] = saved.characters ?? []
-
-  const setup: SessionSetupData = {
-    sessionName: saved.scenarioName ?? sessionId,
-    characterIds,
-    npcs: saved.npcs ?? [],
-    items: saved.items ?? [],
-    openingBriefing: saved.openingBriefing ?? '',
-  }
-
-  return createSession(sessionId, setup)
 }
 
 // ─────────────────────────────────────────
@@ -245,6 +237,10 @@ async function runTurn(
   previousResponses: { charName: string; text: string }[],
 ): Promise<void> {
   const { players, state, scenario, logger } = session
+
+  // Capture statsBefore for all target characters
+  const statsBefore = captureStatSnapshot(session, targetIds)
+  session.pendingStatsBefore = statsBefore
 
   // Build accumulated context from previous AI responses in this turn
   let accumulatedContext = gmText
@@ -262,15 +258,24 @@ async function runTurn(
     const char = session.characters.get(charId)
     if (!char) throw new Error(`Character ${charId} not found in session`)
     const sessionState = state.getState(charId)
-    const history = scenario.getCharacterHistory(charId, 3)
+
+    // Build compressed context from full history
+    const allTurns = scenario.getRecentTurns(1000)
+    const charTurns = allTurns.filter(t => t.characterId === charId)
+    const contextMessages = buildContextMessages(charTurns)
+
+    // Prepend summary of older turns into GM message if available
+    const gmWithContext = contextMessages.summary
+      ? `${contextMessages.summary}\n\n${accumulatedContext}`
+      : accumulatedContext
 
     const ctx: TurnContext = {
       character: char,
       sessionState,
       scenarioId: scenario.scenarioId,
       turnNumber: session.turnNumber,
-      gmMessage: accumulatedContext,
-      visibleHistory: history,
+      gmMessage: gmWithContext,
+      visibleHistory: contextMessages.recentTurns,
     }
 
     // Notify clients that this character is responding
@@ -283,6 +288,16 @@ async function runTurn(
     })
 
     const record = await player.takeTurn(ctx)
+
+    // Fix statsBefore/statsAfter: use the snapshot we captured before the turn
+    const beforeSnap = statsBefore.get(charId)
+    if (beforeSnap) {
+      record.statsBefore = { ...beforeSnap }
+    }
+    // statsAfter = current state (may have been modified by adjust_stat during the turn)
+    const afterState = state.getState(charId)
+    record.statsAfter = { hp: afterState.hp, san: afterState.san, luck: afterState.luck }
+
     const responseText = record.response.rawText
 
     // Send complete response
@@ -319,6 +334,7 @@ async function runTurn(
     session.chatLog.push(chatMsg)
   }
 
+  session.pendingStatsBefore = null
   session.turnNumber++
 
   // Send updated character states
@@ -353,7 +369,7 @@ app.get('/api/sessions', (_req, res) => {
     return
   }
   const files = readdirSync(scenariosDir).filter(f => f.endsWith('.json'))
-  const sessions = files.map(f => {
+  const sessionList = files.map(f => {
     try {
       const data = JSON.parse(readFileSync(join(scenariosDir, f), 'utf-8'))
       return {
@@ -368,32 +384,22 @@ app.get('/api/sessions', (_req, res) => {
       return null
     }
   }).filter(Boolean)
-  res.json(sessions)
+  res.json(sessionList)
 })
 
+// POST /api/sessions — only validates and returns a session ID.
+// Actual initialization happens in the WebSocket start_session handler.
 app.post('/api/sessions', (req, res) => {
   try {
     const setup: SessionSetupData = req.body
+    // Validate that all characters exist
+    for (const charId of setup.characterIds) {
+      loadCharacter(charId) // throws if not found
+    }
     const sessionId = `session-${Date.now()}`
-    const session = createSession(sessionId, setup)
-    res.json({ sessionId, name: session.name })
+    res.json({ sessionId, name: setup.sessionName })
   } catch (err: any) {
     res.status(500).json({ error: err.message })
-  }
-})
-
-app.get('/api/sessions/:id', (req, res) => {
-  const { id } = req.params
-  const scenarioPath = join(ROOT, 'scenarios', `${id}.json`)
-  if (!existsSync(scenarioPath)) {
-    res.status(404).json({ error: 'Session not found' })
-    return
-  }
-  try {
-    const data = JSON.parse(readFileSync(scenarioPath, 'utf-8'))
-    res.json(data)
-  } catch {
-    res.status(500).json({ error: 'Failed to parse session data' })
   }
 })
 
@@ -428,9 +434,15 @@ app.get('/api/characters', (_req, res) => {
 app.post('/api/characters', (req, res) => {
   try {
     const char: CoCCharacter = req.body
+    // Path traversal protection
+    const safeId = char.id.replace(/[^a-zA-Z0-9_-]/g, '')
+    if (safeId !== char.id) {
+      res.status(400).json({ error: 'Invalid character id' })
+      return
+    }
     const charsDir = join(ROOT, 'characters')
     if (!existsSync(charsDir)) mkdirSync(charsDir, { recursive: true })
-    const path = join(charsDir, `${char.id}.json`)
+    const path = join(charsDir, `${safeId}.json`)
     writeFileSync(path, JSON.stringify(char, null, 2), 'utf-8')
     res.json({ success: true, id: char.id })
   } catch (err: any) {
@@ -440,19 +452,14 @@ app.post('/api/characters', (req, res) => {
 
 app.get('/api/characters/:id', (req, res) => {
   const { id } = req.params
-  const paths = [
-    join(ROOT, 'characters', `${id}.json`),
-    join(ROOT, 'src', 'characters', 'templates', `${id}.json`),
-  ]
-  for (const p of paths) {
-    if (existsSync(p)) {
-      try {
-        res.json(JSON.parse(readFileSync(p, 'utf-8')))
-      } catch {
-        res.status(500).json({ error: 'Failed to parse character data' })
-      }
-      return
+  const charPath = join(ROOT, 'characters', `${id}.json`)
+  if (existsSync(charPath)) {
+    try {
+      res.json(JSON.parse(readFileSync(charPath, 'utf-8')))
+    } catch {
+      res.status(500).json({ error: 'Failed to parse character data' })
     }
+    return
   }
   res.status(404).json({ error: 'Character not found' })
 })
@@ -482,7 +489,7 @@ wss.on('connection', (ws, req) => {
   let currentSession: GameSession | null = null
 
   if (sessionId) {
-    // Attach to existing session or create a placeholder
+    // Attach to existing session
     currentSession = sessions.get(sessionId) ?? null
     if (currentSession) {
       currentSession.clients.add(ws)
@@ -511,12 +518,7 @@ wss.on('connection', (ws, req) => {
     switch (msg.type) {
       case 'join_session': {
         const sid: string = msg.sessionId
-        let sess = sessions.get(sid)
-        if (!sess) {
-          // Try to resume from disk
-          const resumed = resumeSession(sid)
-          if (resumed) sess = resumed
-        }
+        const sess = sessions.get(sid)
         if (sess) {
           if (currentSession) currentSession.clients.delete(ws)
           currentSession = sess
@@ -538,6 +540,8 @@ wss.on('connection', (ws, req) => {
       case 'start_session': {
         const setup: SessionSetupData = msg.setup
         const sid: string = msg.sessionId
+
+        // Always create a fresh session
         const sess = createSession(sid, setup)
         if (currentSession) currentSession.clients.delete(ws)
         currentSession = sess
@@ -555,6 +559,9 @@ wss.on('connection', (ws, req) => {
           broadcast(sess, { type: 'system_message', message: sysMsg })
         }
 
+        // Save session to disk immediately so it appears in session list
+        saveSession(sess)
+
         broadcast(sess, {
           type: 'state_update',
           characters: getCharacterStates(sess),
@@ -568,8 +575,16 @@ wss.on('connection', (ws, req) => {
           ws.send(JSON.stringify({ type: 'error', message: 'No active session' }))
           break
         }
+
+        // Concurrency lock
+        if (currentSession.isProcessing) {
+          ws.send(JSON.stringify({ type: 'error', message: '현재 턴이 처리 중입니다' }))
+          break
+        }
+
         const { gmText, targetLabel, targetIds } = msg
         const sess = currentSession
+        sess.isProcessing = true
 
         // Add GM message to chat log
         const gmMsg: ChatMessage = {
@@ -590,6 +605,8 @@ wss.on('connection', (ws, req) => {
           await runTurn(sess, gmText, targetLabel ?? '', targets, [])
         } catch (err: any) {
           broadcast(sess, { type: 'error', message: err.message })
+        } finally {
+          sess.isProcessing = false
         }
         break
       }
@@ -611,6 +628,12 @@ wss.on('connection', (ws, req) => {
         } else if (stat === 'san') {
           if (delta < 0) sess.state.applySanLoss(charId, Math.abs(delta))
           else sess.state.restoreSan(charId, delta)
+        } else if (stat === 'mp') {
+          if (delta < 0) sess.state.spendMp(charId, Math.abs(delta))
+          else sess.state.restoreMp(charId, delta)
+        } else if (stat === 'luck') {
+          if (delta < 0) sess.state.spendLuck(charId, Math.abs(delta))
+          else sess.state.restoreLuck(charId, delta)
         }
         broadcast(sess, {
           type: 'state_update',
@@ -633,7 +656,10 @@ wss.on('connection', (ws, req) => {
 
         const roll = d100()
         let outcome: string
-        if (roll >= 96) outcome = 'fumble'
+
+        // CoC 7e fumble rules: skill < 50 → fumble on 100; skill >= 50 → fumble on 96-100
+        const fumbleThreshold = baseVal < 50 ? 100 : 96
+        if (roll >= fumbleThreshold) outcome = 'fumble'
         else if (roll <= Math.floor(target / 5)) outcome = 'extreme_success'
         else if (roll <= Math.floor(target / 2)) outcome = 'hard_success'
         else if (roll <= target) outcome = 'regular_success'
@@ -688,32 +714,6 @@ wss.on('connection', (ws, req) => {
         }
         sess.chatLog.push(npcMsg)
         broadcast(sess, { type: 'npc_message', message: npcMsg })
-        break
-      }
-
-      case 'resume_session': {
-        const { sessionId: sid } = msg
-        let sess = sessions.get(sid)
-        if (!sess) {
-          const resumed = resumeSession(sid)
-          if (resumed) sess = resumed
-        }
-        if (sess) {
-          if (currentSession) currentSession.clients.delete(ws)
-          currentSession = sess
-          sess.clients.add(ws)
-          ws.send(JSON.stringify({
-            type: 'state_update',
-            characters: getCharacterStates(sess),
-          }))
-          ws.send(JSON.stringify({
-            type: 'chat_history',
-            messages: sess.chatLog,
-          }))
-          ws.send(JSON.stringify({ type: 'session_resumed', sessionId: sid }))
-        } else {
-          ws.send(JSON.stringify({ type: 'error', message: 'Session not found' }))
-        }
         break
       }
 

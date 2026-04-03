@@ -17,12 +17,16 @@ export default function SessionSetup() {
   const [newItemDesc, setNewItemDesc] = useState('')
   const [openingBriefing, setOpeningBriefing] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/characters')
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error('캐릭터 목록을 불러올 수 없습니다')
+        return r.json()
+      })
       .then(setAvailableChars)
-      .catch(() => {})
+      .catch((err: Error) => setError(err.message))
   }, [])
 
   function toggleChar(id: string) {
@@ -59,10 +63,11 @@ export default function SessionSetup() {
 
   async function startSession() {
     if (!sessionName.trim() || selectedChars.length === 0) {
-      alert('세션 이름과 최소 하나의 캐릭터를 선택해주세요.')
+      setError('세션 이름과 최소 하나의 캐릭터를 선택해주세요.')
       return
     }
     setLoading(true)
+    setError(null)
     try {
       const res = await fetch('/api/sessions', {
         method: 'POST',
@@ -76,6 +81,10 @@ export default function SessionSetup() {
         }),
       })
       const data = await res.json()
+      if (!res.ok) {
+        setError(data.error ?? '세션 생성 실패')
+        return
+      }
       const setup: SessionSetupData = {
         sessionName: sessionName.trim(),
         characterIds: selectedChars,
@@ -87,8 +96,8 @@ export default function SessionSetup() {
       setTurnOrder(selectedChars)
       setSession(data.sessionId, sessionName.trim())
       setScreen('game')
-    } catch (err) {
-      alert('세션 시작 중 오류가 발생했습니다.')
+    } catch (err: any) {
+      setError(err.message ?? '세션 시작 중 오류가 발생했습니다.')
     } finally {
       setLoading(false)
     }
@@ -274,6 +283,12 @@ export default function SessionSetup() {
           className="w-full bg-coc-bg border border-coc-border rounded px-3 py-2 text-sm focus:border-coc-accent outline-none resize-none"
         />
       </section>
+
+      {error && (
+        <div className="w-full mb-4 bg-red-900/30 border border-red-700 rounded-lg px-4 py-3 text-red-300 text-sm">
+          {error}
+        </div>
+      )}
 
       <button
         onClick={startSession}

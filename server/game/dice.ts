@@ -40,7 +40,9 @@ export function skillCheck(skillValue: number, skillName: string = ''): DiceResu
   const extreme = Math.floor(skillValue / 5)
 
   let outcome: DiceResult['outcome']
-  if (roll >= 96) {
+  // CoC 7e fumble rules: skill < 50 → fumble only on 100; skill >= 50 → fumble on 96-100
+  const fumbleThreshold = skillValue < 50 ? 100 : 96
+  if (roll >= fumbleThreshold) {
     outcome = 'fumble'
   } else if (roll <= extreme) {
     outcome = 'extreme_success'

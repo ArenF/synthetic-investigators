@@ -10,6 +10,6 @@
     "resolveJsonModule": true,
     "skipLibCheck": true
   },
-  "include": ["server/**/*", "src/**/*"],
+  "include": ["server/**/*"],
   "exclude": ["node_modules", "dist", "client"]
 }

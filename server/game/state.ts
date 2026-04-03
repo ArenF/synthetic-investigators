@@ -85,10 +85,29 @@ export class GameState {
     state.hp = Math.min(char.derived.hp.max, state.hp + amount)
   }
 
-  /** Spend/restore luck */
+  /** Spend luck */
   spendLuck(charId: string, amount: number): void {
     const state = this.getState(charId)
     state.luck = Math.max(0, state.luck - amount)
+  }
+
+  /** Restore luck */
+  restoreLuck(charId: string, amount: number): void {
+    const state = this.getState(charId)
+    state.luck = state.luck + amount
+  }
+
+  /** Spend MP */
+  spendMp(charId: string, amount: number): void {
+    const state = this.getState(charId)
+    state.mp = Math.max(0, state.mp - amount)
+  }
+
+  /** Restore MP */
+  restoreMp(charId: string, amount: number): void {
+    const state = this.getState(charId)
+    const char = this.getCharacter(charId)
+    state.mp = Math.min(char.derived.mp.max, state.mp + amount)
   }
 
   /** Add/remove item */

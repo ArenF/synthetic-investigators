@@ -7,8 +7,7 @@
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
     "server:dev": "tsx watch server/api.ts",
     "client:dev": "vite --config client/vite.config.ts",
-    "build": "vite build --config client/vite.config.ts",
-    "start": "tsx src/index.ts"
+    "build": "vite build --config client/vite.config.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

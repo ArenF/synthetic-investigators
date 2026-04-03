@@ -6,7 +6,7 @@ import GameScreen from './components/GameScreen'
 import CharacterEditor from './components/CharacterEditor'
 import LogViewer from './components/LogViewer'
 
-const WS_BASE = `ws://localhost:3001`
+const WS_BASE = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}:3001`
 
 export default function App() {
   const {
@@ -116,7 +116,6 @@ export default function App() {
         break
 
       case 'session_started':
-      case 'session_resumed':
         break
 
       case 'error':
@@ -153,12 +152,6 @@ export default function App() {
         // Store NPCs
         setNpcs(setup.npcs)
         setPendingSetup(null)
-      } else {
-        // Resuming existing session
-        socket.send(JSON.stringify({
-          type: 'resume_session',
-          sessionId,
-        }))
       }
     }
 
