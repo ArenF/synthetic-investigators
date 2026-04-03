@@ -25,7 +25,7 @@ export class ClaudePlayer extends BasePlayer {
     })
 
     const block = response.content[0]
-    if (block.type !== 'text') throw new Error('Unexpected response type from Claude')
+    if (!block || block.type !== 'text') throw new Error('Unexpected response format from Claude')
     return block.text
   }
 }

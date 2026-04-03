@@ -66,7 +66,12 @@ export class ScenarioManager {
   private load(scenarioId: string): ScenarioSession | null {
     const path = join(SCENARIOS_DIR, `${scenarioId}.json`)
     if (!existsSync(path)) return null
-    return JSON.parse(readFileSync(path, 'utf-8'))
+    try {
+      return JSON.parse(readFileSync(path, 'utf-8'))
+    } catch {
+      console.error(`Failed to parse scenario file: ${path}`)
+      return null
+    }
   }
 
   /** Append to a human-readable log file */

@@ -111,7 +111,11 @@ function loadCharacter(id: string): CoCCharacter {
   ]
   for (const p of paths) {
     if (existsSync(p)) {
-      return JSON.parse(readFileSync(p, 'utf-8')) as CoCCharacter
+      try {
+        return JSON.parse(readFileSync(p, 'utf-8')) as CoCCharacter
+      } catch {
+        throw new Error(`Failed to parse character file: ${p}`)
+      }
     }
   }
   throw new Error(`Character file not found for: ${id}`)
@@ -209,7 +213,13 @@ function resumeSession(sessionId: string): GameSession | null {
   const path = join(ROOT, 'scenarios', `${sessionId}.json`)
   if (!existsSync(path)) return null
 
-  const saved = JSON.parse(readFileSync(path, 'utf-8'))
+  let saved: any
+  try {
+    saved = JSON.parse(readFileSync(path, 'utf-8'))
+  } catch {
+    console.error(`Failed to parse session file: ${path}`)
+    return null
+  }
   const characterIds: string[] = saved.characters ?? []
 
   const setup: SessionSetupData = {
@@ -249,7 +259,8 @@ async function runTurn(
     const player = players.get(charId)
     if (!player) continue
 
-    const char = session.characters.get(charId)!
+    const char = session.characters.get(charId)
+    if (!char) throw new Error(`Character ${charId} not found in session`)
     const sessionState = state.getState(charId)
     const history = scenario.getCharacterHistory(charId, 3)
 
@@ -378,8 +389,12 @@ app.get('/api/sessions/:id', (req, res) => {
     res.status(404).json({ error: 'Session not found' })
     return
   }
-  const data = JSON.parse(readFileSync(scenarioPath, 'utf-8'))
-  res.json(data)
+  try {
+    const data = JSON.parse(readFileSync(scenarioPath, 'utf-8'))
+    res.json(data)
+  } catch {
+    res.status(500).json({ error: 'Failed to parse session data' })
+  }
 })
 
 // ─── Characters ───
@@ -431,7 +446,11 @@ app.get('/api/characters/:id', (req, res) => {
   ]
   for (const p of paths) {
     if (existsSync(p)) {
-      res.json(JSON.parse(readFileSync(p, 'utf-8')))
+      try {
+        res.json(JSON.parse(readFileSync(p, 'utf-8')))
+      } catch {
+        res.status(500).json({ error: 'Failed to parse character data' })
+      }
       return
     }
   }
@@ -495,7 +514,8 @@ wss.on('connection', (ws, req) => {
         let sess = sessions.get(sid)
         if (!sess) {
           // Try to resume from disk
-          sess = resumeSession(sid) ?? undefined
+          const resumed = resumeSession(sid)
+          if (resumed) sess = resumed
         }
         if (sess) {
           if (currentSession) currentSession.clients.delete(ws)
@@ -674,7 +694,10 @@ wss.on('connection', (ws, req) => {
       case 'resume_session': {
         const { sessionId: sid } = msg
         let sess = sessions.get(sid)
-        if (!sess) sess = resumeSession(sid) ?? undefined
+        if (!sess) {
+          const resumed = resumeSession(sid)
+          if (resumed) sess = resumed
+        }
         if (sess) {
           if (currentSession) currentSession.clients.delete(ws)
           currentSession = sess

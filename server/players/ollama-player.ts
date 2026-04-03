@@ -25,6 +25,8 @@ export class OllamaPlayer extends BasePlayer {
       ],
     })
 
-    return response.message.content
+    const content = response.message?.content
+    if (!content) throw new Error('No content in Ollama response')
+    return content
   }
 }

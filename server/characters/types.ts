@@ -136,6 +136,7 @@ export interface SessionState {
   injuries: string[]
   currentItems: string[]  // items may be gained or lost
   notes: string           // GM or player notes
+  sessionSanLoss: number  // cumulative SAN lost this session (for indefinite insanity check)
 }
 
 /**

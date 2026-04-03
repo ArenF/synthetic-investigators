@@ -23,6 +23,8 @@ export class OpenAIPlayer extends BasePlayer {
       ],
     })
 
-    return response.choices[0]?.message?.content ?? ''
+    const content = response.choices[0]?.message?.content
+    if (!content) throw new Error('No content in OpenAI response')
+    return content
   }
 }

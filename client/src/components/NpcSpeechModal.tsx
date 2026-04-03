@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useStore } from '../store'
 
 interface Props {
@@ -7,7 +7,13 @@ interface Props {
 
 export default function NpcSpeechModal({ onClose }: Props) {
   const { npcs, ws } = useStore()
-  const [selectedNpc, setSelectedNpc] = useState(npcs[0]?.name ?? '')
+  const [selectedNpc, setSelectedNpc] = useState('')
+
+  useEffect(() => {
+    if (npcs.length > 0) {
+      setSelectedNpc(npcs[0].name)
+    }
+  }, [npcs])
   const [customName, setCustomName] = useState('')
   const [text, setText] = useState('')
 

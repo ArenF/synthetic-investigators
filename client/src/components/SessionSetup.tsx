@@ -216,7 +216,7 @@ export default function SessionSetup() {
         {items.length > 0 && (
           <div className="mb-3 space-y-2">
             {items.map((item, i) => (
-              <div key={i} className="flex items-center justify-between bg-coc-bg rounded px-3 py-2 text-sm">
+              <div key={`${item.name}-${item.location}-${i}`} className="flex items-center justify-between bg-coc-bg rounded px-3 py-2 text-sm">
                 <span className="font-medium">{item.name}</span>
                 <span className="text-coc-muted text-xs ml-2">{item.location}</span>
                 <button

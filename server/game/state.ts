@@ -21,6 +21,7 @@ export class GameState {
       injuries: [],
       currentItems: [...char.equipment.items],
       notes: '',
+      sessionSanLoss: 0,
     })
   }
 
@@ -42,28 +43,30 @@ export class GameState {
 
   /** Apply HP damage */
   applyDamage(charId: string, amount: number): void {
+    if (amount <= 0) return
     const state = this.getState(charId)
     state.hp = Math.max(0, state.hp - amount)
-    if (amount > 0) {
-      state.injuries.push(`${amount} 피해 받음`)
-    }
+    state.injuries.push(`${amount} 피해 받음`)
   }
 
   /** Apply SAN loss */
   applySanLoss(charId: string, amount: number): void {
+    if (amount <= 0) return
     const state = this.getState(charId)
     const char = this.getCharacter(charId)
-    const prev = state.san
     state.san = Math.max(0, state.san - amount)
+
+    // Track cumulative session SAN loss
+    state.sessionSanLoss = (state.sessionSanLoss ?? 0) + amount
 
     // Check for temporary insanity (lose 5+ SAN in one round)
     if (amount >= 5) {
       state.temporaryInsanity = true
     }
 
-    // Check for indefinite insanity (lose 1/5 of starting SAN in one session)
-    const threshold = Math.floor(char.derived.san.starting / 5)
-    if (prev - state.san >= threshold) {
+    // Check for indefinite insanity (lose 1/5 of max SAN in one session, cumulative)
+    const threshold = Math.floor(char.derived.san.max / 5)
+    if (state.sessionSanLoss >= threshold) {
       state.indefiniteInsanity = true
     }
   }

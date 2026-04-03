@@ -75,9 +75,10 @@ export default function ActionRequestModal({ onClose }: Props) {
         <div className="mb-4">
           <label className="text-coc-muted text-xs block mb-1">기술</label>
           <select
-            value={skill}
-            onChange={e => setSkill(e.target.value)}
-            className="w-full bg-coc-bg border border-coc-border rounded px-3 py-2 text-sm focus:border-coc-accent outline-none mb-2"
+            value={customSkill.trim() ? '' : skill}
+            onChange={e => { setSkill(e.target.value); setCustomSkill('') }}
+            disabled={!!customSkill.trim()}
+            className="w-full bg-coc-bg border border-coc-border rounded px-3 py-2 text-sm focus:border-coc-accent outline-none mb-2 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {COC_SKILLS.map(s => (
               <option key={s} value={s}>{s}</option>

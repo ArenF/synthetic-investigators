@@ -89,12 +89,20 @@ function CharCard({ char }: CharCardProps) {
       </div>
 
       {/* SAN */}
-      <div>
+      <div className="mb-2">
         <div className="flex items-center justify-between mb-1">
           <span className="text-xs text-coc-muted">SAN {char.san}/{char.sanMax} ({sanPct}%)</span>
           <StatControl charId={char.id} stat="san" />
         </div>
         <StatBar value={char.san} max={char.sanMax} color="#4a90c4" />
+      </div>
+
+      {/* MP */}
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs text-coc-muted">MP {char.mp}/{char.mpMax}</span>
+        </div>
+        <StatBar value={char.mp} max={char.mpMax} color="#9b59b6" />
       </div>
     </div>
   )

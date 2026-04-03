@@ -34,7 +34,7 @@ export function rollDice(expression: string): number {
  * Perform a CoC 7e skill check.
  * Returns structured result with success level.
  */
-export function skillCheck(skillValue: number): DiceResult & { roll: number } {
+export function skillCheck(skillValue: number, skillName: string = ''): DiceResult & { roll: number } {
   const roll = d100()
   const hard = Math.floor(skillValue / 2)
   const extreme = Math.floor(skillValue / 5)
@@ -52,7 +52,7 @@ export function skillCheck(skillValue: number): DiceResult & { roll: number } {
     outcome = 'failure'
   }
 
-  return { skill: '', target: skillValue, roll, outcome }
+  return { skill: skillName, target: skillValue, roll, outcome }
 }
 
 /** CoC 7e SAN check */

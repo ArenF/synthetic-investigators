@@ -112,7 +112,7 @@ export class ExperimentLogger {
     }
 
     for (const [name, obs] of Object.entries(byChar)) {
-      const totalSanLoss = obs.reduce((s, o) => s + Math.min(0, o.sanChange), 0)
+      const totalSanLoss = obs.reduce((s, o) => s + Math.max(0, -o.sanChange), 0)
       const flagCounts: Record<string, number> = {}
       for (const o of obs) {
         for (const f of o.behaviorFlags) {
@@ -145,7 +145,12 @@ export class ExperimentLogger {
   private load(): void {
     const path = join(LOGS_DIR, `${this.scenarioId}-experiment.json`)
     if (existsSync(path)) {
-      this.observations = JSON.parse(readFileSync(path, 'utf-8'))
+      try {
+        this.observations = JSON.parse(readFileSync(path, 'utf-8'))
+      } catch {
+        console.error(`Failed to parse experiment log: ${path}`)
+        this.observations = []
+      }
     }
   }
 }

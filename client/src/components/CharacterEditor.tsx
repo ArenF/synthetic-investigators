@@ -247,6 +247,9 @@ export default function CharacterEditor() {
                 <input type="number" value={d.san.starting}
                   onChange={e => setField('derived.san.starting', parseInt(e.target.value) || 0)}
                   className="w-full bg-coc-bg border border-coc-border rounded px-2 py-1.5 text-sm focus:border-coc-accent outline-none" />
+                <input type="number" value={d.san.max}
+                  onChange={e => setField('derived.san.max', parseInt(e.target.value) || 0)}
+                  className="w-full bg-coc-bg border border-coc-border rounded px-2 py-1.5 text-sm focus:border-coc-accent outline-none" />
               </div>
             </div>
             <div>
@@ -312,7 +315,7 @@ export default function CharacterEditor() {
                 <label className="text-coc-muted text-xs block mb-1">{label}</label>
                 <input
                   type="text"
-                  value={(char.backstory as any)[key.split('.')[1]] ?? ''}
+                  value={(char.backstory as any)[key.split('.').slice(1).join('.')] ?? ''}
                   onChange={e => setField(key, e.target.value)}
                   className="w-full bg-coc-bg border border-coc-border rounded px-2 py-1.5 text-sm focus:border-coc-accent outline-none"
                 />
