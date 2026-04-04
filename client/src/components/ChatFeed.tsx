@@ -1,6 +1,10 @@
 import React, { useEffect, useRef } from 'react'
 import { useStore, type ChatMessage } from '../store'
 
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+}
+
 const outcomeLabel: Record<string, { label: string; color: string }> = {
   extreme_success: { label: '극단적 성공', color: 'text-yellow-400' },
   hard_success: { label: '어려운 성공', color: 'text-green-400' },
@@ -17,14 +21,12 @@ const difficultyLabel: Record<string, string> = {
 
 function GmMessage({ msg }: { msg: ChatMessage }) {
   return (
-    <div className="flex flex-col gap-1">
-      {msg.targetLabel && (
-        <div className="text-coc-muted text-xs opacity-60">{msg.targetLabel}</div>
-      )}
-      <div className="bg-coc-accent/10 border border-coc-accent/30 rounded-lg px-4 py-3">
-        <div className="text-xs text-coc-accent font-semibold mb-1">GM</div>
-        <div className="text-coc-text whitespace-pre-wrap">{msg.text}</div>
+    <div className="bg-coc-panel border-l-2 border-coc-accent rounded-r-lg px-4 py-3">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-xs font-semibold text-coc-accent uppercase tracking-wide">GM</span>
+        {msg.targetLabel && <span className="text-xs text-coc-muted">→ {msg.targetLabel}</span>}
       </div>
+      <p className="text-coc-text text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
     </div>
   )
 }
@@ -32,15 +34,12 @@ function GmMessage({ msg }: { msg: ChatMessage }) {
 function AiMessage({ msg }: { msg: ChatMessage }) {
   if (!msg.done) {
     return (
-      <div className="flex flex-col gap-1 pl-4">
-        <div className="text-coc-muted text-xs font-medium">{msg.charName}</div>
-        <div className="bg-coc-panel border border-coc-border rounded-lg px-4 py-3">
-          <div className="flex items-center gap-1">
-            <span className="thinking-dot w-2 h-2 bg-coc-muted rounded-full inline-block" />
-            <span className="thinking-dot w-2 h-2 bg-coc-muted rounded-full inline-block" />
-            <span className="thinking-dot w-2 h-2 bg-coc-muted rounded-full inline-block" />
-            <span className="text-coc-muted text-xs ml-2">응답 중...</span>
-          </div>
+      <div className="bg-coc-panel border border-coc-border rounded-lg px-4 py-3 flex items-center gap-3">
+        <span className="text-coc-muted text-sm">{msg.charName}</span>
+        <div className="flex gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-coc-muted thinking-dot"></span>
+          <span className="w-1.5 h-1.5 rounded-full bg-coc-muted thinking-dot"></span>
+          <span className="w-1.5 h-1.5 rounded-full bg-coc-muted thinking-dot"></span>
         </div>
       </div>
     )
@@ -58,9 +57,13 @@ function AiMessage({ msg }: { msg: ChatMessage }) {
   const hasStructure = action || attempt || inner
 
   return (
-    <div className="flex flex-col gap-1 pl-4">
-      <div className="text-coc-muted text-xs font-medium">{msg.charName}</div>
-      <div className="bg-coc-panel border border-coc-border rounded-lg px-4 py-3 space-y-2">
+    <div className="bg-coc-panel border border-coc-border rounded-lg overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-2 bg-coc-panel2 border-b border-coc-border">
+        <span className="w-2 h-2 rounded-full bg-coc-accent"></span>
+        <span className="text-sm font-medium text-coc-text">{msg.charName}</span>
+        <span className="text-xs text-coc-muted ml-auto">{formatTime(msg.timestamp)}</span>
+      </div>
+      <div className="px-4 py-3 text-sm leading-relaxed text-coc-text space-y-2">
         {hasStructure ? (
           <>
             {action && (
@@ -92,11 +95,9 @@ function AiMessage({ msg }: { msg: ChatMessage }) {
 
 function NpcMessage({ msg }: { msg: ChatMessage }) {
   return (
-    <div className="flex flex-col gap-1 pl-4 border-l-2 border-purple-500/40">
-      <div className="text-purple-400 text-xs font-medium">{msg.npcName} (NPC)</div>
-      <div className="bg-purple-900/20 border border-purple-500/20 rounded-lg px-4 py-3">
-        <div className="text-coc-text whitespace-pre-wrap">"{msg.text}"</div>
-      </div>
+    <div className="border-l-2 border-violet-400/50 bg-violet-950/20 rounded-r-lg px-4 py-3">
+      <div className="text-xs text-violet-400 font-semibold mb-1">{msg.npcName} · NPC</div>
+      <p className="text-coc-text text-sm leading-relaxed italic">"{msg.text}"</p>
     </div>
   )
 }
@@ -108,18 +109,12 @@ function DiceMessage({ msg }: { msg: ChatMessage }) {
   const diff = difficultyLabel[d.difficulty] ?? d.difficulty
 
   return (
-    <div className="flex justify-center">
-      <div className="bg-coc-bg border border-coc-border rounded-lg px-4 py-2 text-sm inline-flex items-center gap-3">
-        <span className="text-coc-muted">🎲</span>
-        <span className="font-medium">{msg.charName}</span>
-        <span className="text-coc-muted">—</span>
-        <span>{d.skill}</span>
-        <span className="text-coc-muted text-xs">({diff} / 목표: {d.target})</span>
-        <span className="font-bold text-lg">{d.roll}</span>
-        <span className={`font-semibold ${outcome.color}`}>{outcome.label}</span>
-        {d.resultText && (
-          <span className="text-coc-muted text-xs border-l border-coc-border pl-3">{d.resultText}</span>
-        )}
+    <div className="flex justify-center py-2">
+      <div className="bg-coc-panel border border-coc-border rounded-xl px-5 py-3 text-center">
+        <div className="text-xs text-coc-muted mb-1">{msg.charName} · {d.skill} ({diff} / 목표: {d.target})</div>
+        <div className="text-3xl font-bold text-coc-text mb-1">{d.roll}</div>
+        <div className={`text-xs font-semibold ${outcome.color}`}>{outcome.label}</div>
+        {d.resultText && <div className="text-xs text-coc-muted mt-2 border-t border-coc-border pt-2">{d.resultText}</div>}
       </div>
     </div>
   )
@@ -146,7 +141,7 @@ export default function ChatFeed() {
       {chatMessages.length === 0 && (
         <div className="flex items-center justify-center h-full">
           <div className="text-center text-coc-muted">
-            <div className="text-4xl mb-3">🎲</div>
+            <div className="text-4xl mb-3 opacity-40">🎲</div>
             <p>GM 입력을 기다리는 중...</p>
             <p className="text-xs mt-1 opacity-60">아래 입력창에 장면을 입력하세요</p>
           </div>

@@ -18,6 +18,7 @@ export default function SessionSetup() {
   const [openingBriefing, setOpeningBriefing] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [charError, setCharError] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/characters')
@@ -33,6 +34,7 @@ export default function SessionSetup() {
     setSelectedChars(prev =>
       prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
     )
+    setCharError(null)
   }
 
   function addNpc() {
@@ -62,12 +64,17 @@ export default function SessionSetup() {
   }
 
   async function startSession() {
-    if (!sessionName.trim() || selectedChars.length === 0) {
-      setError('세션 이름과 최소 하나의 캐릭터를 선택해주세요.')
+    if (!sessionName.trim()) {
+      setError('세션 이름을 입력해주세요.')
+      return
+    }
+    if (selectedChars.length === 0) {
+      setCharError('최소 하나의 캐릭터를 선택해주세요.')
       return
     }
     setLoading(true)
     setError(null)
+    setCharError(null)
     try {
       const res = await fetch('/api/sessions', {
         method: 'POST',
@@ -104,32 +111,35 @@ export default function SessionSetup() {
   }
 
   return (
-    <div className="min-h-screen p-6 max-w-3xl mx-auto">
-      <div className="flex items-center gap-3 mb-8">
+    <div className="min-h-screen p-6 max-w-2xl mx-auto">
+      <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => setScreen('home')}
-          className="text-coc-muted hover:text-coc-text transition-colors"
+          className="text-coc-muted hover:text-coc-text transition-colors text-sm"
         >
           ← 뒤로
         </button>
-        <h1 className="text-2xl font-bold text-coc-accent">새 세션 설정</h1>
+        <h1 className="text-sm font-semibold text-coc-muted uppercase tracking-wide">새 세션 설정</h1>
       </div>
 
       {/* Session Name */}
-      <section className="bg-coc-panel border border-coc-border rounded-lg p-5 mb-4">
-        <h2 className="text-coc-accent font-semibold mb-3">세션 이름</h2>
+      <section className="bg-coc-panel border border-coc-border rounded-xl p-4 mb-4">
+        <h2 className="text-sm font-semibold text-coc-muted uppercase tracking-wide mb-3">세션 이름</h2>
         <input
           type="text"
           value={sessionName}
-          onChange={e => setSessionName(e.target.value)}
+          onChange={e => { setSessionName(e.target.value); setError(null) }}
           placeholder="예: 로드아일랜드의 공포"
-          className="w-full bg-coc-bg border border-coc-border rounded px-3 py-2 text-coc-text focus:border-coc-accent outline-none"
+          className="w-full bg-coc-bg border border-coc-border rounded-lg px-3 py-2 text-coc-text text-sm focus:border-coc-accent outline-none"
         />
+        {error && !charError && (
+          <div className="mt-2 text-coc-danger text-xs">{error}</div>
+        )}
       </section>
 
       {/* Character Selection */}
-      <section className="bg-coc-panel border border-coc-border rounded-lg p-5 mb-4">
-        <h2 className="text-coc-accent font-semibold mb-3">캐릭터 선택</h2>
+      <section className="bg-coc-panel border border-coc-border rounded-xl p-4 mb-4">
+        <h2 className="text-sm font-semibold text-coc-muted uppercase tracking-wide mb-3">캐릭터 선택</h2>
         {availableChars.length === 0 ? (
           <p className="text-coc-muted text-sm">
             캐릭터가 없습니다.{' '}
@@ -145,7 +155,7 @@ export default function SessionSetup() {
             {availableChars.map(char => (
               <label
                 key={char.id}
-                className={`flex items-start gap-3 p-3 rounded border cursor-pointer transition-all ${
+                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
                   selectedChars.includes(char.id)
                     ? 'border-coc-accent bg-coc-accent/10'
                     : 'border-coc-border hover:border-coc-muted'
@@ -157,25 +167,26 @@ export default function SessionSetup() {
                   onChange={() => toggleChar(char.id)}
                   className="mt-0.5"
                 />
-                <div>
-                  <div className="font-medium text-coc-text">{char.name}</div>
-                  <div className="text-coc-muted text-xs">
-                    {char.occupation} · {char.age}세 · {char.provider}/{char.model}
-                  </div>
+                <div className="min-w-0">
+                  <span className="font-medium text-coc-text text-sm">{char.name}</span>
+                  <span className="text-coc-muted text-xs ml-2">{char.occupation} · {char.provider}/{char.model}</span>
                 </div>
               </label>
             ))}
           </div>
         )}
+        {charError && (
+          <div className="mt-2 text-coc-danger text-xs">{charError}</div>
+        )}
       </section>
 
       {/* NPCs */}
-      <section className="bg-coc-panel border border-coc-border rounded-lg p-5 mb-4">
-        <h2 className="text-coc-accent font-semibold mb-3">NPC 등록</h2>
+      <section className="bg-coc-panel border border-coc-border rounded-xl p-4 mb-4">
+        <h2 className="text-sm font-semibold text-coc-muted uppercase tracking-wide mb-3">NPC 등록</h2>
         {npcs.length > 0 && (
           <div className="mb-3 space-y-2">
             {npcs.map(npc => (
-              <div key={npc.id} className="flex items-center justify-between bg-coc-bg rounded px-3 py-2 text-sm">
+              <div key={npc.id} className="flex items-center justify-between bg-coc-bg rounded-lg px-3 py-2 text-sm">
                 <span className="font-medium">{npc.name}</span>
                 <span className="text-coc-muted truncate ml-2 flex-1">{npc.description}</span>
                 <button
@@ -194,25 +205,25 @@ export default function SessionSetup() {
             value={newNpcName}
             onChange={e => setNewNpcName(e.target.value)}
             placeholder="NPC 이름"
-            className="bg-coc-bg border border-coc-border rounded px-3 py-2 text-sm focus:border-coc-accent outline-none"
+            className="bg-coc-bg border border-coc-border rounded-lg px-3 py-2 text-sm focus:border-coc-accent outline-none"
           />
           <input
             type="text"
             value={newNpcDesc}
             onChange={e => setNewNpcDesc(e.target.value)}
             placeholder="설명"
-            className="bg-coc-bg border border-coc-border rounded px-3 py-2 text-sm focus:border-coc-accent outline-none"
+            className="bg-coc-bg border border-coc-border rounded-lg px-3 py-2 text-sm focus:border-coc-accent outline-none"
           />
           <input
             type="text"
             value={newNpcTraits}
             onChange={e => setNewNpcTraits(e.target.value)}
             placeholder="특성 (쉼표로 구분)"
-            className="bg-coc-bg border border-coc-border rounded px-3 py-2 text-sm focus:border-coc-accent outline-none"
+            className="bg-coc-bg border border-coc-border rounded-lg px-3 py-2 text-sm focus:border-coc-accent outline-none"
           />
           <button
             onClick={addNpc}
-            className="bg-coc-accent/20 border border-coc-accent/40 hover:bg-coc-accent/30 text-coc-accent rounded px-3 py-2 text-sm transition-all"
+            className="bg-coc-accent/20 border border-coc-accent/40 hover:bg-coc-accent/30 text-coc-accent rounded-lg px-3 py-2 text-sm transition-all"
           >
             + NPC 추가
           </button>
@@ -220,12 +231,12 @@ export default function SessionSetup() {
       </section>
 
       {/* Items/Clues */}
-      <section className="bg-coc-panel border border-coc-border rounded-lg p-5 mb-4">
-        <h2 className="text-coc-accent font-semibold mb-3">아이템/단서 등록</h2>
+      <section className="bg-coc-panel border border-coc-border rounded-xl p-4 mb-4">
+        <h2 className="text-sm font-semibold text-coc-muted uppercase tracking-wide mb-3">아이템/단서 등록</h2>
         {items.length > 0 && (
           <div className="mb-3 space-y-2">
             {items.map((item, i) => (
-              <div key={`${item.name}-${item.location}-${i}`} className="flex items-center justify-between bg-coc-bg rounded px-3 py-2 text-sm">
+              <div key={`${item.name}-${item.location}-${i}`} className="flex items-center justify-between bg-coc-bg rounded-lg px-3 py-2 text-sm">
                 <span className="font-medium">{item.name}</span>
                 <span className="text-coc-muted text-xs ml-2">{item.location}</span>
                 <button
@@ -244,25 +255,25 @@ export default function SessionSetup() {
             value={newItemName}
             onChange={e => setNewItemName(e.target.value)}
             placeholder="아이템 이름"
-            className="bg-coc-bg border border-coc-border rounded px-3 py-2 text-sm focus:border-coc-accent outline-none"
+            className="bg-coc-bg border border-coc-border rounded-lg px-3 py-2 text-sm focus:border-coc-accent outline-none"
           />
           <input
             type="text"
             value={newItemLoc}
             onChange={e => setNewItemLoc(e.target.value)}
             placeholder="위치"
-            className="bg-coc-bg border border-coc-border rounded px-3 py-2 text-sm focus:border-coc-accent outline-none"
+            className="bg-coc-bg border border-coc-border rounded-lg px-3 py-2 text-sm focus:border-coc-accent outline-none"
           />
           <input
             type="text"
             value={newItemDesc}
             onChange={e => setNewItemDesc(e.target.value)}
             placeholder="설명"
-            className="bg-coc-bg border border-coc-border rounded px-3 py-2 text-sm focus:border-coc-accent outline-none"
+            className="bg-coc-bg border border-coc-border rounded-lg px-3 py-2 text-sm focus:border-coc-accent outline-none"
           />
           <button
             onClick={addItem}
-            className="bg-coc-accent/20 border border-coc-accent/40 hover:bg-coc-accent/30 text-coc-accent rounded px-3 py-2 text-sm transition-all"
+            className="bg-coc-accent/20 border border-coc-accent/40 hover:bg-coc-accent/30 text-coc-accent rounded-lg px-3 py-2 text-sm transition-all"
           >
             + 아이템 추가
           </button>
@@ -270,8 +281,8 @@ export default function SessionSetup() {
       </section>
 
       {/* Opening Briefing */}
-      <section className="bg-coc-panel border border-coc-border rounded-lg p-5 mb-6">
-        <h2 className="text-coc-accent font-semibold mb-3">오프닝 브리핑</h2>
+      <section className="bg-coc-panel border border-coc-border rounded-xl p-4 mb-4">
+        <h2 className="text-sm font-semibold text-coc-muted uppercase tracking-wide mb-3">오프닝 브리핑</h2>
         <p className="text-coc-muted text-xs mb-2">
           세션 시작 시 모든 AI 탐사자에게 전달할 배경 설명
         </p>
@@ -280,20 +291,14 @@ export default function SessionSetup() {
           onChange={e => setOpeningBriefing(e.target.value)}
           rows={4}
           placeholder="때는 1925년 10월, 보스턴..."
-          className="w-full bg-coc-bg border border-coc-border rounded px-3 py-2 text-sm focus:border-coc-accent outline-none resize-none"
+          className="w-full bg-coc-bg border border-coc-border rounded-lg px-3 py-2 text-sm focus:border-coc-accent outline-none resize-none"
         />
       </section>
-
-      {error && (
-        <div className="w-full mb-4 bg-red-900/30 border border-red-700 rounded-lg px-4 py-3 text-red-300 text-sm">
-          {error}
-        </div>
-      )}
 
       <button
         onClick={startSession}
         disabled={loading || !sessionName.trim() || selectedChars.length === 0}
-        className="w-full bg-coc-accent text-coc-bg font-bold py-3 rounded-lg hover:bg-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+        className="w-full bg-coc-accent hover:bg-coc-accent-hover text-coc-bg font-semibold py-3 text-base rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
       >
         {loading ? '세션 생성 중...' : '세션 시작'}
       </button>

@@ -49,12 +49,12 @@ export default function ActionRequestModal({ onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div
-        className="bg-coc-panel border border-coc-border rounded-xl p-6 w-full max-w-md mx-4"
+        className="bg-coc-panel border border-coc-border rounded-2xl w-full max-w-md p-6 shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="text-coc-accent font-bold text-lg mb-4">행동 요청 (기술 판정)</h2>
+        <h2 className="text-base font-semibold text-coc-text mb-5">행동 요청 (기술 판정)</h2>
 
         {/* Target */}
         <div className="mb-4">
@@ -62,7 +62,7 @@ export default function ActionRequestModal({ onClose }: Props) {
           <select
             value={targetId}
             onChange={e => setTargetId(e.target.value)}
-            className="w-full bg-coc-bg border border-coc-border rounded px-3 py-2 text-sm focus:border-coc-accent outline-none"
+            className="w-full bg-coc-bg border border-coc-border rounded-lg px-3 py-2 text-sm focus:border-coc-accent outline-none"
           >
             <option value="all">전체</option>
             {characters.map(c => (
@@ -78,7 +78,7 @@ export default function ActionRequestModal({ onClose }: Props) {
             value={customSkill.trim() ? '' : skill}
             onChange={e => { setSkill(e.target.value); setCustomSkill('') }}
             disabled={!!customSkill.trim()}
-            className="w-full bg-coc-bg border border-coc-border rounded px-3 py-2 text-sm focus:border-coc-accent outline-none mb-2 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full bg-coc-bg border border-coc-border rounded-lg px-3 py-2 text-sm focus:border-coc-accent outline-none mb-2 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {COC_SKILLS.map(s => (
               <option key={s} value={s}>{s}</option>
@@ -89,7 +89,7 @@ export default function ActionRequestModal({ onClose }: Props) {
             value={customSkill}
             onChange={e => setCustomSkill(e.target.value)}
             placeholder="직접 입력 (위 선택을 덮어씁니다)"
-            className="w-full bg-coc-bg border border-coc-border rounded px-3 py-2 text-sm focus:border-coc-accent outline-none"
+            className="w-full bg-coc-bg border border-coc-border rounded-lg px-3 py-2 text-sm focus:border-coc-accent outline-none"
           />
         </div>
 
@@ -101,7 +101,7 @@ export default function ActionRequestModal({ onClose }: Props) {
               <button
                 key={d}
                 onClick={() => setDifficulty(d)}
-                className={`flex-1 py-2 rounded text-xs font-medium transition-all ${
+                className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
                   difficulty === d
                     ? 'bg-coc-accent text-coc-bg'
                     : 'bg-coc-bg border border-coc-border hover:border-coc-muted text-coc-muted'
@@ -114,7 +114,7 @@ export default function ActionRequestModal({ onClose }: Props) {
         </div>
 
         {/* Success/Failure text */}
-        <div className="mb-4 grid grid-cols-2 gap-2">
+        <div className="mb-5 grid grid-cols-2 gap-2">
           <div>
             <label className="text-coc-muted text-xs block mb-1">성공 시 설명</label>
             <input
@@ -122,7 +122,7 @@ export default function ActionRequestModal({ onClose }: Props) {
               value={successText}
               onChange={e => setSuccessText(e.target.value)}
               placeholder="단서를 발견했다"
-              className="w-full bg-coc-bg border border-coc-border rounded px-2 py-1.5 text-xs focus:border-coc-accent outline-none"
+              className="w-full bg-coc-bg border border-coc-border rounded-lg px-2 py-1.5 text-xs focus:border-coc-accent outline-none"
             />
           </div>
           <div>
@@ -132,7 +132,7 @@ export default function ActionRequestModal({ onClose }: Props) {
               value={failureText}
               onChange={e => setFailureText(e.target.value)}
               placeholder="아무것도 보이지 않는다"
-              className="w-full bg-coc-bg border border-coc-border rounded px-2 py-1.5 text-xs focus:border-coc-accent outline-none"
+              className="w-full bg-coc-bg border border-coc-border rounded-lg px-2 py-1.5 text-xs focus:border-coc-accent outline-none"
             />
           </div>
         </div>
@@ -140,15 +140,15 @@ export default function ActionRequestModal({ onClose }: Props) {
         <div className="flex gap-2">
           <button
             onClick={onClose}
-            className="flex-1 bg-coc-bg border border-coc-border rounded-lg py-2 text-sm hover:border-coc-muted transition-all"
+            className="px-4 py-2 text-sm text-coc-muted hover:text-coc-text border border-coc-border rounded-lg transition-all"
           >
             취소
           </button>
           <button
             onClick={rollDice}
-            className="flex-1 bg-coc-accent text-coc-bg rounded-lg py-2 text-sm font-semibold hover:bg-yellow-400 transition-all"
+            className="flex-1 px-4 py-2 text-sm font-semibold bg-coc-accent hover:bg-coc-accent-hover text-coc-bg rounded-lg transition-all"
           >
-            🎲 주사위 굴리기
+            주사위 굴리기
           </button>
         </div>
       </div>

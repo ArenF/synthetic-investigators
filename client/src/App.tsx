@@ -175,7 +175,7 @@ export default function App() {
   }, [screen, sessionId])
 
   return (
-    <div className="min-h-screen bg-coc-bg text-coc-text">
+    <div className="min-h-screen bg-coc-bg text-coc-text font-sans">
       {screen === 'home' && <HomeScreen />}
       {screen === 'session_setup' && <SessionSetup />}
       {screen === 'game' && <GameScreen />}

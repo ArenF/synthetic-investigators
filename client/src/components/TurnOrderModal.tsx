@@ -34,12 +34,12 @@ export default function TurnOrderModal({ onClose, onConfirm }: Props) {
   const charMap = Object.fromEntries(characters.map(c => [c.id, c]))
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div
-        className="bg-coc-panel border border-coc-border rounded-xl p-6 w-full max-w-sm mx-4"
+        className="bg-coc-panel border border-coc-border rounded-2xl w-full max-w-md p-6 shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="text-coc-accent font-bold text-lg mb-4">행동 순서 설정</h2>
+        <h2 className="text-base font-semibold text-coc-text mb-5">행동 순서 설정</h2>
 
         <div className="space-y-2 mb-4">
           {order.map((id, idx) => {
@@ -49,8 +49,8 @@ export default function TurnOrderModal({ onClose, onConfirm }: Props) {
               <div key={id} className="flex items-center gap-2 bg-coc-bg rounded-lg px-3 py-2">
                 <span className="text-coc-muted text-sm w-5">{idx + 1}.</span>
                 <span className="flex-1 text-sm">{char.name}</span>
-                <button onClick={() => moveUp(idx)} className="text-coc-muted hover:text-coc-text p-1">↑</button>
-                <button onClick={() => moveDown(idx)} className="text-coc-muted hover:text-coc-text p-1">↓</button>
+                <button onClick={() => moveUp(idx)} className="text-coc-muted hover:text-coc-text p-1 transition-colors">↑</button>
+                <button onClick={() => moveDown(idx)} className="text-coc-muted hover:text-coc-text p-1 transition-colors">↓</button>
               </div>
             )
           })}
@@ -64,7 +64,7 @@ export default function TurnOrderModal({ onClose, onConfirm }: Props) {
               <button
                 key={c.id}
                 onClick={() => toggleInclude(c.id)}
-                className="text-sm text-coc-muted hover:text-coc-accent mr-2"
+                className="text-sm text-coc-muted hover:text-coc-accent mr-2 transition-colors"
               >
                 + {c.name}
               </button>
@@ -75,13 +75,13 @@ export default function TurnOrderModal({ onClose, onConfirm }: Props) {
         <div className="flex gap-2">
           <button
             onClick={onClose}
-            className="flex-1 bg-coc-bg border border-coc-border rounded-lg py-2 text-sm hover:border-coc-muted transition-all"
+            className="px-4 py-2 text-sm text-coc-muted hover:text-coc-text border border-coc-border rounded-lg transition-all"
           >
             취소
           </button>
           <button
             onClick={() => { onConfirm(order); onClose() }}
-            className="flex-1 bg-coc-accent text-coc-bg rounded-lg py-2 text-sm font-semibold hover:bg-yellow-400 transition-all"
+            className="flex-1 px-4 py-2 text-sm font-semibold bg-coc-accent hover:bg-coc-accent-hover text-coc-bg rounded-lg transition-all"
           >
             확인
           </button>

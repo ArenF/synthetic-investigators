@@ -15,60 +15,57 @@ export default function HomeScreen() {
   }, [])
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8">
-      <div className="text-center mb-12">
-        <h1 className="text-5xl font-bold text-coc-accent mb-2">
-          Synthetic Investigators
+    <div className="min-h-screen flex flex-col items-center justify-center px-6">
+      {/* Logo / Title */}
+      <div className="text-center mb-16">
+        <div className="inline-block bg-coc-accent/10 border border-coc-accent/30 rounded-2xl px-6 py-2 mb-6">
+          <span className="text-coc-accent text-xs font-semibold tracking-widest uppercase">CoC 7th Edition</span>
+        </div>
+        <h1 className="text-6xl font-bold text-coc-text mb-3 tracking-tight">
+          Synthetic <span className="text-coc-accent">Investigators</span>
         </h1>
-        <p className="text-coc-muted text-lg">
-          AI-Powered Call of Cthulhu TRPG Platform
+        <p className="text-coc-muted text-base">
+          Multi-model AI TRPG Experiment Platform
         </p>
       </div>
 
+      {/* Error */}
       {error && (
-        <div className="w-full max-w-3xl mb-6 bg-red-900/30 border border-red-700 rounded-lg px-4 py-3 text-red-300 text-sm">
-          {error}
+        <div className="mb-8 w-full max-w-2xl bg-coc-danger/10 border border-coc-danger/40 rounded-lg px-4 py-3 text-coc-danger text-sm text-center">
+          ⚠ {error}
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-3xl mb-12">
-        <button
-          onClick={() => setScreen('session_setup')}
-          className="bg-coc-panel border border-coc-border hover:border-coc-accent rounded-lg p-6 text-left transition-all group"
-        >
-          <div className="text-3xl mb-3">🎲</div>
-          <h2 className="text-coc-accent font-bold text-lg group-hover:text-yellow-300">
-            새 세션 시작
-          </h2>
-          <p className="text-coc-muted text-sm mt-1">
-            캐릭터를 선택하고 새로운 세션을 시작합니다
-          </p>
+      {/* Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-2xl">
+        {/* Card 1: 새 세션 시작 */}
+        <button onClick={() => setScreen('session_setup')}
+          className="group bg-coc-panel border border-coc-border hover:border-coc-accent/60 hover:bg-coc-panel2 rounded-xl p-6 text-left transition-all duration-200">
+          <div className="w-10 h-10 rounded-lg bg-coc-accent/15 flex items-center justify-center mb-4 group-hover:bg-coc-accent/25 transition-colors">
+            <span className="text-coc-accent text-xl">▶</span>
+          </div>
+          <h2 className="text-coc-text font-semibold text-base mb-1 group-hover:text-coc-accent transition-colors">새 세션 시작</h2>
+          <p className="text-coc-muted text-sm leading-relaxed">캐릭터를 선택하고 새로운 실험 세션을 시작합니다</p>
         </button>
 
-        <button
-          onClick={() => setScreen('character_editor')}
-          className="bg-coc-panel border border-coc-border hover:border-coc-accent rounded-lg p-6 text-left transition-all group"
-        >
-          <div className="text-3xl mb-3">📝</div>
-          <h2 className="text-coc-accent font-bold text-lg group-hover:text-yellow-300">
-            캐릭터 편집
-          </h2>
-          <p className="text-coc-muted text-sm mt-1">
-            CoC 7판 캐릭터 시트를 생성하거나 편집합니다
-          </p>
+        {/* Card 2: 캐릭터 편집 */}
+        <button onClick={() => setScreen('character_editor')}
+          className="group bg-coc-panel border border-coc-border hover:border-coc-accent/60 hover:bg-coc-panel2 rounded-xl p-6 text-left transition-all duration-200">
+          <div className="w-10 h-10 rounded-lg bg-coc-accent/15 flex items-center justify-center mb-4 group-hover:bg-coc-accent/25 transition-colors">
+            <span className="text-coc-accent text-xl">✎</span>
+          </div>
+          <h2 className="text-coc-text font-semibold text-base mb-1 group-hover:text-coc-accent transition-colors">캐릭터 편집</h2>
+          <p className="text-coc-muted text-sm leading-relaxed">CoC 7판 캐릭터 시트를 생성하거나 편집합니다</p>
         </button>
 
-        <button
-          onClick={() => setScreen('log_viewer')}
-          className="bg-coc-panel border border-coc-border hover:border-coc-accent rounded-lg p-6 text-left transition-all group"
-        >
-          <div className="text-3xl mb-3">📋</div>
-          <h2 className="text-coc-accent font-bold text-lg group-hover:text-yellow-300">
-            세션 로그
-          </h2>
-          <p className="text-coc-muted text-sm mt-1">
-            과거 세션의 전체 기록을 열람합니다
-          </p>
+        {/* Card 3: 세션 로그 */}
+        <button onClick={() => setScreen('log_viewer')}
+          className="group bg-coc-panel border border-coc-border hover:border-coc-accent/60 hover:bg-coc-panel2 rounded-xl p-6 text-left transition-all duration-200">
+          <div className="w-10 h-10 rounded-lg bg-coc-accent/15 flex items-center justify-center mb-4 group-hover:bg-coc-accent/25 transition-colors">
+            <span className="text-coc-accent text-xl">≡</span>
+          </div>
+          <h2 className="text-coc-text font-semibold text-base mb-1 group-hover:text-coc-accent transition-colors">세션 로그</h2>
+          <p className="text-coc-muted text-sm leading-relaxed">과거 세션의 전체 기록을 열람합니다</p>
         </button>
       </div>
     </div>

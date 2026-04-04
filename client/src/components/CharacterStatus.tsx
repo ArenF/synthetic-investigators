@@ -10,7 +10,7 @@ interface StatBarProps {
 function StatBar({ value, max, color }: StatBarProps) {
   const pct = Math.max(0, Math.min(100, (value / max) * 100))
   return (
-    <div className="h-2 bg-coc-bg rounded-full overflow-hidden">
+    <div className="h-1.5 bg-coc-bg rounded-full overflow-hidden">
       <div
         className="h-full rounded-full transition-all duration-300"
         style={{ width: `${pct}%`, backgroundColor: color }}
@@ -36,13 +36,13 @@ function StatControl({ charId, stat }: StatControlProps) {
     <div className="flex items-center gap-1">
       <button
         onClick={() => adjust(-1)}
-        className="w-5 h-5 flex items-center justify-center rounded text-xs bg-coc-bg hover:bg-coc-danger/20 text-coc-muted hover:text-coc-danger transition-all"
+        className="w-6 h-6 flex items-center justify-center rounded text-xs bg-coc-bg hover:bg-coc-danger/20 text-coc-muted hover:text-coc-danger transition-all"
       >
         −
       </button>
       <button
         onClick={() => adjust(1)}
-        className="w-5 h-5 flex items-center justify-center rounded text-xs bg-coc-bg hover:bg-coc-hp/20 text-coc-muted hover:text-coc-hp transition-all"
+        className="w-6 h-6 flex items-center justify-center rounded text-xs bg-coc-bg hover:bg-coc-hp/20 text-coc-muted hover:text-coc-hp transition-all"
       >
         +
       </button>
@@ -55,54 +55,60 @@ interface CharCardProps {
 }
 
 function CharCard({ char }: CharCardProps) {
-  const sanPct = Math.round((char.san / char.sanMax) * 100)
-  const hpPct = Math.round((char.hp / char.hpMax) * 100)
-
   return (
-    <div className={`bg-coc-panel border rounded-lg p-3 ${
+    <div className={`relative bg-coc-panel border rounded-xl p-4 ${
       char.indefiniteInsanity
         ? 'border-coc-danger/60'
         : char.temporaryInsanity
         ? 'border-yellow-500/60'
         : 'border-coc-border'
     }`}>
-      <div className="flex items-start justify-between mb-2">
-        <div>
-          <div className="font-medium text-coc-text text-sm">{char.name}</div>
-          <div className="text-coc-muted text-xs">{char.provider}/{char.model.split('-').slice(0,2).join('-')}</div>
+      {/* Insanity badge — top-right */}
+      {char.indefiniteInsanity && (
+        <span className="absolute top-2 right-2 text-xs text-coc-danger bg-coc-danger/10 px-2 py-0.5 rounded-full">광기</span>
+      )}
+      {!char.indefiniteInsanity && char.temporaryInsanity && (
+        <span className="absolute top-2 right-2 text-xs text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-full">불안정</span>
+      )}
+
+      <div className="mb-3">
+        <div className="text-sm font-semibold text-coc-text">{char.name}</div>
+        <div className="bg-coc-panel2 rounded px-2 py-0.5 text-xs text-coc-muted inline-block mt-1">
+          {char.provider}/{char.model.split('-').slice(0,2).join('-')}
         </div>
-        {char.indefiniteInsanity && (
-          <span className="text-xs text-coc-danger bg-coc-danger/10 px-1.5 py-0.5 rounded">광기</span>
-        )}
-        {!char.indefiniteInsanity && char.temporaryInsanity && (
-          <span className="text-xs text-yellow-400 bg-yellow-400/10 px-1.5 py-0.5 rounded">불안정</span>
-        )}
       </div>
 
       {/* HP */}
-      <div className="mb-2">
+      <div className="mb-3">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-xs text-coc-muted">HP {char.hp}/{char.hpMax}</span>
+          <span className="text-xs text-coc-muted">HP <span className="text-coc-text">{char.hp}/{char.hpMax}</span></span>
           <StatControl charId={char.id} stat="hp" />
         </div>
-        <StatBar value={char.hp} max={char.hpMax} color="#5a9e5a" />
+        <StatBar value={char.hp} max={char.hpMax} color="#22c55e" />
       </div>
 
       {/* SAN */}
-      <div className="mb-2">
+      <div className="mb-3">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-xs text-coc-muted">SAN {char.san}/{char.sanMax} ({sanPct}%)</span>
+          <span className="text-xs text-coc-muted">SAN <span className="text-coc-text">{char.san}/{char.sanMax}</span></span>
           <StatControl charId={char.id} stat="san" />
         </div>
-        <StatBar value={char.san} max={char.sanMax} color="#4a90c4" />
+        <StatBar value={char.san} max={char.sanMax} color="#60a5fa" />
       </div>
 
       {/* MP */}
-      <div>
+      <div className="mb-2">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-xs text-coc-muted">MP {char.mp}/{char.mpMax}</span>
+          <span className="text-xs text-coc-muted">MP <span className="text-coc-mp">{char.mp}/{char.mpMax}</span></span>
         </div>
-        <StatBar value={char.mp} max={char.mpMax} color="#9b59b6" />
+        <StatBar value={char.mp} max={char.mpMax} color="#a78bfa" />
+      </div>
+
+      {/* Luck */}
+      <div>
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-coc-muted">LUCK <span className="text-coc-luck">{char.luck}</span></span>
+        </div>
       </div>
     </div>
   )
