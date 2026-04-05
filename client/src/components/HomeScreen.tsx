@@ -14,7 +14,7 @@ export default function HomeScreen() {
   }, [])
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8" style={{ backgroundColor: 'var(--bg-base)' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', backgroundColor: 'var(--bg-base)' }}>
       {/* Header */}
       <div className="text-center mb-12">
         <div className="text-xs font-mono uppercase tracking-widest mb-2" style={{ color: 'var(--teal)' }}>CoC 7th Edition</div>
@@ -31,7 +31,7 @@ export default function HomeScreen() {
       )}
 
       {/* Cards grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-3xl">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', width: '100%', maxWidth: '820px' }}>
         {/* Card 1: 새 세션 시작 */}
         <button
           onClick={() => setScreen('session_setup')}

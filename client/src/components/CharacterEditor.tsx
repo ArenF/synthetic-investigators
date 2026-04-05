@@ -152,7 +152,7 @@ export default function CharacterEditor() {
   const d = char.derived
 
   return (
-    <div className="min-h-screen p-6 max-w-4xl mx-auto">
+    <div style={{ minHeight: '100vh', padding: '1.5rem', maxWidth: '900px', margin: '0 auto' }}>
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => setScreen('home')}
@@ -188,15 +188,26 @@ export default function CharacterEditor() {
       )}
 
       {/* Tab navigation */}
-      <div className="flex gap-1 mb-6" style={{ borderBottom: '1px solid var(--bg-border)' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--bg-border)', marginBottom: '1.5rem' }}>
         {TABS.map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className="px-4 py-2 text-sm font-medium transition-colors"
             style={{
+              padding: '0.625rem 1.25rem',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              whiteSpace: 'nowrap',
               color: activeTab === tab.key ? 'var(--teal)' : 'var(--text-muted)',
               borderBottom: activeTab === tab.key ? '2px solid var(--teal)' : '2px solid transparent',
+              marginBottom: '-1px',
+              background: 'none',
+              border: 'none',
+              borderBottomWidth: '2px',
+              borderBottomStyle: 'solid',
+              borderBottomColor: activeTab === tab.key ? 'var(--teal)' : 'transparent',
+              cursor: 'pointer',
+              transition: 'color 0.15s',
             }}
           >
             {tab.label}

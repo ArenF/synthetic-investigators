@@ -175,7 +175,7 @@ export default function App() {
   }, [screen, sessionId])
 
   return (
-    <div className="min-h-screen font-sans" style={{ backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)' }}>
+    <div className="h-full font-sans" style={{ backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)' }}>
       {screen === 'home' && <HomeScreen />}
       {screen === 'session_setup' && <SessionSetup />}
       {screen === 'game' && <GameScreen />}

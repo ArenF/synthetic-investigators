@@ -111,7 +111,7 @@ export default function SessionSetup() {
   }
 
   return (
-    <div className="min-h-screen p-6 max-w-2xl mx-auto">
+    <div style={{ minHeight: '100vh', padding: '1.5rem', maxWidth: '720px', margin: '0 auto' }}>
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => setScreen('home')}
