@@ -22,7 +22,7 @@ const MODEL_OPTIONS = [
 type TabKey = 'basic' | 'stats' | 'skills' | 'backstory' | 'ai'
 
 const TABS: { key: TabKey; label: string }[] = [
-  { key: 'basic', label: '기본정보' },
+  { key: 'basic', label: '기본 정보' },
   { key: 'stats', label: '스탯' },
   { key: 'skills', label: '스킬' },
   { key: 'backstory', label: '배경' },
@@ -152,24 +152,33 @@ export default function CharacterEditor() {
   const d = char.derived
 
   return (
-    <div className="min-h-screen p-6 max-w-2xl mx-auto">
+    <div className="min-h-screen p-6 max-w-4xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => setScreen('home')} className="text-coc-muted hover:text-coc-text transition-colors text-sm">
+        <button
+          onClick={() => setScreen('home')}
+          className="text-sm transition-colors"
+          style={{ color: 'var(--text-muted)' }}
+          onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-primary)')}
+          onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+        >
           ← 뒤로
         </button>
-        <h1 className="text-sm font-semibold text-coc-muted uppercase tracking-wide">캐릭터 편집기</h1>
+        <h1 className="text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>캐릭터 편집기</h1>
       </div>
 
       {/* Load existing */}
       {savedList.length > 0 && (
-        <div className="bg-coc-panel border border-coc-border rounded-xl p-4 mb-4">
-          <p className="text-coc-muted text-xs mb-2">기존 캐릭터 불러오기</p>
+        <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
+          <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>기존 캐릭터 불러오기</p>
           <div className="flex flex-wrap gap-2">
             {savedList.map(id => (
               <button
                 key={id}
                 onClick={() => loadChar(id)}
-                className="bg-coc-bg border border-coc-border hover:border-coc-accent rounded-lg px-3 py-1 text-sm transition-all"
+                className="rounded-lg px-3 py-1 text-sm transition-all"
+                style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--bg-border)' }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--teal)')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--bg-border)')}
               >
                 {id}
               </button>
@@ -179,16 +188,16 @@ export default function CharacterEditor() {
       )}
 
       {/* Tab navigation */}
-      <div className="flex border-b border-coc-border mb-4">
+      <div className="flex gap-1 mb-6" style={{ borderBottom: '1px solid var(--bg-border)' }}>
         {TABS.map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === tab.key
-                ? 'border-coc-accent text-coc-accent'
-                : 'border-transparent text-coc-muted hover:text-coc-text'
-            }`}
+            className="px-4 py-2 text-sm font-medium transition-colors"
+            style={{
+              color: activeTab === tab.key ? 'var(--teal)' : 'var(--text-muted)',
+              borderBottom: activeTab === tab.key ? '2px solid var(--teal)' : '2px solid transparent',
+            }}
           >
             {tab.label}
           </button>
@@ -199,38 +208,32 @@ export default function CharacterEditor() {
       <div className="space-y-4">
         {/* Basic Info */}
         {activeTab === 'basic' && (
-          <section className="bg-coc-panel border border-coc-border rounded-xl p-4">
-            <h2 className="text-sm font-semibold text-coc-muted uppercase tracking-wide mb-3">기본 정보</h2>
+          <section className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
+            <h2 className="border-l-2 pl-3 font-semibold mb-3 text-sm uppercase tracking-wide" style={{ borderColor: 'var(--teal)', color: 'var(--text-muted)' }}>기본 정보</h2>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-coc-muted text-xs block mb-1">캐릭터 ID (파일명)</label>
-                <input value={charId} onChange={e => updateCharId(e.target.value)}
-                  className="w-full bg-coc-bg border border-coc-border rounded-lg px-2 py-1.5 text-sm focus:border-coc-accent outline-none" />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>캐릭터 ID (파일명)</label>
+                <input value={charId} onChange={e => updateCharId(e.target.value)} className="w-full text-sm" />
               </div>
               <div>
-                <label className="text-coc-muted text-xs block mb-1">이름</label>
-                <input value={char.name} onChange={e => setField('name', e.target.value)}
-                  className="w-full bg-coc-bg border border-coc-border rounded-lg px-2 py-1.5 text-sm focus:border-coc-accent outline-none" />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>이름</label>
+                <input value={char.name} onChange={e => setField('name', e.target.value)} className="w-full text-sm" />
               </div>
               <div>
-                <label className="text-coc-muted text-xs block mb-1">나이</label>
-                <input type="number" value={char.age} onChange={e => setField('age', parseInt(e.target.value))}
-                  className="w-full bg-coc-bg border border-coc-border rounded-lg px-2 py-1.5 text-sm focus:border-coc-accent outline-none" />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>나이</label>
+                <input type="number" value={char.age} onChange={e => setField('age', parseInt(e.target.value))} className="w-full text-sm" />
               </div>
               <div>
-                <label className="text-coc-muted text-xs block mb-1">성별</label>
-                <input value={char.gender} onChange={e => setField('gender', e.target.value)}
-                  className="w-full bg-coc-bg border border-coc-border rounded-lg px-2 py-1.5 text-sm focus:border-coc-accent outline-none" />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>성별</label>
+                <input value={char.gender} onChange={e => setField('gender', e.target.value)} className="w-full text-sm" />
               </div>
               <div>
-                <label className="text-coc-muted text-xs block mb-1">직업</label>
-                <input value={char.occupation} onChange={e => setField('occupation', e.target.value)}
-                  className="w-full bg-coc-bg border border-coc-border rounded-lg px-2 py-1.5 text-sm focus:border-coc-accent outline-none" />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>직업</label>
+                <input value={char.occupation} onChange={e => setField('occupation', e.target.value)} className="w-full text-sm" />
               </div>
               <div>
-                <label className="text-coc-muted text-xs block mb-1">출신지</label>
-                <input value={char.birthplace} onChange={e => setField('birthplace', e.target.value)}
-                  className="w-full bg-coc-bg border border-coc-border rounded-lg px-2 py-1.5 text-sm focus:border-coc-accent outline-none" />
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>출신지</label>
+                <input value={char.birthplace} onChange={e => setField('birthplace', e.target.value)} className="w-full text-sm" />
               </div>
             </div>
           </section>
@@ -239,56 +242,56 @@ export default function CharacterEditor() {
         {/* Stats */}
         {activeTab === 'stats' && (
           <>
-            <section className="bg-coc-panel border border-coc-border rounded-xl p-4">
-              <h2 className="text-sm font-semibold text-coc-muted uppercase tracking-wide mb-3">능력치</h2>
+            <section className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
+              <h2 className="border-l-2 pl-3 font-semibold mb-3 text-sm uppercase tracking-wide" style={{ borderColor: 'var(--teal)', color: 'var(--text-muted)' }}>능력치</h2>
               <div className="grid grid-cols-4 gap-3">
                 {Object.entries(c).map(([key, val]) => (
                   <div key={key}>
-                    <label className="text-coc-muted text-xs block mb-1">{key}</label>
+                    <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>{key}</label>
                     <input
                       type="number"
                       value={val as number}
                       onChange={e => setField(`characteristics.${key}`, parseInt(e.target.value) || 0)}
-                      className="w-full bg-coc-bg border border-coc-border rounded-lg px-2 py-1.5 text-sm focus:border-coc-accent outline-none"
+                      className="w-full text-sm"
                     />
                   </div>
                 ))}
               </div>
             </section>
 
-            <section className="bg-coc-panel border border-coc-border rounded-xl p-4">
-              <h2 className="text-sm font-semibold text-coc-muted uppercase tracking-wide mb-3">파생 능력치</h2>
+            <section className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
+              <h2 className="border-l-2 pl-3 font-semibold mb-3 text-sm uppercase tracking-wide" style={{ borderColor: 'var(--teal)', color: 'var(--text-muted)' }}>파생 능력치</h2>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="text-coc-muted text-xs block mb-1">HP (현재/최대)</label>
+                  <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>HP (현재/최대)</label>
                   <div className="flex gap-1">
                     <input type="number" value={d.hp.current}
                       onChange={e => setField('derived.hp.current', parseInt(e.target.value) || 0)}
-                      className="w-full bg-coc-bg border border-coc-border rounded-lg px-2 py-1.5 text-sm focus:border-coc-accent outline-none" />
+                      className="w-full text-sm" />
                     <input type="number" value={d.hp.max}
                       onChange={e => setField('derived.hp.max', parseInt(e.target.value) || 0)}
-                      className="w-full bg-coc-bg border border-coc-border rounded-lg px-2 py-1.5 text-sm focus:border-coc-accent outline-none" />
+                      className="w-full text-sm" />
                   </div>
                 </div>
                 <div>
-                  <label className="text-coc-muted text-xs block mb-1">SAN (현재/시작/최대)</label>
+                  <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>SAN (현재/시작/최대)</label>
                   <div className="flex gap-1">
                     <input type="number" value={d.san.current}
                       onChange={e => setField('derived.san.current', parseInt(e.target.value) || 0)}
-                      className="w-full bg-coc-bg border border-coc-border rounded-lg px-2 py-1.5 text-sm focus:border-coc-accent outline-none" />
+                      className="w-full text-sm" />
                     <input type="number" value={d.san.starting}
                       onChange={e => setField('derived.san.starting', parseInt(e.target.value) || 0)}
-                      className="w-full bg-coc-bg border border-coc-border rounded-lg px-2 py-1.5 text-sm focus:border-coc-accent outline-none" />
+                      className="w-full text-sm" />
                     <input type="number" value={d.san.max}
                       onChange={e => setField('derived.san.max', parseInt(e.target.value) || 0)}
-                      className="w-full bg-coc-bg border border-coc-border rounded-lg px-2 py-1.5 text-sm focus:border-coc-accent outline-none" />
+                      className="w-full text-sm" />
                   </div>
                 </div>
                 <div>
-                  <label className="text-coc-muted text-xs block mb-1">행운</label>
+                  <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>행운</label>
                   <input type="number" value={d.luck}
                     onChange={e => setField('derived.luck', parseInt(e.target.value) || 0)}
-                    className="w-full bg-coc-bg border border-coc-border rounded-lg px-2 py-1.5 text-sm focus:border-coc-accent outline-none" />
+                    className="w-full text-sm" />
                 </div>
               </div>
             </section>
@@ -297,38 +300,39 @@ export default function CharacterEditor() {
 
         {/* Skills */}
         {activeTab === 'skills' && (
-          <section className="bg-coc-panel border border-coc-border rounded-xl p-4">
-            <h2 className="text-sm font-semibold text-coc-muted uppercase tracking-wide mb-3">기술</h2>
+          <section className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
+            <h2 className="border-l-2 pl-3 font-semibold mb-3 text-sm uppercase tracking-wide" style={{ borderColor: 'var(--teal)', color: 'var(--text-muted)' }}>기술</h2>
             <div className="grid grid-cols-4 gap-2 mb-3">
               {Object.entries(char.skills).map(([skill, val]) => (
                 <div key={skill} className="flex items-center gap-1">
-                  <label className="text-coc-muted text-xs flex-1 truncate">{skill}</label>
+                  <label className="text-xs flex-1 truncate" style={{ color: 'var(--text-muted)' }}>{skill}</label>
                   <input
                     type="number"
                     value={val as number}
                     onChange={e => setField(`skills.${skill}`, parseInt(e.target.value) || 0)}
-                    className="w-14 bg-coc-bg border border-coc-border rounded-lg px-1 py-1 text-xs focus:border-coc-accent outline-none text-center"
+                    className="w-14 px-1 py-1 text-xs text-center"
                   />
                 </div>
               ))}
             </div>
             {/* Add custom skill */}
-            <div className="flex items-center gap-2 border-t border-coc-border/50 pt-3">
+            <div className="flex items-center gap-2 pt-3" style={{ borderTop: '1px solid var(--bg-border)' }}>
               <input
                 type="text"
                 value={customSkill}
                 onChange={e => setCustomSkill(e.target.value)}
                 placeholder="기술 이름"
-                className="flex-1 bg-coc-bg border border-coc-border rounded-lg px-2 py-1 text-sm focus:border-coc-accent outline-none"
+                className="flex-1 text-sm"
               />
               <input
                 type="number"
                 value={customSkillVal}
                 onChange={e => setCustomSkillVal(parseInt(e.target.value) || 0)}
-                className="w-16 bg-coc-bg border border-coc-border rounded-lg px-2 py-1 text-sm focus:border-coc-accent outline-none text-center"
+                className="w-16 text-sm text-center"
               />
               <button onClick={addCustomSkill}
-                className="bg-coc-accent/20 border border-coc-accent/40 hover:bg-coc-accent/30 text-coc-accent rounded-lg px-3 py-1 text-sm transition-all">
+                className="rounded-lg px-3 py-1 text-sm transition-all"
+                style={{ backgroundColor: 'rgba(20,184,166,0.2)', border: '1px solid rgba(20,184,166,0.4)', color: 'var(--teal)' }}>
                 + 추가
               </button>
             </div>
@@ -337,8 +341,8 @@ export default function CharacterEditor() {
 
         {/* Backstory */}
         {activeTab === 'backstory' && (
-          <section className="bg-coc-panel border border-coc-border rounded-xl p-4">
-            <h2 className="text-sm font-semibold text-coc-muted uppercase tracking-wide mb-3">배경</h2>
+          <section className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
+            <h2 className="border-l-2 pl-3 font-semibold mb-3 text-sm uppercase tracking-wide" style={{ borderColor: 'var(--teal)', color: 'var(--text-muted)' }}>배경</h2>
             <div className="space-y-3">
               {[
                 { key: 'backstory.personalDescription', label: '인물 묘사' },
@@ -349,22 +353,22 @@ export default function CharacterEditor() {
                 { key: 'backstory.encountersWithStrangeEntities', label: '기이한 경험' },
               ].map(({ key, label }) => (
                 <div key={key}>
-                  <label className="text-coc-muted text-xs block mb-1">{label}</label>
+                  <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>{label}</label>
                   <input
                     type="text"
                     value={(char.backstory as any)[key.split('.').slice(1).join('.')] ?? ''}
                     onChange={e => setField(key, e.target.value)}
-                    className="w-full bg-coc-bg border border-coc-border rounded-lg px-2 py-1.5 text-sm focus:border-coc-accent outline-none"
+                    className="w-full text-sm"
                   />
                 </div>
               ))}
               <div>
-                <label className="text-coc-muted text-xs block mb-1">성격적 특성 (쉼표로 구분)</label>
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>성격적 특성 (쉼표로 구분)</label>
                 <input
                   type="text"
                   value={char.backstory.traits.join(', ')}
                   onChange={e => setField('backstory.traits', e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean))}
-                  className="w-full bg-coc-bg border border-coc-border rounded-lg px-2 py-1.5 text-sm focus:border-coc-accent outline-none"
+                  className="w-full text-sm"
                 />
               </div>
             </div>
@@ -373,11 +377,11 @@ export default function CharacterEditor() {
 
         {/* Model Config */}
         {activeTab === 'ai' && (
-          <section className="bg-coc-panel border border-coc-border rounded-xl p-4">
-            <h2 className="text-sm font-semibold text-coc-muted uppercase tracking-wide mb-3">AI 모델 설정</h2>
+          <section className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
+            <h2 className="border-l-2 pl-3 font-semibold mb-3 text-sm uppercase tracking-wide" style={{ borderColor: 'var(--teal)', color: 'var(--text-muted)' }}>AI 모델 설정</h2>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-coc-muted text-xs block mb-1">모델</label>
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>모델</label>
                 <select
                   value={`${char.modelConfig.provider}/${char.modelConfig.model}`}
                   onChange={e => {
@@ -385,7 +389,7 @@ export default function CharacterEditor() {
                     setField('modelConfig.provider', provider)
                     setField('modelConfig.model', model)
                   }}
-                  className="w-full bg-coc-bg border border-coc-border rounded-lg px-2 py-1.5 text-sm focus:border-coc-accent outline-none"
+                  className="w-full text-sm"
                 >
                   {MODEL_OPTIONS.map(m => (
                     <option key={`${m.provider}/${m.model}`} value={`${m.provider}/${m.model}`}>
@@ -395,7 +399,7 @@ export default function CharacterEditor() {
                 </select>
               </div>
               <div>
-                <label className="text-coc-muted text-xs block mb-1">Temperature</label>
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Temperature</label>
                 <input
                   type="number"
                   step="0.05"
@@ -403,7 +407,7 @@ export default function CharacterEditor() {
                   max="1"
                   value={char.modelConfig.temperature ?? 0.75}
                   onChange={e => setField('modelConfig.temperature', parseFloat(e.target.value))}
-                  className="w-full bg-coc-bg border border-coc-border rounded-lg px-2 py-1.5 text-sm focus:border-coc-accent outline-none"
+                  className="w-full text-sm"
                 />
               </div>
             </div>
@@ -414,7 +418,8 @@ export default function CharacterEditor() {
       <button
         onClick={saveChar}
         disabled={saving}
-        className="w-full mt-6 bg-coc-accent hover:bg-coc-accent-hover text-coc-bg font-semibold py-3 rounded-xl disabled:opacity-50 transition-all"
+        className="w-full mt-6 font-semibold py-3 rounded-xl disabled:opacity-50 transition-all"
+        style={{ backgroundColor: 'var(--teal)', color: '#0a0e1a' }}
       >
         {saving ? '저장 중...' : saved ? '저장됨!' : '캐릭터 저장'}
       </button>

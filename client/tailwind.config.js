@@ -4,24 +4,32 @@ export default {
   theme: {
     extend: {
       colors: {
-        coc: {
-          bg:      '#0f1117',
-          panel:   '#1c1f2e',
-          panel2:  '#242840',
-          border:  '#2d3148',
-          accent:  '#f59e0b',
-          'accent-hover': '#fbbf24',
-          text:    '#f0f0f0',
-          muted:   '#64748b',
-          danger:  '#ef4444',
-          san:     '#60a5fa',
-          hp:      '#22c55e',
-          mp:      '#a78bfa',
-          luck:    '#fb923c',
+        bg: {
+          base: '#0a0e1a',
+          panel: '#0f1526',
+          elevated: '#161d33',
+          border: '#1e2744',
         },
+        teal: {
+          300: '#5eead4',
+          400: '#2dd4bf',
+          500: '#14b8a6',
+          600: '#0d9488',
+        },
+        slate: {
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+        },
+        hp: '#4ade80',
+        san: '#60a5fa',
+        danger: '#f87171',
+        warn: '#fb923c',
       },
       fontFamily: {
-        sans: ['Pretendard', 'Noto Sans KR', 'sans-serif'],
+        sans: ['Inter', 'Noto Sans KR', 'system-ui', 'sans-serif'],
       },
     },
   },

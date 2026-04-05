@@ -28,18 +28,19 @@ export default function NpcSpeechModal({ onClose }: Props) {
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div
-        className="bg-coc-panel border border-coc-border rounded-2xl w-full max-w-md p-6 shadow-2xl"
+        className="rounded-2xl w-full max-w-md p-6 shadow-2xl"
+        style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="text-base font-semibold text-coc-text mb-5">NPC 대화</h2>
+        <h2 className="text-base font-semibold mb-5" style={{ color: 'var(--text-primary)' }}>NPC 대화</h2>
 
         <div className="mb-4">
-          <label className="text-coc-muted text-xs block mb-1">NPC 선택</label>
+          <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>NPC 선택</label>
           {npcs.length > 0 && (
             <select
               value={selectedNpc}
               onChange={e => setSelectedNpc(e.target.value)}
-              className="w-full bg-coc-bg border border-coc-border rounded-lg px-3 py-2 text-sm focus:border-coc-accent outline-none mb-2"
+              className="w-full text-sm mb-2"
             >
               {npcs.map(n => (
                 <option key={n.id} value={n.name}>{n.name}</option>
@@ -51,31 +52,33 @@ export default function NpcSpeechModal({ onClose }: Props) {
             value={customName}
             onChange={e => setCustomName(e.target.value)}
             placeholder="직접 입력 (NPC 이름)"
-            className="w-full bg-coc-bg border border-coc-border rounded-lg px-3 py-2 text-sm focus:border-coc-accent outline-none"
+            className="w-full text-sm"
           />
         </div>
 
         <div className="mb-5">
-          <label className="text-coc-muted text-xs block mb-1">대사</label>
+          <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>대사</label>
           <textarea
             value={text}
             onChange={e => setText(e.target.value)}
             rows={3}
             placeholder="..."
-            className="w-full bg-coc-bg border border-coc-border rounded-lg px-3 py-2 text-sm focus:border-coc-accent outline-none resize-none"
+            className="w-full text-sm resize-none"
           />
         </div>
 
         <div className="flex gap-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-coc-muted hover:text-coc-text border border-coc-border rounded-lg transition-all"
+            className="px-4 py-2 text-sm rounded-lg transition-all"
+            style={{ color: 'var(--text-muted)', border: '1px solid var(--bg-border)' }}
           >
             취소
           </button>
           <button
             onClick={sendSpeech}
-            className="flex-1 px-4 py-2 text-sm font-semibold bg-coc-accent hover:bg-coc-accent-hover text-coc-bg rounded-lg transition-all"
+            className="flex-1 px-4 py-2 text-sm font-semibold rounded-lg transition-all"
+            style={{ backgroundColor: 'var(--teal)', color: '#0a0e1a' }}
           >
             전송
           </button>

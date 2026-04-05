@@ -6,11 +6,11 @@ function formatTime(iso: string) {
 }
 
 const outcomeLabel: Record<string, { label: string; color: string }> = {
-  extreme_success: { label: '극단적 성공', color: 'text-yellow-400' },
-  hard_success: { label: '어려운 성공', color: 'text-green-400' },
-  regular_success: { label: '성공', color: 'text-coc-hp' },
-  failure: { label: '실패', color: 'text-red-400' },
-  fumble: { label: '대실패', color: 'text-coc-danger' },
+  extreme_success: { label: '극단적 성공', color: '#fbbf24' },
+  hard_success: { label: '어려운 성공', color: '#4ade80' },
+  regular_success: { label: '성공', color: '#4ade80' },
+  failure: { label: '실패', color: '#f87171' },
+  fumble: { label: '대실패', color: '#f87171' },
 }
 
 const difficultyLabel: Record<string, string> = {
@@ -21,12 +21,12 @@ const difficultyLabel: Record<string, string> = {
 
 function GmMessage({ msg }: { msg: ChatMessage }) {
   return (
-    <div className="bg-coc-panel border-l-2 border-coc-accent rounded-r-lg px-4 py-3">
+    <div className="rounded-r-lg px-4 py-3" style={{ backgroundColor: 'var(--bg-panel)', borderLeft: '2px solid var(--teal)' }}>
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-xs font-semibold text-coc-accent uppercase tracking-wide">GM</span>
-        {msg.targetLabel && <span className="text-xs text-coc-muted">→ {msg.targetLabel}</span>}
+        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--teal)' }}>GM</span>
+        {msg.targetLabel && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>→ {msg.targetLabel}</span>}
       </div>
-      <p className="text-coc-text text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+      <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--text-primary)' }}>{msg.text}</p>
     </div>
   )
 }
@@ -34,12 +34,12 @@ function GmMessage({ msg }: { msg: ChatMessage }) {
 function AiMessage({ msg }: { msg: ChatMessage }) {
   if (!msg.done) {
     return (
-      <div className="bg-coc-panel border border-coc-border rounded-lg px-4 py-3 flex items-center gap-3">
-        <span className="text-coc-muted text-sm">{msg.charName}</span>
+      <div className="rounded-lg px-4 py-3 flex items-center gap-3" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
+        <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{msg.charName}</span>
         <div className="flex gap-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-coc-muted thinking-dot"></span>
-          <span className="w-1.5 h-1.5 rounded-full bg-coc-muted thinking-dot"></span>
-          <span className="w-1.5 h-1.5 rounded-full bg-coc-muted thinking-dot"></span>
+          <span className="w-1.5 h-1.5 rounded-full thinking-dot" style={{ backgroundColor: 'var(--text-muted)' }}></span>
+          <span className="w-1.5 h-1.5 rounded-full thinking-dot" style={{ backgroundColor: 'var(--text-muted)' }}></span>
+          <span className="w-1.5 h-1.5 rounded-full thinking-dot" style={{ backgroundColor: 'var(--text-muted)' }}></span>
         </div>
       </div>
     )
@@ -57,36 +57,36 @@ function AiMessage({ msg }: { msg: ChatMessage }) {
   const hasStructure = action || attempt || inner
 
   return (
-    <div className="bg-coc-panel border border-coc-border rounded-lg overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-2 bg-coc-panel2 border-b border-coc-border">
-        <span className="w-2 h-2 rounded-full bg-coc-accent"></span>
-        <span className="text-sm font-medium text-coc-text">{msg.charName}</span>
-        <span className="text-xs text-coc-muted ml-auto">{formatTime(msg.timestamp)}</span>
+    <div className="rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
+      <div className="flex items-center gap-2 px-4 py-2" style={{ backgroundColor: 'var(--bg-elevated)', borderBottom: '1px solid var(--bg-border)' }}>
+        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--teal)' }}></span>
+        <span className="text-sm font-medium" style={{ color: 'var(--teal)' }}>{msg.charName}</span>
+        <span className="text-xs ml-auto" style={{ color: 'var(--text-muted)' }}>{formatTime(msg.timestamp)}</span>
       </div>
-      <div className="px-4 py-3 text-sm leading-relaxed text-coc-text space-y-2">
+      <div className="px-4 py-3 text-sm leading-relaxed space-y-2" style={{ color: 'var(--text-primary)' }}>
         {hasStructure ? (
           <>
             {action && (
               <div>
-                <span className="text-coc-accent text-xs font-semibold">[행동] </span>
-                <span className="text-coc-text whitespace-pre-wrap">{action}</span>
+                <span className="text-xs font-semibold" style={{ color: 'var(--teal)' }}>[행동] </span>
+                <span className="whitespace-pre-wrap">{action}</span>
               </div>
             )}
             {attempt && (
               <div>
-                <span className="text-yellow-400 text-xs font-semibold">[시도] </span>
-                <span className="text-coc-text whitespace-pre-wrap">{attempt}</span>
+                <span className="text-xs font-semibold" style={{ color: '#fbbf24' }}>[시도] </span>
+                <span className="whitespace-pre-wrap">{attempt}</span>
               </div>
             )}
             {inner && (
-              <div className="border-t border-coc-border/50 pt-2 mt-2">
-                <span className="text-coc-san text-xs font-semibold">[내면] </span>
-                <span className="text-coc-muted italic whitespace-pre-wrap">{inner}</span>
+              <div className="pt-2 mt-2" style={{ borderTop: '1px solid var(--bg-border)' }}>
+                <span className="text-xs font-semibold" style={{ color: '#60a5fa' }}>[내면] </span>
+                <span className="italic whitespace-pre-wrap" style={{ color: 'var(--text-muted)' }}>{inner}</span>
               </div>
             )}
           </>
         ) : (
-          <div className="text-coc-text whitespace-pre-wrap">{raw}</div>
+          <div className="whitespace-pre-wrap">{raw}</div>
         )}
       </div>
     </div>
@@ -95,9 +95,9 @@ function AiMessage({ msg }: { msg: ChatMessage }) {
 
 function NpcMessage({ msg }: { msg: ChatMessage }) {
   return (
-    <div className="border-l-2 border-violet-400/50 bg-violet-950/20 rounded-r-lg px-4 py-3">
-      <div className="text-xs text-violet-400 font-semibold mb-1">{msg.npcName} · NPC</div>
-      <p className="text-coc-text text-sm leading-relaxed italic">"{msg.text}"</p>
+    <div className="rounded-r-lg px-4 py-3" style={{ borderLeft: '2px solid rgba(167,139,250,0.5)', backgroundColor: 'rgba(88,28,135,0.15)' }}>
+      <div className="text-xs font-semibold mb-1" style={{ color: '#a78bfa' }}>{msg.npcName} · NPC</div>
+      <p className="text-sm leading-relaxed italic" style={{ color: 'var(--text-primary)' }}>"{msg.text}"</p>
     </div>
   )
 }
@@ -105,16 +105,16 @@ function NpcMessage({ msg }: { msg: ChatMessage }) {
 function DiceMessage({ msg }: { msg: ChatMessage }) {
   const d = msg.diceData
   if (!d) return null
-  const outcome = outcomeLabel[d.outcome] ?? { label: d.outcome, color: 'text-coc-text' }
+  const outcome = outcomeLabel[d.outcome] ?? { label: d.outcome, color: 'var(--text-primary)' }
   const diff = difficultyLabel[d.difficulty] ?? d.difficulty
 
   return (
     <div className="flex justify-center py-2">
-      <div className="bg-coc-panel border border-coc-border rounded-xl px-5 py-3 text-center">
-        <div className="text-xs text-coc-muted mb-1">{msg.charName} · {d.skill} ({diff} / 목표: {d.target})</div>
-        <div className="text-3xl font-bold text-coc-text mb-1">{d.roll}</div>
-        <div className={`text-xs font-semibold ${outcome.color}`}>{outcome.label}</div>
-        {d.resultText && <div className="text-xs text-coc-muted mt-2 border-t border-coc-border pt-2">{d.resultText}</div>}
+      <div className="rounded-xl px-5 py-3 text-center" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
+        <div className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>{msg.charName} · {d.skill} ({diff} / 목표: {d.target})</div>
+        <div className="text-3xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>{d.roll}</div>
+        <div className="text-xs font-semibold" style={{ color: outcome.color }}>{outcome.label}</div>
+        {d.resultText && <div className="text-xs mt-2 pt-2" style={{ color: 'var(--text-muted)', borderTop: '1px solid var(--bg-border)' }}>{d.resultText}</div>}
       </div>
     </div>
   )
@@ -122,7 +122,7 @@ function DiceMessage({ msg }: { msg: ChatMessage }) {
 
 function SystemMessage({ msg }: { msg: ChatMessage }) {
   return (
-    <div className="bg-coc-bg border border-coc-border/50 rounded-lg px-4 py-3 text-coc-muted text-sm italic">
+    <div className="rounded-lg px-4 py-3 text-sm italic" style={{ backgroundColor: 'var(--bg-base)', border: '1px solid var(--bg-border)', color: 'var(--text-muted)' }}>
       {msg.text}
     </div>
   )
@@ -140,7 +140,7 @@ export default function ChatFeed() {
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
       {chatMessages.length === 0 && (
         <div className="flex items-center justify-center h-full">
-          <div className="text-center text-coc-muted">
+          <div className="text-center" style={{ color: 'var(--text-muted)' }}>
             <div className="text-4xl mb-3 opacity-40">🎲</div>
             <p>GM 입력을 기다리는 중...</p>
             <p className="text-xs mt-1 opacity-60">아래 입력창에 장면을 입력하세요</p>

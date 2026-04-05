@@ -36,21 +36,38 @@ export default function TurnOrderModal({ onClose, onConfirm }: Props) {
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div
-        className="bg-coc-panel border border-coc-border rounded-2xl w-full max-w-md p-6 shadow-2xl"
+        className="rounded-2xl w-full max-w-md p-6 shadow-2xl"
+        style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="text-base font-semibold text-coc-text mb-5">행동 순서 설정</h2>
+        <h2 className="text-base font-semibold mb-5" style={{ color: 'var(--text-primary)' }}>행동 순서 설정</h2>
 
         <div className="space-y-2 mb-4">
           {order.map((id, idx) => {
             const char = charMap[id]
             if (!char) return null
             return (
-              <div key={id} className="flex items-center gap-2 bg-coc-bg rounded-lg px-3 py-2">
-                <span className="text-coc-muted text-sm w-5">{idx + 1}.</span>
-                <span className="flex-1 text-sm">{char.name}</span>
-                <button onClick={() => moveUp(idx)} className="text-coc-muted hover:text-coc-text p-1 transition-colors">↑</button>
-                <button onClick={() => moveDown(idx)} className="text-coc-muted hover:text-coc-text p-1 transition-colors">↓</button>
+              <div key={id} className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+                <span className="text-sm w-5" style={{ color: 'var(--text-muted)' }}>{idx + 1}.</span>
+                <span className="flex-1 text-sm" style={{ color: 'var(--text-primary)' }}>{char.name}</span>
+                <button
+                  onClick={() => moveUp(idx)}
+                  className="p-1 transition-colors"
+                  style={{ color: 'var(--text-muted)' }}
+                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-primary)')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+                >
+                  ↑
+                </button>
+                <button
+                  onClick={() => moveDown(idx)}
+                  className="p-1 transition-colors"
+                  style={{ color: 'var(--text-muted)' }}
+                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-primary)')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+                >
+                  ↓
+                </button>
               </div>
             )
           })}
@@ -59,12 +76,15 @@ export default function TurnOrderModal({ onClose, onConfirm }: Props) {
         {/* Characters not in order */}
         {characters.filter(c => !order.includes(c.id)).length > 0 && (
           <div className="mb-4">
-            <p className="text-coc-muted text-xs mb-2">제외된 캐릭터 (클릭해서 추가)</p>
+            <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>제외된 캐릭터 (클릭해서 추가)</p>
             {characters.filter(c => !order.includes(c.id)).map(c => (
               <button
                 key={c.id}
                 onClick={() => toggleInclude(c.id)}
-                className="text-sm text-coc-muted hover:text-coc-accent mr-2 transition-colors"
+                className="text-sm mr-2 transition-colors"
+                style={{ color: 'var(--text-muted)' }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--teal)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
               >
                 + {c.name}
               </button>
@@ -75,13 +95,15 @@ export default function TurnOrderModal({ onClose, onConfirm }: Props) {
         <div className="flex gap-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-coc-muted hover:text-coc-text border border-coc-border rounded-lg transition-all"
+            className="px-4 py-2 text-sm rounded-lg transition-all"
+            style={{ color: 'var(--text-muted)', border: '1px solid var(--bg-border)' }}
           >
             취소
           </button>
           <button
             onClick={() => { onConfirm(order); onClose() }}
-            className="flex-1 px-4 py-2 text-sm font-semibold bg-coc-accent hover:bg-coc-accent-hover text-coc-bg rounded-lg transition-all"
+            className="flex-1 px-4 py-2 text-sm font-semibold rounded-lg transition-all"
+            style={{ backgroundColor: 'var(--teal)', color: '#0a0e1a' }}
           >
             확인
           </button>

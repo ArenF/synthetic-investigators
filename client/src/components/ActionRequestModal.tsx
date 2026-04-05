@@ -51,18 +51,19 @@ export default function ActionRequestModal({ onClose }: Props) {
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div
-        className="bg-coc-panel border border-coc-border rounded-2xl w-full max-w-md p-6 shadow-2xl"
+        className="rounded-2xl w-full max-w-md p-6 shadow-2xl"
+        style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="text-base font-semibold text-coc-text mb-5">행동 요청 (기술 판정)</h2>
+        <h2 className="text-base font-semibold mb-5" style={{ color: 'var(--text-primary)' }}>행동 요청 (기술 판정)</h2>
 
         {/* Target */}
         <div className="mb-4">
-          <label className="text-coc-muted text-xs block mb-1">대상</label>
+          <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>대상</label>
           <select
             value={targetId}
             onChange={e => setTargetId(e.target.value)}
-            className="w-full bg-coc-bg border border-coc-border rounded-lg px-3 py-2 text-sm focus:border-coc-accent outline-none"
+            className="w-full text-sm"
           >
             <option value="all">전체</option>
             {characters.map(c => (
@@ -73,12 +74,12 @@ export default function ActionRequestModal({ onClose }: Props) {
 
         {/* Skill */}
         <div className="mb-4">
-          <label className="text-coc-muted text-xs block mb-1">기술</label>
+          <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>기술</label>
           <select
             value={customSkill.trim() ? '' : skill}
             onChange={e => { setSkill(e.target.value); setCustomSkill('') }}
             disabled={!!customSkill.trim()}
-            className="w-full bg-coc-bg border border-coc-border rounded-lg px-3 py-2 text-sm focus:border-coc-accent outline-none mb-2 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full text-sm mb-2 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {COC_SKILLS.map(s => (
               <option key={s} value={s}>{s}</option>
@@ -89,23 +90,23 @@ export default function ActionRequestModal({ onClose }: Props) {
             value={customSkill}
             onChange={e => setCustomSkill(e.target.value)}
             placeholder="직접 입력 (위 선택을 덮어씁니다)"
-            className="w-full bg-coc-bg border border-coc-border rounded-lg px-3 py-2 text-sm focus:border-coc-accent outline-none"
+            className="w-full text-sm"
           />
         </div>
 
         {/* Difficulty */}
         <div className="mb-4">
-          <label className="text-coc-muted text-xs block mb-1">난이도</label>
+          <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>난이도</label>
           <div className="flex gap-2">
             {(['regular', 'hard', 'extreme'] as Difficulty[]).map(d => (
               <button
                 key={d}
                 onClick={() => setDifficulty(d)}
-                className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
-                  difficulty === d
-                    ? 'bg-coc-accent text-coc-bg'
-                    : 'bg-coc-bg border border-coc-border hover:border-coc-muted text-coc-muted'
-                }`}
+                className="flex-1 py-2 rounded-lg text-xs font-medium transition-all"
+                style={difficulty === d
+                  ? { backgroundColor: 'var(--teal)', color: '#0a0e1a' }
+                  : { backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--bg-border)', color: 'var(--text-muted)' }
+                }
               >
                 {diffLabels[d]}
               </button>
@@ -116,23 +117,23 @@ export default function ActionRequestModal({ onClose }: Props) {
         {/* Success/Failure text */}
         <div className="mb-5 grid grid-cols-2 gap-2">
           <div>
-            <label className="text-coc-muted text-xs block mb-1">성공 시 설명</label>
+            <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>성공 시 설명</label>
             <input
               type="text"
               value={successText}
               onChange={e => setSuccessText(e.target.value)}
               placeholder="단서를 발견했다"
-              className="w-full bg-coc-bg border border-coc-border rounded-lg px-2 py-1.5 text-xs focus:border-coc-accent outline-none"
+              className="w-full text-xs"
             />
           </div>
           <div>
-            <label className="text-coc-muted text-xs block mb-1">실패 시 설명</label>
+            <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>실패 시 설명</label>
             <input
               type="text"
               value={failureText}
               onChange={e => setFailureText(e.target.value)}
               placeholder="아무것도 보이지 않는다"
-              className="w-full bg-coc-bg border border-coc-border rounded-lg px-2 py-1.5 text-xs focus:border-coc-accent outline-none"
+              className="w-full text-xs"
             />
           </div>
         </div>
@@ -140,13 +141,15 @@ export default function ActionRequestModal({ onClose }: Props) {
         <div className="flex gap-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-coc-muted hover:text-coc-text border border-coc-border rounded-lg transition-all"
+            className="px-4 py-2 text-sm rounded-lg transition-all"
+            style={{ color: 'var(--text-muted)', border: '1px solid var(--bg-border)' }}
           >
             취소
           </button>
           <button
             onClick={rollDice}
-            className="flex-1 px-4 py-2 text-sm font-semibold bg-coc-accent hover:bg-coc-accent-hover text-coc-bg rounded-lg transition-all"
+            className="flex-1 px-4 py-2 text-sm font-semibold rounded-lg transition-all"
+            style={{ backgroundColor: 'var(--teal)', color: '#0a0e1a' }}
           >
             주사위 굴리기
           </button>
