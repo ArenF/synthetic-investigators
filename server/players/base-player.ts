@@ -38,6 +38,11 @@ export abstract class BasePlayer {
     const rawResponse = await this.chat(this.systemPrompt, this.history)
     this.history.push({ role: 'assistant', content: rawResponse })
 
+    // Sliding window: keep only the last 30 messages (15 turns) to prevent unbounded growth
+    if (this.history.length > 30) {
+      this.history = this.history.slice(this.history.length - 30)
+    }
+
     const parsed = parseResponse(rawResponse)
     const s = ctx.sessionState
 

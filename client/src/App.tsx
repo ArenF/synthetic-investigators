@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useStore } from './store'
 import HomeScreen from './components/HomeScreen'
 import SessionSetup from './components/SessionSetup'
@@ -25,6 +25,9 @@ export default function App() {
   } = useStore()
 
   const wsRef = useRef<WebSocket | null>(null)
+  const reconnectAttempts = useRef(0)
+  const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [reconnectKey, setReconnectKey] = useState(0)
 
   function handleServerMessage(msg: any) {
     const store = useStore.getState()
@@ -138,6 +141,7 @@ export default function App() {
     wsRef.current = socket
 
     socket.onopen = () => {
+      reconnectAttempts.current = 0  // reset on successful connection
       setWsReady(true)
       setWs(socket)
 
@@ -158,6 +162,16 @@ export default function App() {
     socket.onclose = () => {
       setWsReady(false)
       setWs(null)
+
+      // Auto-reconnect with exponential backoff (only while in game screen, max 5 attempts)
+      const currentScreen = useStore.getState().screen
+      if (currentScreen === 'game' && reconnectAttempts.current < 5) {
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30_000)
+        reconnectAttempts.current++
+        reconnectTimer.current = setTimeout(() => {
+          setReconnectKey(k => k + 1)
+        }, delay)
+      }
     }
 
     socket.onmessage = (event) => {
@@ -170,9 +184,18 @@ export default function App() {
     }
 
     return () => {
+      // Clear any pending reconnect timer
+      if (reconnectTimer.current) {
+        clearTimeout(reconnectTimer.current)
+        reconnectTimer.current = null
+      }
       socket.close()
+      wsRef.current = null
+      // Sync Zustand state on cleanup
+      useStore.getState().setWs(null)
+      useStore.getState().setWsReady(false)
     }
-  }, [screen, sessionId])
+  }, [screen, sessionId, reconnectKey])
 
   return (
     <div className="h-full font-sans" style={{ backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)' }}>

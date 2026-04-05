@@ -103,6 +103,23 @@ export interface ChatMessage {
 const sessions = new Map<string, GameSession>()
 
 // ─────────────────────────────────────────
+// Helper: timeout wrapper for AI turns
+// ─────────────────────────────────────────
+
+const TURN_TIMEOUT_MS = 30_000
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`AI 턴 타임아웃 (${ms / 1000}초 초과): ${label}`)),
+      ms,
+    )
+  })
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer))
+}
+
+// ─────────────────────────────────────────
 // Helper: load character JSON
 // ─────────────────────────────────────────
 
@@ -287,7 +304,7 @@ async function runTurn(
       done: false,
     })
 
-    const record = await player.takeTurn(ctx)
+    const record = await withTimeout(player.takeTurn(ctx), TURN_TIMEOUT_MS, char.name)
 
     // Fix statsBefore/statsAfter: use the snapshot we captured before the turn
     const beforeSnap = statsBefore.get(charId)
@@ -452,7 +469,13 @@ app.post('/api/characters', (req, res) => {
 
 app.get('/api/characters/:id', (req, res) => {
   const { id } = req.params
-  const charPath = join(ROOT, 'characters', `${id}.json`)
+  // Path traversal protection — same as POST
+  const safeId = id.replace(/[^a-zA-Z0-9_-]/g, '')
+  if (safeId !== id) {
+    res.status(400).json({ error: 'Invalid character id' })
+    return
+  }
+  const charPath = join(ROOT, 'characters', `${safeId}.json`)
   if (existsSync(charPath)) {
     try {
       res.json(JSON.parse(readFileSync(charPath, 'utf-8')))
@@ -647,7 +670,10 @@ wss.on('connection', (ws, req) => {
         const { charId, skill, difficulty } = msg
         const sess = currentSession
         const char = sess.characters.get(charId)
-        if (!char) break
+        if (!char) {
+          ws.send(JSON.stringify({ type: 'error', message: `캐릭터를 찾을 수 없습니다: ${charId}` }))
+          break
+        }
 
         const baseVal = char.skills[skill] ?? 0
         let target = baseVal
