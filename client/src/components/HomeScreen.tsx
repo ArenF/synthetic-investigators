@@ -40,7 +40,6 @@ export default function HomeScreen() {
           onMouseEnter={e => (e.currentTarget.style.borderColor = '#14b8a6')}
           onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--bg-border)')}
         >
-          <div className="text-3xl mb-3" style={{ color: 'var(--teal)' }}>▶</div>
           <div className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>새 세션 시작</div>
           <div className="text-xs" style={{ color: 'var(--text-muted)' }}>캐릭터를 선택하고 새로운 실험 세션을 시작합니다</div>
         </button>
@@ -53,7 +52,6 @@ export default function HomeScreen() {
           onMouseEnter={e => (e.currentTarget.style.borderColor = '#14b8a6')}
           onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--bg-border)')}
         >
-          <div className="text-3xl mb-3" style={{ color: 'var(--teal)' }}>✎</div>
           <div className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>캐릭터 편집</div>
           <div className="text-xs" style={{ color: 'var(--text-muted)' }}>CoC 7판 캐릭터 시트를 생성하거나 편집합니다</div>
         </button>
@@ -66,7 +64,6 @@ export default function HomeScreen() {
           onMouseEnter={e => (e.currentTarget.style.borderColor = '#14b8a6')}
           onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--bg-border)')}
         >
-          <div className="text-3xl mb-3" style={{ color: 'var(--teal)' }}>≡</div>
           <div className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>세션 로그</div>
           <div className="text-xs" style={{ color: 'var(--text-muted)' }}>과거 세션의 전체 기록을 열람합니다</div>
         </button>
