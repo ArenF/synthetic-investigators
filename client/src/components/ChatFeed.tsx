@@ -140,10 +140,9 @@ export default function ChatFeed() {
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
       {chatMessages.length === 0 && (
         <div className="flex items-center justify-center h-full">
-          <div className="text-center" style={{ color: 'var(--text-muted)' }}>
-            <div className="text-4xl mb-3 opacity-40">🎲</div>
-            <p>GM 입력을 기다리는 중...</p>
-            <p className="text-xs mt-1 opacity-60">아래 입력창에 장면을 입력하세요</p>
+          <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+            <p style={{ fontSize: '0.875rem' }}>GM 입력을 기다리는 중...</p>
+            <p style={{ fontSize: '0.75rem', marginTop: '4px', opacity: 0.6 }}>아래 입력창에 장면을 입력하세요</p>
           </div>
         </div>
       )}

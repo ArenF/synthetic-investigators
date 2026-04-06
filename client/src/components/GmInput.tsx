@@ -4,6 +4,21 @@ import ActionRequestModal from './ActionRequestModal'
 import NpcSpeechModal from './NpcSpeechModal'
 import TurnOrderModal from './TurnOrderModal'
 
+const CHIP_BASE: React.CSSProperties = {
+  display: 'inline-flex', alignItems: 'center',
+  padding: '2px 10px', borderRadius: '999px', fontSize: '0.7rem',
+  border: '1px solid var(--bg-border)', cursor: 'pointer',
+  backgroundColor: 'var(--bg-elevated)', color: 'var(--text-muted)',
+  transition: 'border-color 0.15s, color 0.15s', whiteSpace: 'nowrap',
+}
+
+const CHIP_ACTIVE: React.CSSProperties = {
+  ...CHIP_BASE,
+  backgroundColor: 'rgba(20,184,166,0.12)',
+  borderColor: 'var(--teal)',
+  color: 'var(--teal)',
+}
+
 export default function GmInput() {
   const { ws, wsReady, isProcessingTurn, characters, turnOrder, setTurnOrder } = useStore()
   const [text, setText] = useState('')
@@ -11,12 +26,23 @@ export default function GmInput() {
   const [showActionModal, setShowActionModal] = useState(false)
   const [showNpcModal, setShowNpcModal] = useState(false)
   const [showOrderModal, setShowOrderModal] = useState(false)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Cycle through: all → char[0] → char[1] → ... → all
+  function cycleTarget() {
+    if (targetMode === 'all') {
+      if (characters.length > 0) setTargetMode(characters[0].id)
+    } else {
+      const idx = characters.findIndex(c => c.id === targetMode)
+      if (idx === -1 || idx >= characters.length - 1) setTargetMode('all')
+      else setTargetMode(characters[idx + 1].id)
+    }
+  }
 
   function getTargetLabel(): string {
-    if (targetMode === 'all') return '[전체 상황]'
+    if (targetMode === 'all') return 'all'
     const char = characters.find(c => c.id === targetMode)
-    return char ? `[${char.name}의 상황]` : '[전체 상황]'
+    return char ? char.name : 'all'
   }
 
   function getTargetIds(): string[] {
@@ -24,21 +50,27 @@ export default function GmInput() {
     return [targetMode]
   }
 
+  function getGmTargetLabel(): string {
+    if (targetMode === 'all') return '[전체 상황]'
+    const char = characters.find(c => c.id === targetMode)
+    return char ? `[${char.name}의 상황]` : '[전체 상황]'
+  }
+
   function sendTurn() {
     if (!ws || ws.readyState !== WebSocket.OPEN) return
     if (!text.trim() || isProcessingTurn) return
-
     ws.send(JSON.stringify({
       type: 'send_turn',
       gmText: text.trim(),
-      targetLabel: getTargetLabel(),
+      targetLabel: getGmTargetLabel(),
       targetIds: getTargetIds(),
     }))
     setText('')
+    inputRef.current?.focus()
   }
 
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       sendTurn()
     }
@@ -51,82 +83,124 @@ export default function GmInput() {
     }
   }
 
+  const canSend = wsReady && !!text.trim() && !isProcessingTurn
+
   return (
     <>
-      <div className="shrink-0 px-4 py-3 space-y-2" style={{ backgroundColor: 'var(--bg-panel)', borderTop: '1px solid var(--bg-border)' }}>
-        {/* Row 1: Target selector + connection */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>대상:</span>
-          <select
-            value={targetMode}
-            onChange={e => setTargetMode(e.target.value)}
-            className="text-xs"
+      <div style={{
+        flexShrink: 0,
+        backgroundColor: 'var(--bg-panel)',
+        borderTop: '1px solid var(--bg-border)',
+        padding: '0.625rem 2rem 0.75rem',
+      }}>
+        <div style={{ maxWidth: '820px', margin: '0 auto' }}>
+        {/* ── Tag chips row ── */}
+        <div style={{ display: 'flex', gap: '0.375rem', marginBottom: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* Target chip */}
+          <button
+            onClick={cycleTarget}
+            style={targetMode === 'all' ? CHIP_ACTIVE : { ...CHIP_BASE, borderColor: '#fb923c', color: '#fb923c', backgroundColor: 'rgba(251,191,36,0.08)' }}
+            title="클릭하여 대상 변경"
           >
-            <option value="all">전체</option>
-            {characters.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-          {targetMode !== 'all' && (
-            <span className="text-xs opacity-60" style={{ color: 'var(--text-muted)' }}>{getTargetLabel()}</span>
+            target:{getTargetLabel()}
+          </button>
+
+          {/* Action chips */}
+          <button
+            onClick={() => setShowActionModal(true)}
+            disabled={isProcessingTurn}
+            style={{ ...CHIP_BASE, opacity: isProcessingTurn ? 0.4 : 1 }}
+            onMouseEnter={e => { if (!isProcessingTurn) { e.currentTarget.style.borderColor = 'var(--teal)'; e.currentTarget.style.color = 'var(--teal)' } }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--bg-border)'; e.currentTarget.style.color = 'var(--text-muted)' }}
+          >
+            판정
+          </button>
+          <button
+            onClick={() => setShowNpcModal(true)}
+            disabled={isProcessingTurn}
+            style={{ ...CHIP_BASE, opacity: isProcessingTurn ? 0.4 : 1 }}
+            onMouseEnter={e => { if (!isProcessingTurn) { e.currentTarget.style.borderColor = '#a78bfa'; e.currentTarget.style.color = '#a78bfa' } }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--bg-border)'; e.currentTarget.style.color = 'var(--text-muted)' }}
+          >
+            NPC
+          </button>
+          <button
+            onClick={() => setShowOrderModal(true)}
+            disabled={isProcessingTurn}
+            style={{ ...CHIP_BASE, opacity: isProcessingTurn ? 0.4 : 1 }}
+            onMouseEnter={e => { if (!isProcessingTurn) { e.currentTarget.style.borderColor = 'var(--text-muted)'; e.currentTarget.style.color = 'var(--text-primary)' } }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--bg-border)'; e.currentTarget.style.color = 'var(--text-muted)' }}
+          >
+            순서
+          </button>
+
+          {/* Status indicator */}
+          {isProcessingTurn && (
+            <span style={{ fontSize: '0.7rem', color: '#fbbf24', marginLeft: 'auto' }}>
+              ● AI 응답 중...
+            </span>
           )}
-          <div className="flex-1" />
           {!wsReady && (
-            <span className="text-xs" style={{ color: '#fb923c' }}>연결 중...</span>
+            <span style={{ fontSize: '0.7rem', color: '#fb923c', marginLeft: 'auto' }}>
+              ● 연결 중...
+            </span>
           )}
         </div>
 
-        {/* Row 2: Textarea + action buttons */}
-        <div className="flex gap-2">
-          <textarea
-            ref={textareaRef}
+        {/* ── Input row ── */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '0.625rem',
+          backgroundColor: 'rgba(255,255,255,0.05)',
+          border: '1px solid var(--bg-border)',
+          borderRadius: '0.75rem',
+          padding: '0.5rem 0.75rem',
+          transition: 'border-color 0.15s',
+        }}
+          onFocus={() => {}}
+          onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(20,184,166,0.4)')}
+          onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--bg-border)')}
+        >
+          {/* Send icon button */}
+          <button
+            onClick={sendTurn}
+            disabled={!canSend}
+            title="전송 (Enter)"
+            style={{
+              background: 'none', border: 'none', cursor: canSend ? 'pointer' : 'not-allowed',
+              color: canSend ? 'var(--teal)' : 'var(--text-muted)',
+              opacity: canSend ? 1 : 0.4,
+              padding: '0 4px', flexShrink: 0,
+              transition: 'color 0.15s, opacity 0.15s',
+              display: 'flex', alignItems: 'center',
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </button>
+
+          {/* Text input */}
+          <input
+            ref={inputRef}
+            type="text"
             value={text}
             onChange={e => setText(e.target.value)}
             onKeyDown={handleKeyDown}
-            rows={3}
-            disabled={isProcessingTurn}
-            placeholder={isProcessingTurn ? 'AI 응답 대기 중...' : 'GM 장면 설명 입력... (Ctrl+Enter로 전송)'}
-            className="flex-1 text-sm resize-none disabled:opacity-50"
-            style={{ minHeight: '80px' }}
+            disabled={isProcessingTurn || !wsReady}
+            placeholder={
+              isProcessingTurn ? 'AI 응답 대기 중...'
+              : !wsReady ? '서버 연결 대기 중...'
+              : '장면을 입력하세요... (Enter로 전송)'
+            }
+            style={{
+              flex: 1, background: 'none', border: 'none', outline: 'none',
+              fontSize: '0.875rem', color: 'var(--text-primary)',
+              opacity: (isProcessingTurn || !wsReady) ? 0.5 : 1,
+            }}
           />
-          <div className="flex flex-col gap-1">
-            <button
-              onClick={() => setShowActionModal(true)}
-              disabled={isProcessingTurn}
-              title="행동 요청 (기술 판정)"
-              className="px-3 py-1.5 text-xs rounded-lg transition-all disabled:opacity-40"
-              style={{ border: '1px solid var(--bg-border)', color: 'var(--teal)', backgroundColor: 'var(--bg-elevated)' }}
-            >
-              판정
-            </button>
-            <button
-              onClick={() => setShowNpcModal(true)}
-              disabled={isProcessingTurn}
-              title="NPC 대화"
-              className="px-3 py-1.5 text-xs rounded-lg transition-all disabled:opacity-40"
-              style={{ border: '1px solid var(--bg-border)', color: '#a78bfa', backgroundColor: 'var(--bg-elevated)' }}
-            >
-              NPC
-            </button>
-            <button
-              onClick={() => setShowOrderModal(true)}
-              disabled={isProcessingTurn}
-              title="행동 순서 설정"
-              className="px-3 py-1.5 text-xs rounded-lg transition-all disabled:opacity-40"
-              style={{ border: '1px solid var(--bg-border)', color: 'var(--text-muted)', backgroundColor: 'var(--bg-elevated)' }}
-            >
-              순서
-            </button>
-            <button
-              onClick={sendTurn}
-              disabled={!wsReady || !text.trim() || isProcessingTurn}
-              className="flex-1 px-4 py-2 text-sm font-semibold rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-              style={{ backgroundColor: 'var(--teal)', color: '#0a0e1a' }}
-            >
-              전송
-            </button>
-          </div>
         </div>
+        </div>{/* end maxWidth wrapper */}
       </div>
 
       {showActionModal && <ActionRequestModal onClose={() => setShowActionModal(false)} />}

@@ -29,6 +29,10 @@ const ROOT = join(__dirname, '..')
 export interface CharacterState {
   id: string
   name: string
+  age: number
+  occupation: string
+  residence: string
+  equipment: string[]   // equipment.items 리스트
   hp: number
   hpMax: number
   san: number
@@ -159,6 +163,10 @@ function getCharacterStates(session: GameSession): CharacterState[] {
     states.push({
       id,
       name: char.name,
+      age: char.age,
+      occupation: char.occupation,
+      residence: char.residence,
+      equipment: char.equipment?.items ?? [],
       hp: s.hp,
       hpMax: char.derived.hp.max,
       san: s.san,

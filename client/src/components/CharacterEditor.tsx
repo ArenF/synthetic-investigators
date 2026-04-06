@@ -170,13 +170,12 @@ export default function CharacterEditor() {
       {savedList.length > 0 && (
         <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
           <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>기존 캐릭터 불러오기</p>
-          <div className="flex flex-wrap gap-2">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
             {savedList.map(id => (
               <button
                 key={id}
                 onClick={() => loadChar(id)}
-                className="rounded-lg px-3 py-1 text-sm transition-all"
-                style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--bg-border)' }}
+                style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--bg-border)', borderRadius: '0.5rem', padding: '0.25rem 0.75rem', fontSize: '0.875rem', cursor: 'pointer', color: 'var(--text-base)' }}
                 onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--teal)')}
                 onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--bg-border)')}
               >

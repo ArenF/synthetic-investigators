@@ -7,6 +7,10 @@ export type Screen = 'home' | 'session_setup' | 'game' | 'character_editor' | 'l
 export interface CharacterState {
   id: string
   name: string
+  age: number
+  occupation: string
+  residence: string
+  equipment: string[]
   hp: number
   hpMax: number
   san: number
