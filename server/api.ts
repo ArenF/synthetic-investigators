@@ -565,7 +565,13 @@ wss.on('connection', (ws, req) => {
         const sid: string = msg.sessionId
 
         // Always create a fresh session
-        const sess = createSession(sid, setup)
+        let sess: GameSession
+        try {
+          sess = createSession(sid, setup)
+        } catch (err: any) {
+          ws.send(JSON.stringify({ type: 'error', message: `세션 생성 실패: ${err.message}` }))
+          break
+        }
         if (currentSession) currentSession.clients.delete(ws)
         currentSession = sess
         sess.clients.add(ws)

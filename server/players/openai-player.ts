@@ -7,9 +7,9 @@ export class OpenAIPlayer extends BasePlayer {
 
   constructor(character: CoCCharacter) {
     super(character)
-    this.client = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    })
+    const apiKey = process.env.OPENAI_API_KEY
+    if (!apiKey) throw new Error('OPENAI_API_KEY가 설정되지 않았습니다. .env 파일을 확인하세요.')
+    this.client = new OpenAI({ apiKey })
   }
 
   protected async chat(systemPrompt: string, messages: Message[]): Promise<string> {
