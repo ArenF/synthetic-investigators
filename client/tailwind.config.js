@@ -1,14 +1,14 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ['./index.html', './src/**/*.{ts,tsx}'],
+  content: ['./index.html', './src/**/*.{ts,svelte}'],
   theme: {
     extend: {
       colors: {
         bg: {
-          base: '#0a0e1a',
-          panel: '#0f1526',
+          base:     '#0a0e1a',
+          panel:    '#0f1526',
           elevated: '#161d33',
-          border: '#1e2744',
+          border:   '#1e2744',
         },
         teal: {
           300: '#5eead4',
@@ -23,10 +23,10 @@ export default {
           500: '#64748b',
           600: '#475569',
         },
-        hp: '#4ade80',
-        san: '#60a5fa',
+        hp:     '#4ade80',
+        san:    '#60a5fa',
         danger: '#f87171',
-        warn: '#fb923c',
+        warn:   '#fb923c',
       },
       fontFamily: {
         sans: ['Inter', 'Noto Sans KR', 'system-ui', 'sans-serif'],

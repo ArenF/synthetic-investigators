@@ -3,14 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --bg-base: #0a0e1a;
-  --bg-panel: #0f1526;
+  --bg-base:     #0a0e1a;
+  --bg-panel:    #0f1526;
   --bg-elevated: #161d33;
-  --bg-border: #1e2744;
-  --teal: #14b8a6;
-  --teal-light: #2dd4bf;
+  --bg-border:   #1e2744;
+  --teal:        #14b8a6;
+  --teal-light:  #2dd4bf;
   --text-primary: #e2e8f0;
-  --text-muted: #94a3b8;
+  --text-muted:   #94a3b8;
 }
 
 html, body {
@@ -46,16 +46,4 @@ input, textarea, select {
 }
 input:focus, textarea:focus, select:focus {
   border-color: var(--teal) !important;
-}
-
-@layer utilities {
-  .thinking-dot {
-    animation: blink 1.4s infinite both;
-  }
-  .thinking-dot:nth-child(2) { animation-delay: 0.2s; }
-  .thinking-dot:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes blink {
-    0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
-    40% { opacity: 1; transform: scale(1); }
-  }
 }
