@@ -26,11 +26,14 @@ function StatControl({ charId, stat }: StatControlProps) {
   )
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+function Row({ label, children, trailing }: { label: string; children: React.ReactNode; trailing?: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
       <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', flexShrink: 0 }}>{label}</span>
-      <span style={{ fontSize: '0.7rem', color: 'var(--text-primary)', textAlign: 'right', marginLeft: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '110px' }}>{children}</span>
+      <span style={{ fontSize: '0.7rem', color: 'var(--text-primary)', textAlign: 'right', marginLeft: '4px', display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100px' }}>{children}</span>
+        {trailing}
+      </span>
     </div>
   )
 }
@@ -72,28 +75,18 @@ function CharCard({ char }: { char: CharacterState }) {
       <Row label="직업">{char.occupation}</Row>
       <Row label="거주지">{char.residence}</Row>
 
-      {/* HP */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
-        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>HP</span>
-        <span style={{ fontSize: '0.7rem', color: '#4ade80', display: 'flex', alignItems: 'center' }}>
-          {char.hp}/{char.hpMax}
-          <StatControl charId={char.id} stat="hp" />
-        </span>
-      </div>
+      {/* HP / MP / SAN / LUCK */}
+      <Row label="HP" trailing={<StatControl charId={char.id} stat="hp" />}>
+        <span style={{ color: '#4ade80' }}>{char.hp}/{char.hpMax}</span>
+      </Row>
       <Bar value={char.hp} max={char.hpMax} color="#4ade80" />
 
-      {/* MP */}
       <Row label="MP"><span style={{ color: '#a78bfa' }}>{char.mp}/{char.mpMax}</span></Row>
       <Bar value={char.mp} max={char.mpMax} color="#a78bfa" />
 
-      {/* SAN */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
-        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>SAN</span>
-        <span style={{ fontSize: '0.7rem', color: '#60a5fa', display: 'flex', alignItems: 'center' }}>
-          {char.san}/{char.sanMax}
-          <StatControl charId={char.id} stat="san" />
-        </span>
-      </div>
+      <Row label="SAN" trailing={<StatControl charId={char.id} stat="san" />}>
+        <span style={{ color: '#60a5fa' }}>{char.san}/{char.sanMax}</span>
+      </Row>
       <Bar value={char.san} max={char.sanMax} color="#60a5fa" />
 
       <Row label="LUCK"><span style={{ color: '#fb923c' }}>{char.luck}</span></Row>

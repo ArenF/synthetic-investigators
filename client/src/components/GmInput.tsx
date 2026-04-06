@@ -19,6 +19,29 @@ const CHIP_ACTIVE: React.CSSProperties = {
   color: 'var(--teal)',
 }
 
+const CHIP_ORANGE: React.CSSProperties = {
+  ...CHIP_BASE,
+  backgroundColor: 'rgba(251,191,36,0.08)',
+  borderColor: '#fb923c',
+  color: '#fb923c',
+}
+
+/** Returns onMouseEnter/onMouseLeave handlers that highlight a chip with the given color. */
+function chipHover(hoverColor: string, disabled: boolean) {
+  return {
+    onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (!disabled) {
+        e.currentTarget.style.borderColor = hoverColor
+        e.currentTarget.style.color = hoverColor
+      }
+    },
+    onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.currentTarget.style.borderColor = 'var(--bg-border)'
+      e.currentTarget.style.color = 'var(--text-muted)'
+    },
+  }
+}
+
 export default function GmInput() {
   const { ws, wsReady, isProcessingTurn, characters, turnOrder, setTurnOrder } = useStore()
   const [text, setText] = useState('')
@@ -99,7 +122,7 @@ export default function GmInput() {
           {/* Target chip */}
           <button
             onClick={cycleTarget}
-            style={targetMode === 'all' ? CHIP_ACTIVE : { ...CHIP_BASE, borderColor: '#fb923c', color: '#fb923c', backgroundColor: 'rgba(251,191,36,0.08)' }}
+            style={targetMode === 'all' ? CHIP_ACTIVE : CHIP_ORANGE}
             title="클릭하여 대상 변경"
           >
             target:{getTargetLabel()}
@@ -110,8 +133,7 @@ export default function GmInput() {
             onClick={() => setShowActionModal(true)}
             disabled={isProcessingTurn}
             style={{ ...CHIP_BASE, opacity: isProcessingTurn ? 0.4 : 1 }}
-            onMouseEnter={e => { if (!isProcessingTurn) { e.currentTarget.style.borderColor = 'var(--teal)'; e.currentTarget.style.color = 'var(--teal)' } }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--bg-border)'; e.currentTarget.style.color = 'var(--text-muted)' }}
+            {...chipHover('var(--teal)', isProcessingTurn)}
           >
             판정
           </button>
@@ -119,8 +141,7 @@ export default function GmInput() {
             onClick={() => setShowNpcModal(true)}
             disabled={isProcessingTurn}
             style={{ ...CHIP_BASE, opacity: isProcessingTurn ? 0.4 : 1 }}
-            onMouseEnter={e => { if (!isProcessingTurn) { e.currentTarget.style.borderColor = '#a78bfa'; e.currentTarget.style.color = '#a78bfa' } }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--bg-border)'; e.currentTarget.style.color = 'var(--text-muted)' }}
+            {...chipHover('#a78bfa', isProcessingTurn)}
           >
             NPC
           </button>
@@ -128,8 +149,7 @@ export default function GmInput() {
             onClick={() => setShowOrderModal(true)}
             disabled={isProcessingTurn}
             style={{ ...CHIP_BASE, opacity: isProcessingTurn ? 0.4 : 1 }}
-            onMouseEnter={e => { if (!isProcessingTurn) { e.currentTarget.style.borderColor = 'var(--text-muted)'; e.currentTarget.style.color = 'var(--text-primary)' } }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--bg-border)'; e.currentTarget.style.color = 'var(--text-muted)' }}
+            {...chipHover('var(--text-primary)', isProcessingTurn)}
           >
             순서
           </button>

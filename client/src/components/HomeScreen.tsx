@@ -31,7 +31,7 @@ export default function HomeScreen() {
       )}
 
       {/* Cards grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', width: '100%', maxWidth: '820px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', width: '100%', maxWidth: '820px' }}>
         {/* Card 1: 새 세션 시작 */}
         <button
           onClick={() => setScreen('session_setup')}
@@ -56,7 +56,19 @@ export default function HomeScreen() {
           <div className="text-xs" style={{ color: 'var(--text-muted)' }}>CoC 7판 캐릭터 시트를 생성하거나 편집합니다</div>
         </button>
 
-        {/* Card 3: 세션 로그 */}
+        {/* Card 3: 시나리오 관리 */}
+        <button
+          onClick={() => setScreen('scenario_list')}
+          className="group p-6 rounded-xl text-left transition-all duration-200"
+          style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}
+          onMouseEnter={e => (e.currentTarget.style.borderColor = '#14b8a6')}
+          onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--bg-border)')}
+        >
+          <div className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>시나리오 관리</div>
+          <div className="text-xs" style={{ color: 'var(--text-muted)' }}>재사용 가능한 시나리오 파일을 만들고 관리합니다</div>
+        </button>
+
+        {/* Card 4: 세션 로그 */}
         <button
           onClick={() => setScreen('log_viewer')}
           className="group p-6 rounded-xl text-left transition-all duration-200"

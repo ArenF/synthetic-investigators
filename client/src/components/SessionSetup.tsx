@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useStore, type NPC, type SessionSetupData, type CharacterSummary } from '../store'
+import { useStore, type NPC, type SessionSetupData, type CharacterSummary, type ScenarioTemplate } from '../store'
 
 export default function SessionSetup() {
   const { setScreen, setSession, setPendingSetup, setTurnOrder } = useStore()
@@ -19,6 +19,25 @@ export default function SessionSetup() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [charError, setCharError] = useState<string | null>(null)
+
+  // Scenario load panel
+  const [templates, setTemplates] = useState<ScenarioTemplate[]>([])
+  const [showScenarioPanel, setShowScenarioPanel] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/scenario-templates')
+      .then(r => r.ok ? r.json() : [])
+      .then(setTemplates)
+      .catch(() => {})
+  }, [])
+
+  function loadScenario(t: ScenarioTemplate) {
+    if (!sessionName) setSessionName(t.title)
+    setNpcs(t.npcs)
+    setItems(t.items)
+    setOpeningBriefing(t.openingBriefing)
+    setShowScenarioPanel(false)
+  }
 
   useEffect(() => {
     fetch('/api/characters')
@@ -124,6 +143,39 @@ export default function SessionSetup() {
         </button>
         <h1 className="text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>새 세션 설정</h1>
       </div>
+
+      {/* Scenario Load Panel */}
+      {templates.length > 0 && (
+        <section className="rounded-xl p-4 mb-4" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h2 className="border-l-2 pl-3 font-semibold text-sm uppercase tracking-wide" style={{ borderColor: 'var(--teal)', color: 'var(--text-muted)', margin: 0 }}>시나리오 불러오기</h2>
+            <button
+              onClick={() => setShowScenarioPanel(v => !v)}
+              style={{ fontSize: '0.75rem', color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer' }}
+            >
+              {showScenarioPanel ? '접기' : `${templates.length}개 저장됨`}
+            </button>
+          </div>
+          {showScenarioPanel && (
+            <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {templates.map(t => (
+                <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '0.5rem', padding: '0.625rem 0.75rem', backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--bg-border)' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</div>
+                    {t.description && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{t.description}</div>}
+                  </div>
+                  <button
+                    onClick={() => loadScenario(t)}
+                    style={{ marginLeft: '0.75rem', flexShrink: 0, fontSize: '0.75rem', padding: '0.25rem 0.625rem', borderRadius: '0.375rem', border: '1px solid rgba(20,184,166,0.4)', backgroundColor: 'rgba(20,184,166,0.1)', color: 'var(--teal)', cursor: 'pointer' }}
+                  >
+                    불러오기
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Session Name */}
       <section className="rounded-xl p-4 mb-4" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>

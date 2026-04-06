@@ -5,6 +5,8 @@ import SessionSetup from './components/SessionSetup'
 import GameScreen from './components/GameScreen'
 import CharacterEditor from './components/CharacterEditor'
 import LogViewer from './components/LogViewer'
+import ScenarioList from './components/ScenarioList'
+import ScenarioEditor from './components/ScenarioEditor'
 
 const WS_BASE = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}:3001`
 
@@ -204,6 +206,8 @@ export default function App() {
       {screen === 'game' && <GameScreen />}
       {screen === 'character_editor' && <CharacterEditor />}
       {screen === 'log_viewer' && <LogViewer />}
+      {screen === 'scenario_list' && <ScenarioList />}
+      {screen === 'scenario_editor' && <ScenarioEditor />}
     </div>
   )
 }

@@ -2,7 +2,7 @@ import { create } from 'zustand'
 
 // ─── Types ───
 
-export type Screen = 'home' | 'session_setup' | 'game' | 'character_editor' | 'log_viewer'
+export type Screen = 'home' | 'session_setup' | 'game' | 'character_editor' | 'log_viewer' | 'scenario_list' | 'scenario_editor'
 
 export interface CharacterState {
   id: string
@@ -78,6 +78,17 @@ export interface SessionSetupData {
   openingBriefing: string
 }
 
+export interface ScenarioTemplate {
+  id: string
+  title: string
+  description: string
+  npcs: NPC[]
+  items: { name: string; location: string; description: string }[]
+  openingBriefing: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface AppState {
   // Navigation
   screen: Screen
@@ -102,6 +113,9 @@ export interface AppState {
   // Pending setup (used when transitioning to game screen)
   pendingSetup: SessionSetupData | null
 
+  // Scenario editor state
+  editingScenarioId: string | null
+
   // Actions
   setScreen: (screen: Screen) => void
   setSession: (id: string, name: string) => void
@@ -117,6 +131,7 @@ export interface AppState {
   setSavedSessions: (sessions: SessionInfo[]) => void
   setAvailableCharacters: (chars: CharacterSummary[]) => void
   setPendingSetup: (setup: SessionSetupData | null) => void
+  setEditingScenarioId: (id: string | null) => void
   reset: () => void
 }
 
@@ -134,6 +149,7 @@ export const useStore = create<AppState>((set) => ({
   savedSessions: [],
   availableCharacters: [],
   pendingSetup: null,
+  editingScenarioId: null,
 
   setScreen: (screen) => set({ screen }),
   setSession: (id, name) => set({ sessionId: id, sessionName: name }),
@@ -151,6 +167,7 @@ export const useStore = create<AppState>((set) => ({
   setSavedSessions: (sessions) => set({ savedSessions: sessions }),
   setAvailableCharacters: (chars) => set({ availableCharacters: chars }),
   setPendingSetup: (setup) => set({ pendingSetup: setup }),
+  setEditingScenarioId: (id) => set({ editingScenarioId: id }),
   reset: () => set((state) => {
     state.ws?.close()
     return {
