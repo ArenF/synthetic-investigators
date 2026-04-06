@@ -6,22 +6,35 @@
   "occupation": "프리랜서 기자",
   "birthplace": "인천",
   "residence": "서울 마포구 (홍대 근처 고시원)",
-
   "characteristics": {
-    "STR": 50, "CON": 55, "SIZ": 50, "DEX": 65,
-    "APP": 70, "INT": 70, "POW": 55, "EDU": 70
+    "STR": 50,
+    "CON": 55,
+    "SIZ": 50,
+    "DEX": 65,
+    "APP": 70,
+    "INT": 70,
+    "POW": 55,
+    "EDU": 70
   },
-
   "derived": {
-    "hp":   { "current": 10, "max": 10 },
-    "mp":   { "current": 11, "max": 11 },
-    "san":  { "current": 55, "starting": 55, "max": 99 },
+    "hp": {
+      "current": 10,
+      "max": 10
+    },
+    "mp": {
+      "current": 11,
+      "max": 11
+    },
+    "san": {
+      "current": 55,
+      "starting": 55,
+      "max": 99
+    },
     "luck": 65,
     "build": 0,
     "moveRate": 8,
     "damageBonus": "0"
   },
-
   "skills": {
     "말돌리기": 65,
     "사진술": 60,
@@ -35,7 +48,6 @@
     "회피": 32,
     "격투": 25
   },
-
   "backstory": {
     "personalDescription": "활기차고 빠른 눈동자. 항상 카메라나 녹음기를 들고 다닌다. 약간 헝클어진 머리와 커피 얼룩 진 재킷. 좁은 공간에서도 존재감이 크다.",
     "ideology": "세상은 알 권리가 있다. 진실을 감추는 자들이야말로 진짜 악이다.",
@@ -62,7 +74,6 @@
     "arcaneTomesSpells": "",
     "encountersWithStrangeEntities": "취재 중 이상한 제보를 받은 적 있다. 처음엔 무시했는데..."
   },
-
   "equipment": {
     "items": [
       "카메라 (필름 3롤 포함)",
@@ -86,10 +97,9 @@
     "assets": "없음 (빚 있음)",
     "spendingLevel": "궁핍"
   },
-
   "modelConfig": {
-    "provider": "openai",
-    "model": "gpt-4o",
+    "provider": "ollama",
+    "model": "llama3.2",
     "temperature": 0.8
   }
 }

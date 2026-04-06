@@ -5,3 +5,7 @@ client/dist/
 logs/*.json
 *.local
 .DS_Store
+
+characters/*.json
+scenarios/*.json
+.claude/
