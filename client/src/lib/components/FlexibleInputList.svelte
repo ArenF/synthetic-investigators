@@ -65,12 +65,13 @@ input[type="number"] {
 	justify-content: center;
 	align-items: center;
     padding: 5px;
+    gap: 5px;
 }
 
 .input_container {
     display: flex;
 	flex-direction: row;
-    margin: 10px;
+    margin: 0px 10px;
     padding: 5px;
     gap: 10px;
 }

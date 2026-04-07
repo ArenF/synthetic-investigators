@@ -38,6 +38,9 @@
         gap: 15px;
         width: 100%;
         padding: 5px 15px;
+        background-color: #262e4c;
+        border-radius: 10px;
+        margin: 5px;
     }
 
     .radio_container {

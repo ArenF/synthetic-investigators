@@ -33,6 +33,5 @@
 
     input {
         padding: 5px 5px;
-        
     }
 </style>
