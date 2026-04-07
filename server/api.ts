@@ -7,7 +7,7 @@ import express from 'express'
 import cors from 'cors'
 import { WebSocketServer, WebSocket } from 'ws'
 import { createServer } from 'http'
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'fs'
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import type { CoCCharacter, TurnContext } from './characters/types.js'
@@ -493,6 +493,81 @@ app.get('/api/characters/:id', (req, res) => {
     return
   }
   res.status(404).json({ error: 'Character not found' })
+})
+
+// ─── Scenario Templates ───
+
+const TEMPLATES_DIR = join(ROOT, 'scenario-templates')
+
+function safeTemplateId(id: string): string | null {
+  const safe = id.replace(/[^a-zA-Z0-9_-]/g, '')
+  return safe === id && safe.length > 0 ? safe : null
+}
+
+app.get('/api/scenario-templates', (_req, res) => {
+  if (!existsSync(TEMPLATES_DIR)) { res.json([]); return }
+  const files = readdirSync(TEMPLATES_DIR).filter(f => f.endsWith('.json'))
+  const templates = files.map(f => {
+    try {
+      return JSON.parse(readFileSync(join(TEMPLATES_DIR, f), 'utf-8'))
+    } catch { return null }
+  }).filter(Boolean)
+  res.json(templates)
+})
+
+app.get('/api/scenario-templates/:id', (req, res) => {
+  const safe = safeTemplateId(req.params.id)
+  if (!safe) { res.status(400).json({ error: 'Invalid template id' }); return }
+  const path = join(TEMPLATES_DIR, `${safe}.json`)
+  if (!existsSync(path)) { res.status(404).json({ error: 'Template not found' }); return }
+  try {
+    res.json(JSON.parse(readFileSync(path, 'utf-8')))
+  } catch {
+    res.status(500).json({ error: 'Failed to read template' })
+  }
+})
+
+app.post('/api/scenario-templates', (req, res) => {
+  try {
+    const { title, description = '', npcs = [], items = [], openingBriefing = '' } = req.body
+    if (!title?.trim()) { res.status(400).json({ error: 'title is required' }); return }
+    const id = `scenario-${Date.now()}`
+    const template = { id, title: title.trim(), description, npcs, items, openingBriefing, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+    if (!existsSync(TEMPLATES_DIR)) mkdirSync(TEMPLATES_DIR, { recursive: true })
+    writeFileSync(join(TEMPLATES_DIR, `${id}.json`), JSON.stringify(template, null, 2), 'utf-8')
+    res.json(template)
+  } catch (err: any) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.put('/api/scenario-templates/:id', (req, res) => {
+  const safe = safeTemplateId(req.params.id)
+  if (!safe) { res.status(400).json({ error: 'Invalid template id' }); return }
+  const path = join(TEMPLATES_DIR, `${safe}.json`)
+  if (!existsSync(path)) { res.status(404).json({ error: 'Template not found' }); return }
+  try {
+    const existing = JSON.parse(readFileSync(path, 'utf-8'))
+    const { title, description, npcs, items, openingBriefing } = req.body
+    const updated = { ...existing, ...(title !== undefined && { title }), ...(description !== undefined && { description }), ...(npcs !== undefined && { npcs }), ...(items !== undefined && { items }), ...(openingBriefing !== undefined && { openingBriefing }), updatedAt: new Date().toISOString() }
+    writeFileSync(path, JSON.stringify(updated, null, 2), 'utf-8')
+    res.json(updated)
+  } catch (err: any) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.delete('/api/scenario-templates/:id', (req, res) => {
+  const safe = safeTemplateId(req.params.id)
+  if (!safe) { res.status(400).json({ error: 'Invalid template id' }); return }
+  const path = join(TEMPLATES_DIR, `${safe}.json`)
+  if (!existsSync(path)) { res.status(404).json({ error: 'Template not found' }); return }
+  try {
+    unlinkSync(path)
+    res.json({ success: true })
+  } catch (err: any) {
+    res.status(500).json({ error: err.message })
+  }
 })
 
 // SPA fallback
