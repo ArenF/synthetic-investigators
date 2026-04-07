@@ -20,30 +20,30 @@ let page:PageType = $state('Main');
     <div class="main_container">
     
     <ClickableCard
-        title="시나리오 생성"
-        description="새로운 시나리오를 생성할 수 있습니다."
-        onclick={() => {page = 'ScenarioCreate'}}
-      />
-      <ClickableCard
-        title="시나리오 편집"
-        description="기존의 시나리오를 수정/제거 할 수 있습니다."
-        onclick={() => {page = 'ScenarioEdit'}}
-      />
-      <ClickableCard
-        title="플레이어 생성"
-        description="시나리오에서 활동할 캐릭터들의 설정과 스탯을 설정해보세요! 그들을 활동하게 할 AI도 같이 지정해보세요."
-        onclick={() => {page = 'PlayerCreate'}}
-      />
-      <ClickableCard
-        title="플레이어 편집"
-        description="기존의 플레이어들의 설정을 변경해보세요!"
-        onclick={() => {page = 'PlayerEdit'}}
-      />
-      <ClickableCard
-        title="게임 플레이"
-        description="시나리오를 선택하고 플레이어들을 선택해 게임을 시작하세요!"
-        onclick={() => {page = 'GamePlay'}}
-      />
+      title="시나리오 생성"
+      description="새로운 시나리오를 생성할 수 있습니다."
+      onclick={() => {page = 'ScenarioCreate'}}
+    />
+    <ClickableCard
+      title="시나리오 편집"
+      description="기존의 시나리오를 수정/제거 할 수 있습니다."
+      onclick={() => {page = 'ScenarioEdit'}}
+    />
+    <ClickableCard
+      title="플레이어 생성"
+      description="시나리오에서 활동할 캐릭터들의 설정과 스탯을 설정해보세요! 그들을 활동하게 할 AI도 같이 지정해보세요."
+      onclick={() => {page = 'PlayerCreate'}}
+    />
+    <ClickableCard
+      title="플레이어 편집"
+      description="기존의 플레이어들의 설정을 변경해보세요!"
+      onclick={() => {page = 'PlayerEdit'}}
+    />
+    <ClickableCard
+      title="게임 플레이"
+      description="시나리오를 선택하고 플레이어들을 선택해 게임을 시작하세요!"
+      onclick={() => {page = 'GamePlay'}}
+    />
     </div>
   {:else if page === "GamePlay"}
     <GamePlay/>
