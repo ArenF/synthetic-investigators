@@ -13,6 +13,20 @@ import type { PageType } from "./lib/types/types";
 
 let page:PageType = $state('Main');
 
+$effect(() => {
+  console.log(page);
+
+  return () => {
+    console.log(page);
+  };
+});
+
+
+function changePage(whichPage:PageType) {
+  page = whichPage;
+  
+}
+
 </script>
 
 <main class="main min-h-screen flex items-center justify-center bg-bg-base">
@@ -22,27 +36,27 @@ let page:PageType = $state('Main');
     <ClickableCard
       title="시나리오 생성"
       description="새로운 시나리오를 생성할 수 있습니다."
-      onclick={() => {page = 'ScenarioCreate'}}
+      onclick={() => {changePage('ScenarioCreate')}}
     />
     <ClickableCard
       title="시나리오 편집"
       description="기존의 시나리오를 수정/제거 할 수 있습니다."
-      onclick={() => {page = 'ScenarioEdit'}}
+      onclick={() => {changePage('ScenarioEdit')}}
     />
     <ClickableCard
       title="플레이어 생성"
       description="시나리오에서 활동할 캐릭터들의 설정과 스탯을 설정해보세요! 그들을 활동하게 할 AI도 같이 지정해보세요."
-      onclick={() => {page = 'PlayerCreate'}}
+      onclick={() => {changePage('PlayerCreate')}}
     />
     <ClickableCard
       title="플레이어 편집"
       description="기존의 플레이어들의 설정을 변경해보세요!"
-      onclick={() => {page = 'PlayerEdit'}}
+      onclick={() => {changePage('PlayerEdit')}}
     />
     <ClickableCard
       title="게임 플레이"
       description="시나리오를 선택하고 플레이어들을 선택해 게임을 시작하세요!"
-      onclick={() => {page = 'GamePlay'}}
+      onclick={() => {changePage('GamePlay')}}
     />
     </div>
   {:else if page === "GamePlay"}

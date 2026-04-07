@@ -1,4 +1,3 @@
-
 <script lang="ts">
 
 export let title: string;
@@ -7,16 +6,16 @@ export let onclick: () => void;
 
 </script>
 
-<main>
-    <div class="clickable_card" on:click={() => {onclick()}}>
-      <p>{title}</p>
-      <p class="description">{description}</p>
-    </div>
-</main>
+<button type="button" class="clickable_card" on:click={onclick}>
+  <p>{title}</p>
+  <p class="description">{description}</p>
+</button>
 
 <style>
 
 .clickable_card {
+  border: none;
+  cursor: pointer;
   background-color: #00385a;
   border-radius: 15px;
   box-shadow: 5px 10px 5px 2px #01162b;
