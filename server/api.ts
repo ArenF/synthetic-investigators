@@ -681,7 +681,7 @@ wss.on('connection', (ws, req) => {
 
           // Inject briefing into each AI player's history so they know the scenario context
           for (const player of sess.players.values()) {
-            player.injectOpeningBriefing(setup.openingBriefing, setup.npcs, setup.items)
+            player.injectOpeningBriefing(setup.openingBriefing)
           }
         }
 
