@@ -116,6 +116,10 @@ export default function App() {
         })
         break
 
+      case 'order_updated':
+        store.setTurnOrder(msg.order)
+        break
+
       case 'turn_complete':
         setProcessing(false)
         break

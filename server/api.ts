@@ -855,7 +855,13 @@ wss.on('connection', (ws, req) => {
   })
 
   ws.on('close', () => {
-    if (currentSession) currentSession.clients.delete(ws)
+    if (currentSession) {
+      currentSession.clients.delete(ws)
+      // Remove session from memory when all clients disconnect (data is persisted to disk)
+      if (currentSession.clients.size === 0 && !currentSession.isProcessing) {
+        sessions.delete(currentSession.id)
+      }
+    }
   })
 })
 

@@ -94,7 +94,13 @@ export class GameState {
   /** Restore luck */
   restoreLuck(charId: string, amount: number): void {
     const state = this.getState(charId)
-    state.luck = state.luck + amount
+    const char = this.getCharacter(charId)
+    state.luck = Math.min(char.derived.luck, state.luck + amount)
+  }
+
+  /** Reset session SAN loss tracker (call at start of new session) */
+  resetSessionSanLoss(charId: string): void {
+    this.getState(charId).sessionSanLoss = 0
   }
 
   /** Spend MP */
