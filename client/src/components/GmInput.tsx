@@ -3,6 +3,7 @@ import { useStore } from '../store'
 import ActionRequestModal from './ActionRequestModal'
 import NpcSpeechModal from './NpcSpeechModal'
 import TurnOrderModal from './TurnOrderModal'
+import AttemptReviewModal from './AttemptReviewModal'
 
 const CHIP_BASE: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center',
@@ -43,13 +44,19 @@ function chipHover(hoverColor: string, disabled: boolean) {
 }
 
 export default function GmInput() {
-  const { ws, wsReady, isProcessingTurn, characters, turnOrder, setTurnOrder, playMode, setPlayMode } = useStore()
+  const { ws, wsReady, isProcessingTurn, characters, turnOrder, setTurnOrder, playMode, setPlayMode, pendingAttempt, setPendingAttempt } = useStore()
   const [text, setText] = useState('')
   const [targetMode, setTargetMode] = useState<'all' | string>('all')
   const [showActionModal, setShowActionModal] = useState(false)
   const [showNpcModal, setShowNpcModal] = useState(false)
   const [showOrderModal, setShowOrderModal] = useState(false)
+  const [showAttemptModal, setShowAttemptModal] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Auto-show the attempt review modal when a new attempt comes in
+  React.useEffect(() => {
+    if (pendingAttempt) setShowAttemptModal(true)
+  }, [pendingAttempt])
 
   // Cycle through: all → char[0] → char[1] → ... → all
   function cycleTarget() {
@@ -172,6 +179,22 @@ export default function GmInput() {
             {playMode === 'immersion' ? '과몰입' : '게임'}
           </button>
 
+          {pendingAttempt && (
+            <button
+              onClick={() => setShowAttemptModal(true)}
+              title={`${pendingAttempt.charName}의 시도 선언 — 클릭하여 처리`}
+              style={{
+                ...CHIP_BASE,
+                backgroundColor: 'rgba(251,191,36,0.12)',
+                borderColor: '#fbbf24',
+                color: '#fbbf24',
+                animation: 'pulse 2s infinite',
+              }}
+            >
+              ⚡ {pendingAttempt.charName} 시도 대기
+            </button>
+          )}
+
           {/* Status indicator */}
           {isProcessingTurn && (
             <span style={{ fontSize: '0.7rem', color: '#fbbf24', marginLeft: 'auto' }}>
@@ -247,6 +270,11 @@ export default function GmInput() {
         <TurnOrderModal
           onClose={() => setShowOrderModal(false)}
           onConfirm={confirmOrder}
+        />
+      )}
+      {showAttemptModal && pendingAttempt && (
+        <AttemptReviewModal
+          onClose={() => setShowAttemptModal(false)}
         />
       )}
     </>

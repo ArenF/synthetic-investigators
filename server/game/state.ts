@@ -2,7 +2,7 @@
  * Game state management — tracks HP, SAN, items per character across turns.
  */
 
-import type { CoCCharacter, SessionState, TurnRecord, KnownNpc } from '../characters/types.js'
+import type { CoCCharacter, SessionState, KnownNpc, ItemObject, Effect } from '../characters/types.js'
 
 export class GameState {
   private states: Map<string, SessionState> = new Map()
@@ -19,7 +19,7 @@ export class GameState {
       temporaryInsanity: false,
       indefiniteInsanity: false,
       injuries: [],
-      currentItems: [...char.equipment.items],
+      currentItems: char.equipment.items.map(name => ({ name, type: 'misc' as const })),
       notes: '',
       sessionSanLoss: 0,
       knownNpcs: [],
@@ -132,14 +132,53 @@ export class GameState {
     state.mp = Math.min(char.derived.mp.max, state.mp + amount)
   }
 
-  /** Add/remove item */
-  addItem(charId: string, item: string): void {
+  /** Add an item to character's inventory */
+  addItem(charId: string, item: ItemObject): void {
     this.getState(charId).currentItems.push(item)
   }
 
-  removeItem(charId: string, item: string): void {
+  /** Remove an item from character's inventory by name */
+  removeItem(charId: string, itemName: string): void {
     const state = this.getState(charId)
-    state.currentItems = state.currentItems.filter(i => i !== item)
+    state.currentItems = state.currentItems.filter(i => i.name !== itemName)
+  }
+
+  /**
+   * Apply a list of effects to a character.
+   * Used by the Judgment Event System to automatically apply outcomes.
+   */
+  applyEffects(charId: string, effects: Effect[]): void {
+    for (const effect of effects) {
+      switch (effect.kind) {
+        case 'stat':
+          if (effect.stat === 'hp') {
+            if (effect.delta < 0) this.applyDamage(charId, Math.abs(effect.delta))
+            else this.restoreHp(charId, effect.delta)
+          } else if (effect.stat === 'san') {
+            if (effect.delta < 0) this.applySanLoss(charId, Math.abs(effect.delta))
+            else this.restoreSan(charId, effect.delta)
+          } else if (effect.stat === 'mp') {
+            if (effect.delta < 0) this.spendMp(charId, Math.abs(effect.delta))
+            else this.restoreMp(charId, effect.delta)
+          } else if (effect.stat === 'luck') {
+            if (effect.delta < 0) this.spendLuck(charId, Math.abs(effect.delta))
+            else this.restoreLuck(charId, effect.delta)
+          }
+          break
+        case 'item_gain':
+          this.addItem(charId, effect.item)
+          break
+        case 'item_lose':
+          this.removeItem(charId, effect.itemName)
+          break
+        case 'status': {
+          const state = this.getState(charId)
+          state[effect.status] = effect.value
+          break
+        }
+        // 'skill' effects: not tracked in session state (would require separate skill delta tracking)
+      }
+    }
   }
 
   /** Clear temporary insanity (after session or treatment) */

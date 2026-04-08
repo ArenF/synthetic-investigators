@@ -80,6 +80,40 @@ export interface Equipment {
   spendingLevel: string  // "궁핍" | "보통" | "풍족" | "부유"
 }
 
+export interface ItemObject {
+  name: string
+  type: 'weapon' | 'clue' | 'tool' | 'consumable' | 'misc'
+  description?: string
+  weaponStats?: {
+    skill: string
+    damage: string
+    range?: string
+    attacks?: number
+    ammo?: number
+  }
+}
+
+export type Effect =
+  | { kind: 'stat'; stat: 'hp' | 'san' | 'mp' | 'luck'; delta: number }
+  | { kind: 'skill'; skill: string; delta: number; permanent?: boolean }
+  | { kind: 'item_gain'; item: ItemObject }
+  | { kind: 'item_lose'; itemName: string }
+  | { kind: 'status'; status: 'temporaryInsanity' | 'indefiniteInsanity'; value: boolean }
+
+export interface Outcome {
+  desc: string
+  effects?: Effect[]
+}
+
+export interface JudgmentOutcomes {
+  extremeSuccess?: Outcome
+  hardSuccess?: Outcome
+  regularSuccess?: Outcome
+  regularFailure?: Outcome
+  badFailure?: Outcome
+  fumble?: Outcome
+}
+
 export interface WeaponEntry {
   name: string
   skill: string        // 사용하는 기술
@@ -141,7 +175,7 @@ export interface SessionState {
   temporaryInsanity: boolean
   indefiniteInsanity: boolean
   injuries: string[]
-  currentItems: string[]  // items may be gained or lost
+  currentItems: ItemObject[]  // items may be gained or lost
   notes: string           // GM or player notes
   sessionSanLoss: number  // cumulative SAN lost this session (for indefinite insanity check)
   knownNpcs: KnownNpc[]  // NPCs this character has been introduced to
@@ -186,7 +220,7 @@ export interface DiceResult {
   skill: string
   target: number
   roll: number
-  outcome: 'extreme_success' | 'hard_success' | 'regular_success' | 'failure' | 'fumble'
+  outcome: 'extreme_success' | 'hard_success' | 'regular_success' | 'regular_failure' | 'bad_failure' | 'fumble' | 'failure'
 }
 
 /**

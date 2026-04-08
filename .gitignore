@@ -5,3 +5,5 @@ client/dist/
 logs/*.json
 *.local
 .DS_Store
+logs/
+scenarios/

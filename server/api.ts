@@ -17,6 +17,8 @@ import { GameState } from './game/state.js'
 import { ScenarioManager } from './game/scenario.js'
 import { ExperimentLogger } from './game/logger.js'
 import { d100 } from './game/dice.js'
+import { performJudgment, detectSkillFromText } from './game/judgment.js'
+import type { JudgmentOutcomes } from './characters/types.js'
 import { buildContextMessages } from './game/context.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -346,6 +348,18 @@ async function runTurn(
       text: responseText,
       done: true,
     })
+
+    // Broadcast attempt_declared if AI declared a skill attempt
+    if (record.response.attempt) {
+      const detectedSkill = detectSkillFromText(record.response.attempt)
+      broadcast(session, {
+        type: 'attempt_declared',
+        charId,
+        charName: char.name,
+        attempt: record.response.attempt,
+        detectedSkill,
+      })
+    }
 
     // Add to accumulated context for next AI (preserve diceContext for all characters)
     previousResponses.push({ charName: char.name, text: record.response.action })
@@ -792,11 +806,14 @@ wss.on('connection', (ws, req) => {
 
         // CoC 7e fumble rules: skill < 50 → fumble on 100; skill >= 50 → fumble on 96-100
         const fumbleThreshold = baseVal < 50 ? 100 : 96
+        // Midpoint between skill and 95: boundary between regular_failure and bad_failure
+        const regularFailureMax = Math.floor((baseVal + 95) / 2)
         if (roll >= fumbleThreshold) outcome = 'fumble'
         else if (roll <= Math.floor(target / 5)) outcome = 'extreme_success'
         else if (roll <= Math.floor(target / 2)) outcome = 'hard_success'
         else if (roll <= target) outcome = 'regular_success'
-        else outcome = 'failure'
+        else if (roll <= regularFailureMax) outcome = 'regular_failure'
+        else outcome = 'bad_failure'
 
         const resultData = {
           type: 'dice_result',
@@ -807,9 +824,9 @@ wss.on('connection', (ws, req) => {
           roll,
           target,
           outcome,
-          resultText: msg.successText && outcome !== 'failure' && outcome !== 'fumble'
-            ? msg.successText
-            : msg.failureText ?? '',
+          resultText: (outcome === 'extreme_success' || outcome === 'hard_success' || outcome === 'regular_success')
+            ? (msg.successText ?? '')
+            : (msg.failureText ?? ''),
         }
         broadcast(sess, resultData)
 
@@ -879,6 +896,81 @@ wss.on('connection', (ws, req) => {
           try { currentSession.state.introduceNpc(charId, npc) } catch {}
         }
         broadcast(currentSession, { type: 'npc_introduced', npc, targetIds })
+        break
+      }
+
+      case 'judgment_request': {
+        if (!currentSession) break
+        const { charId, skill, difficulty, outcomes } = msg as {
+          charId: string
+          skill: string
+          difficulty: 'regular' | 'hard' | 'extreme'
+          outcomes: JudgmentOutcomes
+        }
+        const sess = currentSession
+        const char = sess.characters.get(charId)
+        if (!char) {
+          ws.send(JSON.stringify({ type: 'error', message: `캐릭터를 찾을 수 없습니다: ${charId}` }))
+          break
+        }
+
+        try {
+          const result = performJudgment(sess, charId, skill, difficulty, outcomes ?? {})
+
+          // Build and broadcast judgment_result
+          const resultMsg = {
+            type: 'judgment_result',
+            charId,
+            charName: result.charName,
+            skill,
+            difficulty,
+            roll: result.roll,
+            target: result.target,
+            outcome: result.outcome,
+            outcomeDesc: result.appliedOutcome?.desc ?? '',
+            effectsApplied: result.effectsApplied,
+            naturalLanguage: result.naturalLanguage,
+          }
+          broadcast(sess, resultMsg)
+
+          // Store for next send_turn: AI receives natural language summary
+          sess.pendingDiceResults.push({
+            charId,
+            charName: result.charName,
+            skill,
+            outcome: result.outcome,
+            resultText: result.naturalLanguage,
+          })
+
+          // Add to chat log as dice_result
+          const diceMsg: ChatMessage = {
+            id: `judgment-${Date.now()}`,
+            type: 'dice_result',
+            charId,
+            charName: result.charName,
+            text: `${result.charName} — ${skill} 판정 (목표: ${result.target}) → ${result.roll} = ${result.outcome}`,
+            timestamp: new Date().toISOString(),
+            diceData: {
+              skill,
+              difficulty,
+              roll: result.roll,
+              target: result.target,
+              outcome: result.outcome,
+              resultText: result.appliedOutcome?.desc ?? '',
+            },
+          }
+          sess.chatLog.push(diceMsg)
+
+          // Broadcast updated character states (effects may have changed stats)
+          if (result.effectsApplied.length > 0) {
+            broadcast(sess, {
+              type: 'state_update',
+              characters: getCharacterStates(sess),
+            })
+          }
+        } catch (err: any) {
+          ws.send(JSON.stringify({ type: 'error', message: err.message }))
+        }
         break
       }
 

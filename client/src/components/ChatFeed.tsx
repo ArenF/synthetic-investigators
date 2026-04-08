@@ -9,8 +9,10 @@ const outcomeLabel: Record<string, { label: string; color: string }> = {
   extreme_success: { label: '극단적 성공', color: '#fbbf24' },
   hard_success: { label: '어려운 성공', color: '#4ade80' },
   regular_success: { label: '성공', color: '#4ade80' },
-  failure: { label: '실패', color: '#f87171' },
+  regular_failure: { label: '실패', color: '#f87171' },
+  bad_failure: { label: '나쁜 실패', color: '#ef4444' },
   fumble: { label: '대실패', color: '#f87171' },
+  failure: { label: '실패', color: '#f87171' },  // backward compat
 }
 
 const difficultyLabel: Record<string, string> = {

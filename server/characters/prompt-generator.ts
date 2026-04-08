@@ -200,7 +200,11 @@ HP: ${s.hp}/${char.derived.hp.max}  |  SAN: ${s.san}/${char.derived.san.starting
 
   // ── Items block ──
   const itemsBlock = s.currentItems.length > 0
-    ? `\n[소지품]\n${s.currentItems.map(i => `  - ${i}`).join('\n')}`
+    ? `\n[소지품]\n${s.currentItems.map(i => {
+        const item = typeof i === 'string' ? { name: i, type: 'misc' } : i
+        const extra = (item as any).description ? ` — ${(item as any).description}` : ''
+        return `  - ${item.name}${extra}`
+      }).join('\n')}`
     : ''
 
   // ── Known NPCs block ──

@@ -121,12 +121,18 @@ export default function App() {
         break
 
       case 'mode_changed':
-        setPlayMode(msg.mode)
+        store.setPlayMode(msg.mode)
         break
 
       case 'turn_complete':
         setProcessing(false)
         break
+
+      case 'attempt_declared': {
+        const { charId, charName, attempt, detectedSkill } = msg
+        useStore.getState().setPendingAttempt({ charId, charName, attempt, detectedSkill })
+        break
+      }
 
       case 'session_started':
         break
