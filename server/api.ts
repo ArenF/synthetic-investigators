@@ -78,6 +78,7 @@ export interface GameSession {
   clients: Set<WebSocket>
   isProcessing: boolean
   pendingStatsBefore: Map<string, { hp: number; san: number; luck: number }> | null
+  pendingDiceResults: { charId: string; charName: string; skill: string; outcome: string; resultText: string }[]
 }
 
 export interface ChatMessage {
@@ -244,6 +245,7 @@ function createSession(sessionId: string, setup: SessionSetupData): GameSession 
     clients: new Set(),
     isProcessing: false,
     pendingStatsBefore: null,
+    pendingDiceResults: [],
   }
 
   sessions.set(sessionId, session)
@@ -267,8 +269,14 @@ async function runTurn(
   const statsBefore = captureStatSnapshot(session, targetIds)
   session.pendingStatsBefore = statsBefore
 
+  // Prepend pending dice results to GM text
+  const pendingDice = session.pendingDiceResults.splice(0)
+  const diceContext = pendingDice
+    .map(r => `[판정 결과 — ${r.charName} · ${r.skill}: ${r.outcome}] ${r.resultText}`.trim())
+    .join('\n')
+  let accumulatedContext = diceContext ? `${diceContext}\n\n${gmText}` : gmText
+
   // Build accumulated context from previous AI responses in this turn
-  let accumulatedContext = gmText
   if (previousResponses.length > 0) {
     accumulatedContext += '\n\n[이번 턴 다른 탐사자들의 행동]\n'
     for (const prev of previousResponses) {
@@ -794,6 +802,15 @@ wss.on('connection', (ws, req) => {
             : msg.failureText ?? '',
         }
         broadcast(sess, resultData)
+
+        // Store for next send_turn: AI will receive the result text
+        sess.pendingDiceResults.push({
+          charId,
+          charName: char.name,
+          skill,
+          outcome,
+          resultText: resultData.resultText,
+        })
 
         // Add to chat log
         const diceMsg: ChatMessage = {
