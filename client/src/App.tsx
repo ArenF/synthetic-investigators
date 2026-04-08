@@ -120,6 +120,10 @@ export default function App() {
         store.setTurnOrder(msg.order)
         break
 
+      case 'mode_changed':
+        setPlayMode(msg.mode)
+        break
+
       case 'turn_complete':
         setProcessing(false)
         break

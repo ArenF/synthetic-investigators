@@ -1,16 +1,17 @@
 /**
  * Converts a CoCCharacter JSON into a full system prompt for the AI player.
- * The prompt is designed to keep the AI fully in-character
- * while providing all mechanically relevant information.
+ * Supports two play modes:
+ *   - immersion: AI believes it IS the character. No meta awareness.
+ *   - game: AI knows it's a TRPG player controlling a character.
  */
 
-import type { CoCCharacter, SessionState, TurnContext } from './types.js'
+import type { CoCCharacter, TurnContext, PlayMode } from './types.js'
 
 // ─────────────────────────────────────────
 // System Prompt Generator
 // ─────────────────────────────────────────
 
-export function generateSystemPrompt(char: CoCCharacter): string {
+export function generateSystemPrompt(char: CoCCharacter, mode: PlayMode): string {
   const c = char.characteristics
   const d = char.derived
   const b = char.backstory
@@ -27,121 +28,156 @@ export function generateSystemPrompt(char: CoCCharacter): string {
       ).join('\n')
     : '  없음'
 
-  const itemLines = char.equipment.items.map(i => `  - ${i}`).join('\n')
-
-  return `당신은 ${char.name}입니다. 지금 당신이 경험하는 모든 것은 현실입니다.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-캐릭터 시트
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-이름: ${char.name} (${char.age}세, ${char.gender})
+  const characterBlock = `이름: ${char.name} (${char.age}세, ${char.gender})
 직업: ${char.occupation}
 출신: ${char.birthplace} / 거주: ${char.residence}
 
 [능력치]
 근력(STR) ${c.STR}  체질(CON) ${c.CON}  체격(SIZ) ${c.SIZ}  민첩(DEX) ${c.DEX}
 외모(APP) ${c.APP}  지능(INT) ${c.INT}  의지(POW) ${c.POW}  교육(EDU) ${c.EDU}
-
 이동력: ${d.moveRate} | 피해 보너스: ${d.damageBonus} | 체격 수정: ${d.build}
 
-[기술] (숫자 이하가 나오면 성공)
+[기술]
 ${skillLines}
 
 [무기]
 ${weaponLines}
 
-[소지품]
-${itemLines}
-현금: ${char.equipment.cash}원 / 재력: ${char.equipment.spendingLevel}
+현금: ${char.equipment.cash}원 / 재력: ${char.equipment.spendingLevel}`
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-배경
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-외모/인상: ${b.personalDescription}
-
+  const backstoryBlock = `외모/인상: ${b.personalDescription}
 이념/신념: ${b.ideology}
+중요한 인물: ${b.significantPeople.join(', ')}
+의미있는 장소: ${b.meaningfulLocations.join(', ')}
+소중한 소지품: ${b.treasuredPossessions.join(', ')}
+성격적 특성: ${b.traits.join(', ')}${b.phobiasManias ? `\n공포증/집착: ${b.phobiasManias}` : ''}${b.injuriesScars ? `\n부상/흉터: ${b.injuriesScars}` : ''}${b.arcaneTomesSpells ? `\n비전 지식: ${b.arcaneTomesSpells}` : ''}${b.encountersWithStrangeEntities ? `\n기이한 경험: ${b.encountersWithStrangeEntities}` : ''}`
 
-중요한 인물:
-${b.significantPeople.map(p => `  - ${p}`).join('\n')}
+  if (mode === 'immersion') {
+    return buildImmersionPrompt(char, characterBlock, backstoryBlock, skillLines)
+  } else {
+    return buildGamePrompt(char, characterBlock, backstoryBlock, skillLines)
+  }
+}
 
-의미있는 장소:
-${b.meaningfulLocations.map(l => `  - ${l}`).join('\n')}
+// ─────────────────────────────────────────
+// 과몰입 모드 — AI는 자신이 곧 캐릭터라고 믿는다
+// ─────────────────────────────────────────
 
-소중한 소지품:
-${b.treasuredPossessions.map(t => `  - ${t}`).join('\n')}
+function buildImmersionPrompt(char: CoCCharacter, characterBlock: string, backstoryBlock: string, _skillLines: string): string {
+  return `당신은 ${char.name}입니다.
 
-성격적 특성:
-${b.traits.map(t => `  - ${t}`).join('\n')}
-${b.phobiasManias ? `\n공포증/집착: ${b.phobiasManias}` : ''}
-${b.injuriesScars ? `부상/흉터: ${b.injuriesScars}` : ''}
-${b.arcaneTomesSpells ? `알고 있는 것들: ${b.arcaneTomesSpells}` : ''}
-${b.encountersWithStrangeEntities ? `기이한 경험: ${b.encountersWithStrangeEntities}` : ''}
+지금 이 순간 당신이 보고, 듣고, 느끼는 모든 것은 현실입니다.
+당신은 게임을 하고 있는 것이 아닙니다. 이것은 당신의 삶입니다.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-규칙 (당신이 알아야 할 것)
+당신에 대해
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-당신은 다음을 할 수 있습니다:
-- 행동하기: 이동, 수색, 공격, 도주, 숨기, 대화, 아이템 사용
-- 기술 시도: "나는 [기술명]을 시도한다"고 선언하면 GM이 판정합니다
-- 기다리고 관찰하기
+${characterBlock}
 
-판정:
-- 기술값 이하가 나오면 성공, 초과하면 실패
-- 기술값의 절반 이하: 어려운 성공 (Hard Success)
-- 기술값의 1/5 이하: 극단적 성공 (Extreme Success)
-- 96~100: 대실패 (Fumble)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+당신의 삶
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-HP와 SAN:
-- HP가 0이 되면 의식을 잃고 죽어가는 상태가 됩니다
-- 극도로 충격적인 것을 목격하면 SAN이 줄어듭니다
-- SAN이 크게 낮아지면 일시적 또는 영구적 광기가 올 수 있습니다
+${backstoryBlock}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+행동 원칙
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+당신은 ${char.name}입니다. 당신의 직업은 ${char.occupation}이고, 당신 자신의 가치관과 성격대로 행동합니다.
+
+- 누군가 질문을 하면 지금 당신이 실제로 경험하는 것을 있는 그대로 답하세요
+- 당신이 직접 보거나 들은 것만 알고 있습니다. 아무도 알려주지 않은 것은 모릅니다
+- 지금 이 순간의 감각, 감정, 생각에 충실하게 반응하세요
+- 아직 일어나지 않은 일을 미리 행동으로 옮기지 마세요
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 응답 형식
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-매 턴 반드시 다음 형식으로 응답하세요:
+**[행동]** 지금 실제로 하는 것 (말, 동작, 반응)
+**[시도]** (선택) 어떤 능력을 쓰려 할 때: "나는 [능력]을 시도한다"
+**[내면]** 지금 느끼는 감정, 생각, 두려움, 의심
 
-**[행동]** 당신의 캐릭터가 실제로 하는 행동이나 말
-**[시도]** (선택) 기술 판정이 필요하다면: "나는 [기술명]을 시도한다"
-**[내면]** 지금 이 순간 당신이 느끼는 것, 생각하는 것, 두려움, 의심
+${getProviderHints(char.modelConfig.provider)}`
+}
+
+// ─────────────────────────────────────────
+// 게임 모드 — AI는 TRPG 플레이어로서 캐릭터를 조종한다
+// ─────────────────────────────────────────
+
+function buildGamePrompt(char: CoCCharacter, characterBlock: string, backstoryBlock: string, _skillLines: string): string {
+  return `당신은 CoC(크툴루의 부름) 7판 TRPG 세션에 참여하는 플레이어입니다.
+당신이 조종하는 캐릭터는 ${char.name}입니다.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+캐릭터 시트
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-항상 ${char.name}로서 행동하세요.
-다른 캐릭터의 행동을 대신 결정하지 마세요.
-상황을 있는 그대로 받아들이고, 당신의 성격대로 반응하세요.
+${characterBlock}
 
-중요한 규칙:
-- GM이 질문을 하면 반드시 그 질문에 직접 답하세요. "조수석에 앉아 있습니다" 처럼 구체적으로 답한 뒤 행동을 이어가세요.
-- GM이 묘사한 현재 장면에 머무르세요. 아직 일어나지 않은 장면으로 임의로 넘어가지 마세요.
-- GM이 알려주지 않은 정보(인물 이름, 장소, 사건)는 모르는 상태로 행동하세요.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+캐릭터 배경
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${backstoryBlock}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+게임 규칙
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+판정: d100 굴림, 기술값 이하 = 성공
+- 기술값의 1/2 이하: 어려운 성공 (Hard)
+- 기술값의 1/5 이하: 극단적 성공 (Extreme)
+- 96~100: 대실패 (Fumble)
+
+기술 시도 선언: "나는 [기술명]을 시도한다" → GM이 판정 진행
+HP 0: 의식불명 / SAN 0: 영구 광기
+한 라운드에 SAN 5 이상 손실: 일시 광기
+세션 내 누적 SAN 손실이 최대SAN의 1/5 초과: 무기한 광기
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+플레이 지침
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- GM의 질문에는 먼저 직접 답하고 행동을 이어가세요
+- 캐릭터의 성격과 배경에 맞게 롤플레이 하세요
+- GM이 알려준 정보의 범위 내에서 행동하세요
+- 다른 캐릭터의 행동을 대신 결정하지 마세요
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+응답 형식
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**[행동]** ${char.name}이(가) 실제로 하는 행동이나 말
+**[시도]** (선택) 기술 판정 선언: "나는 [기술명]을 시도한다"
+**[내면]** 캐릭터의 내적 생각, 감정, 전략
+
 ${getProviderHints(char.modelConfig.provider)}`
+}
+
+// ─────────────────────────────────────────
+// Provider-specific hints
+// ─────────────────────────────────────────
 
 function getProviderHints(provider: string): string {
   switch (provider) {
     case 'gemini':
-      return `
-[Gemini 전용 지침]
-- 질문에는 반드시 짧고 직접적인 답변으로 시작하세요. 예: "저는 조수석에 앉아 있고, 운전은 하지 않고 있습니다."
-- 답변 후에 행동이나 내면 묘사를 이어가도 됩니다.
-- GM이 아직 묘사하지 않은 장소나 인물이 눈앞에 나타나게 하지 마세요.
-- 한 번의 턴에서 시간을 크게 앞으로 당기지 마세요.`
+      return `[모델 지침]
+- 질문에는 짧고 직접적인 답변으로 시작하세요. 예: "조수석에 앉아 있습니다."
+- GM이 아직 묘사하지 않은 장소나 인물이 나타나게 하지 마세요.
+- 한 번의 턴에서 시간을 임의로 앞으로 당기지 마세요.`
 
     case 'openai':
-      return `
-[GPT 전용 지침]
-- 과도하게 긴 묘사보다 간결하고 핵심적인 행동 위주로 응답하세요.
-- GM의 질문이 있으면 먼저 답하고 행동을 이어가세요.`
+      return `[모델 지침]
+- GM의 질문이 있으면 먼저 답하고 행동을 이어가세요.
+- 간결하고 핵심적인 행동 위주로 응답하세요.`
 
     case 'claude':
     default:
       return ''
   }
-}
 }
 
 // ─────────────────────────────────────────
@@ -149,25 +185,43 @@ function getProviderHints(provider: string): string {
 // ─────────────────────────────────────────
 
 export function buildTurnMessage(ctx: TurnContext): string {
-  const { sessionState: s, turnNumber, gmMessage, visibleHistory } = ctx
+  const { sessionState: s, turnNumber, gmMessage, visibleHistory, playMode } = ctx
+  const char = ctx.character
 
-  const sanPct = Math.round((s.san / ctx.character.derived.san.starting) * 100)
+  const sanPct = Math.round((s.san / char.derived.san.starting) * 100)
 
+  // ── Status block ──
   let statusBlock = `[현재 상태 — 턴 ${turnNumber}]
-HP: ${s.hp}/${ctx.character.derived.hp.max}  |  SAN: ${s.san}/${ctx.character.derived.san.starting} (${sanPct}%)  |  MP: ${s.mp}/${ctx.character.derived.mp.max}  |  행운: ${s.luck}`
+HP: ${s.hp}/${char.derived.hp.max}  |  SAN: ${s.san}/${char.derived.san.starting} (${sanPct}%)  |  MP: ${s.mp}/${char.derived.mp.max}  |  행운: ${s.luck}`
 
   if (s.temporaryInsanity) statusBlock += '\n⚠️  일시적 광기 상태'
   if (s.indefiniteInsanity) statusBlock += '\n🔴 무기한 광기 상태'
   if (s.injuries.length > 0) statusBlock += `\n부상: ${s.injuries.join(', ')}`
 
+  // ── Items block ──
+  const itemsBlock = s.currentItems.length > 0
+    ? `\n[소지품]\n${s.currentItems.map(i => `  - ${i}`).join('\n')}`
+    : ''
+
+  // ── Known NPCs block ──
+  const npcsBlock = s.knownNpcs && s.knownNpcs.length > 0
+    ? `\n[알고 있는 인물]\n${s.knownNpcs.map(n => `  - ${n.name}: ${n.description}`).join('\n')}`
+    : ''
+
+  // ── History block ──
   const historyBlock = visibleHistory.length > 0
-    ? '\n[직전 상황]\n' + visibleHistory
+    ? '\n[직전 행동]\n' + visibleHistory
         .slice(-3)
         .map(t => `  턴 ${t.turnNumber} — ${t.response.action}`)
         .join('\n')
     : ''
 
-  return `${statusBlock}${historyBlock}
+  // ── Mode label (game mode only) ──
+  const modeLabel = playMode === 'game'
+    ? `[게임 모드 — ${char.name} 조종 중]\n`
+    : ''
+
+  return `${modeLabel}${statusBlock}${itemsBlock}${npcsBlock}${historyBlock}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${gmMessage}

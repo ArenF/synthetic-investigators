@@ -11,7 +11,7 @@ import { createServer } from 'http'
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
-import type { CoCCharacter, TurnContext } from './characters/types.js'
+import type { CoCCharacter, TurnContext, PlayMode } from './characters/types.js'
 import { createPlayer, type BasePlayer } from './players/index.js'
 import { GameState } from './game/state.js'
 import { ScenarioManager } from './game/scenario.js'
@@ -60,6 +60,7 @@ export interface SessionSetupData {
   npcs: NPC[]
   items: { name: string; location: string; description: string }[]
   openingBriefing: string
+  playMode?: PlayMode
 }
 
 export interface GameSession {
@@ -80,6 +81,7 @@ export interface GameSession {
   isProcessing: boolean
   pendingStatsBefore: Map<string, { hp: number; san: number; luck: number }> | null
   pendingDiceResults: { charId: string; charName: string; skill: string; outcome: string; resultText: string }[]
+  playMode: PlayMode
 }
 
 export interface ChatMessage {
@@ -247,6 +249,7 @@ function createSession(sessionId: string, setup: SessionSetupData): GameSession 
     isProcessing: false,
     pendingStatsBefore: null,
     pendingDiceResults: [],
+    playMode: setup.playMode ?? 'immersion',
   }
 
   sessions.set(sessionId, session)
@@ -310,6 +313,7 @@ async function runTurn(
       turnNumber: session.turnNumber,
       gmMessage: gmWithContext,
       visibleHistory: contextMessages.recentTurns,
+      playMode: session.playMode,
     }
 
     // Notify clients that this character is responding
@@ -852,6 +856,29 @@ wss.on('connection', (ws, req) => {
         }
         sess.chatLog.push(npcMsg)
         broadcast(sess, { type: 'npc_message', message: npcMsg })
+        break
+      }
+
+
+      case 'set_play_mode': {
+        if (!currentSession) break
+        const mode: PlayMode = msg.mode === 'game' ? 'game' : 'immersion'
+        currentSession.playMode = mode
+        for (const player of currentSession.players.values()) {
+          player.setPlayMode(mode)
+        }
+        broadcast(currentSession, { type: 'mode_changed', mode })
+        break
+      }
+
+      case 'introduce_npc': {
+        if (!currentSession) break
+        const npc = msg.npc as { name: string; description: string }
+        const targetIds: string[] = msg.targetIds ?? [...currentSession.characters.keys()]
+        for (const charId of targetIds) {
+          try { currentSession.state.introduceNpc(charId, npc) } catch {}
+        }
+        broadcast(currentSession, { type: 'npc_introduced', npc, targetIds })
         break
       }
 

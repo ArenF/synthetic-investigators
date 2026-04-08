@@ -2,6 +2,8 @@ import { create } from 'zustand'
 
 // ─── Types ───
 
+export type PlayMode = 'immersion' | 'game'
+
 export type Screen = 'home' | 'session_setup' | 'game' | 'character_editor' | 'log_viewer' | 'scenario_list' | 'scenario_editor'
 
 export interface CharacterState {
@@ -76,6 +78,7 @@ export interface SessionSetupData {
   npcs: NPC[]
   items: { name: string; location: string; description: string }[]
   openingBriefing: string
+  playMode?: PlayMode
 }
 
 export interface ScenarioTemplate {
@@ -113,6 +116,9 @@ export interface AppState {
   // Pending setup (used when transitioning to game screen)
   pendingSetup: SessionSetupData | null
 
+  // Play mode
+  playMode: PlayMode
+
   // Scenario editor state
   editingScenarioId: string | null
 
@@ -132,6 +138,7 @@ export interface AppState {
   setAvailableCharacters: (chars: CharacterSummary[]) => void
   setPendingSetup: (setup: SessionSetupData | null) => void
   setEditingScenarioId: (id: string | null) => void
+  setPlayMode: (mode: PlayMode) => void
   reset: () => void
 }
 
@@ -149,6 +156,7 @@ export const useStore = create<AppState>((set) => ({
   savedSessions: [],
   availableCharacters: [],
   pendingSetup: null,
+  playMode: 'immersion',
   editingScenarioId: null,
 
   setScreen: (screen) => set({ screen }),
@@ -168,6 +176,7 @@ export const useStore = create<AppState>((set) => ({
   setAvailableCharacters: (chars) => set({ availableCharacters: chars }),
   setPendingSetup: (setup) => set({ pendingSetup: setup }),
   setEditingScenarioId: (id) => set({ editingScenarioId: id }),
+  setPlayMode: (mode) => set({ playMode: mode }),
   reset: () => set((state) => {
     state.ws?.close()
     return {
@@ -181,6 +190,7 @@ export const useStore = create<AppState>((set) => ({
       ws: null,
       wsReady: false,
       pendingSetup: null,
+      playMode: 'immersion',
     }
   }),
 }))

@@ -126,6 +126,13 @@ export interface CoCCharacter {
 /**
  * Mutable state during a session — updated as the game progresses
  */
+export type PlayMode = 'immersion' | 'game'
+
+export interface KnownNpc {
+  name: string
+  description: string
+}
+
 export interface SessionState {
   hp: number
   san: number
@@ -137,6 +144,7 @@ export interface SessionState {
   currentItems: string[]  // items may be gained or lost
   notes: string           // GM or player notes
   sessionSanLoss: number  // cumulative SAN lost this session (for indefinite insanity check)
+  knownNpcs: KnownNpc[]  // NPCs this character has been introduced to
 }
 
 /**
@@ -149,6 +157,7 @@ export interface TurnContext {
   turnNumber: number
   gmMessage: string           // what the GM sends this turn
   visibleHistory: TurnRecord[] // recent turns this character can see
+  playMode: PlayMode          // immersion | game
 }
 
 /**

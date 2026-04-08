@@ -2,7 +2,7 @@
  * Game state management — tracks HP, SAN, items per character across turns.
  */
 
-import type { CoCCharacter, SessionState, TurnRecord } from '../characters/types.js'
+import type { CoCCharacter, SessionState, TurnRecord, KnownNpc } from '../characters/types.js'
 
 export class GameState {
   private states: Map<string, SessionState> = new Map()
@@ -22,6 +22,7 @@ export class GameState {
       currentItems: [...char.equipment.items],
       notes: '',
       sessionSanLoss: 0,
+      knownNpcs: [],
     })
   }
 
@@ -101,6 +102,21 @@ export class GameState {
   /** Reset session SAN loss tracker (call at start of new session) */
   resetSessionSanLoss(charId: string): void {
     this.getState(charId).sessionSanLoss = 0
+  }
+
+  /** Introduce an NPC to a character (adds to their known NPCs list) */
+  introduceNpc(charId: string, npc: KnownNpc): void {
+    const state = this.getState(charId)
+    if (!state.knownNpcs.find(n => n.name === npc.name)) {
+      state.knownNpcs.push(npc)
+    }
+  }
+
+  /** Introduce an NPC to all characters */
+  introduceNpcToAll(npc: KnownNpc): void {
+    for (const charId of this.getAllCharacterIds()) {
+      this.introduceNpc(charId, npc)
+    }
   }
 
   /** Spend MP */

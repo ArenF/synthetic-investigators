@@ -3,9 +3,8 @@
  * Each provider (Claude, Gemini, OpenAI, Ollama) extends this.
  */
 
-import type { CoCCharacter, TurnContext, TurnRecord } from '../characters/types.js'
+import type { CoCCharacter, TurnContext, TurnRecord, PlayMode } from '../characters/types.js'
 import { generateSystemPrompt, buildTurnMessage, parseResponse } from '../characters/prompt-generator.js'
-import { rollDice } from '../game/dice.js'
 
 export interface Message {
   role: 'user' | 'assistant'
@@ -16,16 +15,31 @@ export abstract class BasePlayer {
   protected character: CoCCharacter
   protected history: Message[] = []
   protected systemPrompt: string
+  protected playMode: PlayMode = 'immersion'
 
-  constructor(character: CoCCharacter) {
+  constructor(character: CoCCharacter, mode: PlayMode = 'immersion') {
     this.character = character
-    this.systemPrompt = generateSystemPrompt(character)
+    this.playMode = mode
+    this.systemPrompt = generateSystemPrompt(character, mode)
   }
 
   get id(): string { return this.character.id }
   get name(): string { return this.character.name }
   get model(): string { return this.character.modelConfig.model }
   get provider(): string { return this.character.modelConfig.provider }
+
+  /**
+   * Switch play mode — regenerates system prompt immediately.
+   * History is preserved so the AI can continue the conversation in the new mode.
+   */
+  setPlayMode(mode: PlayMode): void {
+    this.playMode = mode
+    this.systemPrompt = generateSystemPrompt(this.character, mode)
+  }
+
+  getPlayMode(): PlayMode {
+    return this.playMode
+  }
 
   /**
    * Send a turn message and get the character's response.
@@ -38,7 +52,7 @@ export abstract class BasePlayer {
     const rawResponse = await this.chat(this.systemPrompt, this.history)
     this.history.push({ role: 'assistant', content: rawResponse })
 
-    // Sliding window: keep only the last 30 messages (15 turns) to prevent unbounded growth
+    // Sliding window: keep only the last 30 messages (15 turns)
     if (this.history.length > 30) {
       this.history = this.history.slice(this.history.length - 30)
     }
@@ -55,14 +69,14 @@ export abstract class BasePlayer {
       modelName: this.character.modelConfig.model,
       gmInput: ctx.gmMessage,
       statsBefore: { hp: s.hp, san: s.san, luck: s.luck },
-      statsAfter: { hp: s.hp, san: s.san, luck: s.luck }, // updated by GM
+      statsAfter: { hp: s.hp, san: s.san, luck: s.luck },
       response: { ...parsed, rawText: rawResponse },
     }
   }
 
   /**
    * Inject the opening briefing as the first user message.
-   * Call this after session creation so the AI knows the scenario context.
+   * Only injects minimal scenario context — no NPC/item spoilers.
    */
   injectOpeningBriefing(briefing: string): void {
     const context = `[시나리오 시작]\n${briefing}\n\n이 상황에서 당신의 캐릭터로서 행동을 시작하세요.`

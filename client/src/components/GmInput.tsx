@@ -43,7 +43,7 @@ function chipHover(hoverColor: string, disabled: boolean) {
 }
 
 export default function GmInput() {
-  const { ws, wsReady, isProcessingTurn, characters, turnOrder, setTurnOrder } = useStore()
+  const { ws, wsReady, isProcessingTurn, characters, turnOrder, setTurnOrder, playMode, setPlayMode } = useStore()
   const [text, setText] = useState('')
   const [targetMode, setTargetMode] = useState<'all' | string>('all')
   const [showActionModal, setShowActionModal] = useState(false)
@@ -106,6 +106,14 @@ export default function GmInput() {
     }
   }
 
+  function toggleMode() {
+    const next = playMode === 'immersion' ? 'game' : 'immersion'
+    setPlayMode(next)
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'set_play_mode', mode: next }))
+    }
+  }
+
   const canSend = wsReady && !!text.trim() && !isProcessingTurn
 
   return (
@@ -152,6 +160,16 @@ export default function GmInput() {
             {...chipHover('var(--text-primary)', isProcessingTurn)}
           >
             순서
+          </button>
+          <button
+            onClick={toggleMode}
+            title={playMode === 'immersion' ? '과몰입 모드 — 클릭하여 게임 모드로 전환' : '게임 모드 — 클릭하여 과몰입 모드로 전환'}
+            style={playMode === 'immersion'
+              ? { ...CHIP_BASE, backgroundColor: 'rgba(239,68,68,0.1)', borderColor: '#ef4444', color: '#ef4444' }
+              : { ...CHIP_BASE, backgroundColor: 'rgba(99,102,241,0.1)', borderColor: '#6366f1', color: '#6366f1' }
+            }
+          >
+            {playMode === 'immersion' ? '과몰입' : '게임'}
           </button>
 
           {/* Status indicator */}
