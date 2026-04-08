@@ -342,9 +342,9 @@ async function runTurn(
       done: true,
     })
 
-    // Add to accumulated context for next AI
+    // Add to accumulated context for next AI (preserve diceContext for all characters)
     previousResponses.push({ charName: char.name, text: record.response.action })
-    accumulatedContext = gmText + '\n\n[이번 턴 다른 탐사자들의 행동]\n'
+    accumulatedContext = (diceContext ? `${diceContext}\n\n` : '') + gmText + '\n\n[이번 턴 다른 탐사자들의 행동]\n'
     for (const prev of previousResponses) {
       accumulatedContext += `\n${prev.charName}: ${prev.text}`
     }
