@@ -61,6 +61,23 @@ export abstract class BasePlayer {
   }
 
   /**
+   * Inject the opening briefing as the first user message.
+   * Call this after session creation so the AI knows the scenario context.
+   */
+  injectOpeningBriefing(briefing: string, npcs: { name: string; description: string }[], items: { name: string; location: string; description: string }[]): void {
+    let context = `[시나리오 브리핑]\n${briefing}`
+    if (npcs.length > 0) {
+      context += '\n\n[등장 NPC]\n' + npcs.map(n => `  ${n.name}: ${n.description}`).join('\n')
+    }
+    if (items.length > 0) {
+      context += '\n\n[주요 단서/물품]\n' + items.map(i => `  ${i.name} (위치: ${i.location}) — ${i.description}`).join('\n')
+    }
+    context += '\n\n이 상황을 인지하고, 당신의 캐릭터로서 행동을 시작하세요.'
+    this.history.push({ role: 'user', content: context })
+    this.history.push({ role: 'assistant', content: '네, 상황을 파악했습니다. 준비됐습니다.' })
+  }
+
+  /**
    * Reset conversation history (e.g. new scenario)
    */
   resetHistory(): void {

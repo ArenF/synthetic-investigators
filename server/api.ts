@@ -678,6 +678,11 @@ wss.on('connection', (ws, req) => {
           }
           sess.chatLog.push(sysMsg)
           broadcast(sess, { type: 'system_message', message: sysMsg })
+
+          // Inject briefing into each AI player's history so they know the scenario context
+          for (const player of sess.players.values()) {
+            player.injectOpeningBriefing(setup.openingBriefing, setup.npcs, setup.items)
+          }
         }
 
         // Save session to disk immediately so it appears in session list
