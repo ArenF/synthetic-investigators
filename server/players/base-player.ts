@@ -5,6 +5,7 @@
 
 import type { CoCCharacter, TurnContext, TurnRecord, PlayMode } from '../characters/types.js'
 import { generateSystemPrompt, buildTurnMessage, parseResponse } from '../characters/prompt-generator.js'
+import { log } from '../game/dev-logger.js'
 
 export interface Message {
   role: 'user' | 'assistant'
@@ -49,7 +50,22 @@ export abstract class BasePlayer {
     const userMessage = buildTurnMessage(ctx)
     this.history.push({ role: 'user', content: userMessage })
 
-    const rawResponse = await this.chat(this.systemPrompt, this.history)
+    const tag = `${this.character.modelConfig.provider.toUpperCase()}:${this.character.name}`
+    log.ai(tag, `턴 ${ctx.turnNumber} 요청 — 모델: ${this.character.modelConfig.model}, 히스토리: ${this.history.length}개 메시지`)
+    log.ai(tag, `GM 메시지: ${ctx.gmMessage.slice(0, 120).replace(/\n/g, ' ')}${ctx.gmMessage.length > 120 ? '...' : ''}`)
+
+    const t0 = Date.now()
+    let rawResponse: string
+    try {
+      rawResponse = await this.chat(this.systemPrompt, this.history)
+    } catch (err: any) {
+      log.error(tag, `AI 호출 실패 (${Date.now() - t0}ms): ${err.message}`)
+      throw err
+    }
+    const elapsed = Date.now() - t0
+    log.ok(tag, `응답 수신 (${elapsed}ms) — ${rawResponse.length}자`)
+    log.ai(tag, `응답 미리보기: ${rawResponse.slice(0, 150).replace(/\n/g, ' ')}${rawResponse.length > 150 ? '...' : ''}`)
+
     this.history.push({ role: 'assistant', content: rawResponse })
 
     // Sliding window: keep only the last 30 messages (15 turns)

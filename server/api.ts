@@ -20,6 +20,7 @@ import { d100 } from './game/dice.js'
 import { performJudgment, detectSkillFromText } from './game/judgment.js'
 import type { JudgmentOutcomes } from './characters/types.js'
 import { buildContextMessages } from './game/context.js'
+import { log, logApiKeyStatus, testOllamaConnection } from './game/dev-logger.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -1000,6 +1001,8 @@ wss.on('connection', (ws, req) => {
 })
 
 const PORT = process.env.PORT ?? 3001
-server.listen(PORT, () => {
-  console.log(`Synthetic Investigators server running on http://localhost:${PORT}`)
+server.listen(PORT, async () => {
+  log.ok('STARTUP', `Synthetic Investigators server running on http://localhost:${PORT}`)
+  logApiKeyStatus()
+  await testOllamaConnection()
 })
