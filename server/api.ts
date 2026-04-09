@@ -11,7 +11,7 @@ import { createServer } from 'http'
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
-import type { CoCCharacter, TurnContext, PlayMode } from './characters/types.js'
+import type { CoCCharacter, TurnContext, PlayMode, CoCharacter } from './characters/types.js'
 import { createPlayer, type BasePlayer } from './players/index.js'
 import { GameState } from './game/state.js'
 import { ScenarioManager } from './game/scenario.js'
@@ -308,6 +308,14 @@ async function runTurn(
       ? `${contextMessages.summary}\n\n${accumulatedContext}`
       : accumulatedContext
 
+    // Build co-characters list (everyone else in the session)
+    const coCharacters: CoCharacter[] = []
+    for (const [otherId, otherChar] of session.characters) {
+      if (otherId !== charId) {
+        coCharacters.push({ id: otherId, name: otherChar.name, occupation: otherChar.occupation })
+      }
+    }
+
     const ctx: TurnContext = {
       character: char,
       sessionState,
@@ -316,6 +324,7 @@ async function runTurn(
       gmMessage: gmWithContext,
       visibleHistory: contextMessages.recentTurns,
       playMode: session.playMode,
+      coCharacters,
     }
 
     // Notify clients that this character is responding

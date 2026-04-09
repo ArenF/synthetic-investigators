@@ -185,7 +185,7 @@ function getProviderHints(provider: string): string {
 // ─────────────────────────────────────────
 
 export function buildTurnMessage(ctx: TurnContext): string {
-  const { sessionState: s, turnNumber, gmMessage, visibleHistory, playMode } = ctx
+  const { sessionState: s, turnNumber, gmMessage, visibleHistory, playMode, coCharacters } = ctx
   const char = ctx.character
 
   const sanPct = Math.round((s.san / char.derived.san.starting) * 100)
@@ -207,6 +207,11 @@ HP: ${s.hp}/${char.derived.hp.max}  |  SAN: ${s.san}/${char.derived.san.starting
       }).join('\n')}`
     : ''
 
+  // ── Co-characters block (other investigators in same session) ──
+  const coCharsBlock = coCharacters && coCharacters.length > 0
+    ? `\n[함께하는 탐사자]\n${coCharacters.map(c => `  - ${c.name} (${c.occupation})`).join('\n')}`
+    : ''
+
   // ── Known NPCs block ──
   const npcsBlock = s.knownNpcs && s.knownNpcs.length > 0
     ? `\n[알고 있는 인물]\n${s.knownNpcs.map(n => `  - ${n.name}: ${n.description}`).join('\n')}`
@@ -225,7 +230,7 @@ HP: ${s.hp}/${char.derived.hp.max}  |  SAN: ${s.san}/${char.derived.san.starting
     ? `[게임 모드 — ${char.name} 조종 중]\n`
     : ''
 
-  return `${modeLabel}${statusBlock}${itemsBlock}${npcsBlock}${historyBlock}
+  return `${modeLabel}${statusBlock}${itemsBlock}${coCharsBlock}${npcsBlock}${historyBlock}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${gmMessage}

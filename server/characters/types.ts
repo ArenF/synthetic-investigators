@@ -184,6 +184,12 @@ export interface SessionState {
 /**
  * The prompt context given to an AI player each turn
  */
+export interface CoCharacter {
+  id: string
+  name: string
+  occupation: string
+}
+
 export interface TurnContext {
   character: CoCCharacter
   sessionState: SessionState
@@ -192,6 +198,7 @@ export interface TurnContext {
   gmMessage: string           // what the GM sends this turn
   visibleHistory: TurnRecord[] // recent turns this character can see
   playMode: PlayMode          // immersion | game
+  coCharacters: CoCharacter[] // other characters in the same session
 }
 
 /**

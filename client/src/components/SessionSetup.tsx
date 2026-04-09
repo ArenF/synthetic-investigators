@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { useStore, type NPC, type SessionSetupData, type CharacterSummary, type ScenarioTemplate } from '../store'
+import { useStore, type NPC, type SessionSetupData, type CharacterSummary, type ScenarioTemplate, type PlayMode } from '../store'
 
 export default function SessionSetup() {
-  const { setScreen, setSession, setPendingSetup, setTurnOrder } = useStore()
+  const { setScreen, setSession, setPendingSetup, setTurnOrder, setPlayMode } = useStore()
 
   const [sessionName, setSessionName] = useState('')
+  const [playMode, setLocalPlayMode] = useState<PlayMode>('game')
   const [selectedChars, setSelectedChars] = useState<string[]>([])
   const [availableChars, setAvailableChars] = useState<CharacterSummary[]>([])
   const [npcs, setNpcs] = useState<NPC[]>([])
@@ -117,8 +118,10 @@ export default function SessionSetup() {
         npcs,
         items,
         openingBriefing,
+        playMode,
       }
       setPendingSetup(setup)
+      setPlayMode(playMode)
       setTurnOrder(selectedChars)
       setSession(data.sessionId, sessionName.trim())
       setScreen('game')
@@ -315,6 +318,39 @@ export default function SessionSetup() {
           placeholder="때는 1925년 10월, 보스턴..."
           className="w-full text-sm resize-none"
         />
+      </section>
+
+      {/* Play Mode */}
+      <section className="rounded-xl p-4 mb-4" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
+        <h2 className="border-l-2 pl-3 font-semibold mb-3 text-sm uppercase tracking-wide" style={{ borderColor: 'var(--teal)', color: 'var(--text-muted)' }}>플레이 모드</h2>
+        <div className="flex gap-3">
+          <label
+            className="flex-1 flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all"
+            style={{
+              border: playMode === 'game' ? '1px solid var(--teal)' : '1px solid var(--bg-border)',
+              backgroundColor: playMode === 'game' ? 'rgba(20,184,166,0.08)' : 'transparent',
+            }}
+          >
+            <input type="radio" name="playMode" value="game" checked={playMode === 'game'} onChange={() => setLocalPlayMode('game')} className="mt-0.5" />
+            <div>
+              <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>🎮 게임 모드</div>
+              <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>TRPG 플레이어 관점. 규칙 인식, 전략적 판단.</div>
+            </div>
+          </label>
+          <label
+            className="flex-1 flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all"
+            style={{
+              border: playMode === 'immersion' ? '1px solid #ef4444' : '1px solid var(--bg-border)',
+              backgroundColor: playMode === 'immersion' ? 'rgba(239,68,68,0.08)' : 'transparent',
+            }}
+          >
+            <input type="radio" name="playMode" value="immersion" checked={playMode === 'immersion'} onChange={() => setLocalPlayMode('immersion')} className="mt-0.5" />
+            <div>
+              <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>🎭 과몰입 모드</div>
+              <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>AI가 캐릭터 자체가 됨. 메타 인식 없음. 실험용.</div>
+            </div>
+          </label>
+        </div>
       </section>
 
       <button

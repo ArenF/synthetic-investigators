@@ -167,7 +167,7 @@ export const useStore = create<AppState>((set) => ({
   savedSessions: [],
   availableCharacters: [],
   pendingSetup: null,
-  playMode: 'immersion',
+  playMode: 'game',
   editingScenarioId: null,
   pendingAttempt: null,
 
@@ -203,7 +203,7 @@ export const useStore = create<AppState>((set) => ({
       ws: null,
       wsReady: false,
       pendingSetup: null,
-      playMode: 'immersion',
+      playMode: 'game',
     }
   }),
 }))
