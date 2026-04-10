@@ -66,6 +66,12 @@ export interface SessionSetupData {
   playMode?: PlayMode
 }
 
+export interface QueuedTurn {
+  gmText: string
+  targetLabel: string
+  targetIds: string[]
+}
+
 export interface GameSession {
   id: string
   name: string
@@ -82,6 +88,7 @@ export interface GameSession {
   chatLog: ChatMessage[]
   clients: Set<WebSocket>
   isProcessing: boolean
+  turnQueue: QueuedTurn[]
   pendingStatsBefore: Map<string, { hp: number; san: number; luck: number }> | null
   pendingDiceResults: { charId: string; charName: string; skill: string; outcome: string; resultText: string }[]
   playMode: PlayMode
@@ -256,6 +263,7 @@ function createSession(sessionId: string, setup: SessionSetupData): GameSession 
     chatLog: [],
     clients: new Set(),
     isProcessing: false,
+    turnQueue: [],
     pendingStatsBefore: null,
     pendingDiceResults: [],
     playMode: setup.playMode ?? 'immersion',
@@ -275,6 +283,7 @@ async function runTurn(
   targetLabel: string,
   targetIds: string[],
   previousResponses: { charName: string; text: string }[],
+  sendTurnComplete = true,
 ): Promise<void> {
   const { players, state, scenario, logger } = session
 
@@ -412,7 +421,48 @@ async function runTurn(
     characters: getCharacterStates(session),
   })
 
-  broadcast(session, { type: 'turn_complete' })
+  if (sendTurnComplete) {
+    broadcast(session, { type: 'turn_complete' })
+  }
+}
+
+// ─────────────────────────────────────────
+// Helper: drain the turn queue
+// ─────────────────────────────────────────
+
+async function drainTurnQueue(sess: GameSession): Promise<void> {
+  while (sess.turnQueue.length > 0) {
+    const next = sess.turnQueue.shift()!
+
+    // Add GM message to chat log
+    const gmMsg: ChatMessage = {
+      id: `gm-${Date.now()}`,
+      type: 'gm_scene',
+      targetLabel: next.targetLabel,
+      text: next.gmText,
+      timestamp: new Date().toISOString(),
+    }
+    sess.chatLog.push(gmMsg)
+    broadcast(sess, { type: 'gm_message', message: gmMsg })
+
+    // Notify clients of remaining queue size (after shift)
+    broadcast(sess, {
+      type: 'queue_update',
+      remaining: sess.turnQueue.length,
+    })
+
+    try {
+      const targets = next.targetIds.length > 0 ? next.targetIds : sess.turnOrder
+      // Never send turn_complete mid-queue; we'll send it after the loop
+      await runTurn(sess, next.gmText, next.targetLabel, targets, [], false)
+    } catch (err: any) {
+      broadcast(sess, { type: 'error', message: err.message })
+    }
+  }
+
+  // All queued turns processed
+  sess.isProcessing = false
+  broadcast(sess, { type: 'turn_complete' })
 }
 
 // ─────────────────────────────────────────
@@ -614,6 +664,51 @@ app.delete('/api/scenario-templates/:id', (req, res) => {
   }
 })
 
+// ─── Models ───
+
+const KNOWN_MODELS: Record<string, string[]> = {
+  claude: [
+    'claude-opus-4-6',
+    'claude-sonnet-4-6',
+    'claude-opus-4-5',
+    'claude-sonnet-4-5',
+    'claude-haiku-4-5',
+    'claude-haiku-3-5',
+  ],
+  gemini: [
+    'gemini-2.5-pro-preview-03-25',
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-lite',
+    'gemini-1.5-pro',
+    'gemini-1.5-flash',
+  ],
+  openai: [
+    'gpt-4.1',
+    'gpt-4.1-mini',
+    'gpt-4o',
+    'gpt-4o-mini',
+    'o3-mini',
+  ],
+}
+
+app.get('/api/models', async (_req, res) => {
+  const result: Record<string, string[]> = { ...KNOWN_MODELS, ollama: [] }
+
+  // Query Ollama for actually installed models
+  try {
+    const ollamaHost = process.env.OLLAMA_HOST ?? 'http://localhost:11434'
+    const r = await fetch(`${ollamaHost}/api/tags`)
+    if (r.ok) {
+      const data = await r.json() as { models?: { name: string }[] }
+      result.ollama = (data.models ?? []).map(m => m.name)
+    }
+  } catch {
+    // Ollama not running — return empty list
+  }
+
+  res.json(result)
+})
+
 // SPA fallback
 app.get('*', (_req, res) => {
   const indexPath = join(ROOT, 'client', 'dist', 'index.html')
@@ -737,14 +832,24 @@ wss.on('connection', (ws, req) => {
           break
         }
 
-        // Concurrency lock
-        if (currentSession.isProcessing) {
-          ws.send(JSON.stringify({ type: 'error', message: '현재 턴이 처리 중입니다' }))
+        const { gmText, targetLabel, targetIds } = msg
+        const sess = currentSession
+        const queuedTurn: QueuedTurn = {
+          gmText,
+          targetLabel: targetLabel ?? '',
+          targetIds: targetIds ?? [],
+        }
+
+        if (sess.isProcessing) {
+          // Queue the turn instead of dropping it
+          sess.turnQueue.push(queuedTurn)
+          broadcast(sess, {
+            type: 'queue_update',
+            remaining: sess.turnQueue.length,
+          })
           break
         }
 
-        const { gmText, targetLabel, targetIds } = msg
-        const sess = currentSession
         sess.isProcessing = true
 
         // Add GM message to chat log
@@ -758,17 +863,21 @@ wss.on('connection', (ws, req) => {
         sess.chatLog.push(gmMsg)
         broadcast(sess, { type: 'gm_message', message: gmMsg })
 
-        // Run AI turns sequentially
+        // Run first turn (sendTurnComplete=false — drainTurnQueue handles turn_complete)
         try {
           const targets = (targetIds && targetIds.length > 0)
             ? targetIds
             : sess.turnOrder
-          await runTurn(sess, gmText, targetLabel ?? '', targets, [])
+          await runTurn(sess, gmText, targetLabel ?? '', targets, [], false)
         } catch (err: any) {
           broadcast(sess, { type: 'error', message: err.message })
-        } finally {
-          sess.isProcessing = false
         }
+
+        // Drain queued turns then send turn_complete and clear isProcessing
+        drainTurnQueue(sess).catch(err => {
+          broadcast(sess, { type: 'error', message: err.message })
+          sess.isProcessing = false
+        })
         break
       }
 

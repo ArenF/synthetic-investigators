@@ -44,7 +44,7 @@ function chipHover(hoverColor: string, disabled: boolean) {
 }
 
 export default function GmInput() {
-  const { ws, wsReady, isProcessingTurn, characters, turnOrder, setTurnOrder, pendingAttempt, setPendingAttempt } = useStore()
+  const { ws, wsReady, isProcessingTurn, turnQueueSize, characters, turnOrder, setTurnOrder, pendingAttempt, setPendingAttempt } = useStore()
   const [text, setText] = useState('')
   const [targetMode, setTargetMode] = useState<'all' | string>('all')
   const [showActionModal, setShowActionModal] = useState(false)
@@ -88,7 +88,7 @@ export default function GmInput() {
 
   function sendTurn() {
     if (!ws || ws.readyState !== WebSocket.OPEN) return
-    if (!text.trim() || isProcessingTurn) return
+    if (!text.trim()) return
     ws.send(JSON.stringify({
       type: 'send_turn',
       gmText: text.trim(),
@@ -113,7 +113,7 @@ export default function GmInput() {
     }
   }
 
-  const canSend = wsReady && !!text.trim() && !isProcessingTurn
+  const canSend = wsReady && !!text.trim()
 
   return (
     <>
@@ -177,9 +177,14 @@ export default function GmInput() {
           )}
 
           {/* Status indicator */}
-          {isProcessingTurn && (
+          {isProcessingTurn && turnQueueSize === 0 && (
             <span style={{ fontSize: '0.7rem', color: '#fbbf24', marginLeft: 'auto' }}>
               ● AI 응답 중...
+            </span>
+          )}
+          {isProcessingTurn && turnQueueSize > 0 && (
+            <span style={{ fontSize: '0.7rem', color: '#fb923c', marginLeft: 'auto' }}>
+              ● AI 응답 중 (대기 {turnQueueSize}턴)
             </span>
           )}
           {!wsReady && (
@@ -229,16 +234,16 @@ export default function GmInput() {
             value={text}
             onChange={e => setText(e.target.value)}
             onKeyDown={handleKeyDown}
-            disabled={isProcessingTurn || !wsReady}
+            disabled={!wsReady}
             placeholder={
-              isProcessingTurn ? 'AI 응답 대기 중...'
-              : !wsReady ? '서버 연결 대기 중...'
+              !wsReady ? '서버 연결 대기 중...'
+              : isProcessingTurn ? '장면을 입력하세요... (AI 응답 중에도 큐에 추가됩니다)'
               : '장면을 입력하세요... (Enter로 전송)'
             }
             style={{
               flex: 1, background: 'none', border: 'none', outline: 'none',
               fontSize: '0.875rem', color: 'var(--text-primary)',
-              opacity: (isProcessingTurn || !wsReady) ? 0.5 : 1,
+              opacity: !wsReady ? 0.5 : 1,
             }}
           />
         </div>

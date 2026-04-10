@@ -8,16 +8,8 @@ const COC_SKILLS = [
   '말돌리기', '수영', '등반', '점프', '자물쇠따기', '전기수리', '기계수리', '컴퓨터',
 ]
 
-const MODEL_OPTIONS = [
-  { provider: 'claude', model: 'claude-opus-4-5' },
-  { provider: 'claude', model: 'claude-sonnet-4-5' },
-  { provider: 'claude', model: 'claude-haiku-3-5' },
-  { provider: 'gemini', model: 'gemini-2.0-flash' },
-  { provider: 'gemini', model: 'gemini-1.5-pro' },
-  { provider: 'openai', model: 'gpt-4o' },
-  { provider: 'openai', model: 'gpt-4o-mini' },
-  { provider: 'ollama', model: 'llama3.2' },
-]
+const PROVIDERS = ['claude', 'gemini', 'openai', 'ollama'] as const
+type Provider = typeof PROVIDERS[number]
 
 type TabKey = 'basic' | 'stats' | 'skills' | 'backstory' | 'ai'
 
@@ -82,11 +74,16 @@ export default function CharacterEditor() {
   const [customSkill, setCustomSkill] = useState('')
   const [customSkillVal, setCustomSkillVal] = useState(0)
   const [activeTab, setActiveTab] = useState<TabKey>('basic')
+  const [availableModels, setAvailableModels] = useState<Record<string, string[]>>({})
 
   useEffect(() => {
     fetch('/api/characters')
       .then(r => r.json())
       .then((list: any[]) => setSavedList(list.map(c => c.id)))
+      .catch(() => {})
+    fetch('/api/models')
+      .then(r => r.json())
+      .then(data => setAvailableModels(data))
       .catch(() => {})
   }, [])
 
@@ -389,25 +386,27 @@ export default function CharacterEditor() {
         {activeTab === 'ai' && (
           <section className="rounded-xl p-4" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
             <h2 className="border-l-2 pl-3 font-semibold mb-3 text-sm uppercase tracking-wide" style={{ borderColor: 'var(--teal)', color: 'var(--text-muted)' }}>AI 모델 설정</h2>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              {/* Provider */}
               <div>
-                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>모델</label>
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>프로바이더</label>
                 <select
-                  value={`${char.modelConfig.provider}/${char.modelConfig.model}`}
+                  value={char.modelConfig.provider}
                   onChange={e => {
-                    const [provider, model] = e.target.value.split('/')
+                    const provider = e.target.value
+                    const first = availableModels[provider]?.[0] ?? ''
                     setField('modelConfig.provider', provider)
-                    setField('modelConfig.model', model)
+                    setField('modelConfig.model', first)
                   }}
                   className="w-full text-sm"
                 >
-                  {MODEL_OPTIONS.map(m => (
-                    <option key={`${m.provider}/${m.model}`} value={`${m.provider}/${m.model}`}>
-                      {m.provider} / {m.model}
-                    </option>
+                  {PROVIDERS.map(p => (
+                    <option key={p} value={p}>{p}</option>
                   ))}
                 </select>
               </div>
+
+              {/* Temperature */}
               <div>
                 <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Temperature</label>
                 <input
@@ -420,6 +419,61 @@ export default function CharacterEditor() {
                   className="w-full text-sm"
                 />
               </div>
+            </div>
+
+            {/* Model name — free text + datalist suggestions */}
+            <div>
+              <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>
+                모델
+                {char.modelConfig.provider === 'ollama' && availableModels.ollama?.length === 0 && (
+                  <span style={{ color: '#fb923c', marginLeft: '0.5rem' }}>
+                    (Ollama 연결 안됨 — 직접 입력)
+                  </span>
+                )}
+              </label>
+              <datalist id="model-suggestions">
+                {(availableModels[char.modelConfig.provider] ?? []).map(m => (
+                  <option key={m} value={m} />
+                ))}
+              </datalist>
+              <input
+                type="text"
+                list="model-suggestions"
+                value={char.modelConfig.model}
+                onChange={e => setField('modelConfig.model', e.target.value)}
+                placeholder={`모델 이름 입력 (예: ${
+                  char.modelConfig.provider === 'claude' ? 'claude-sonnet-4-6'
+                  : char.modelConfig.provider === 'gemini' ? 'gemini-2.0-flash'
+                  : char.modelConfig.provider === 'openai' ? 'gpt-4o'
+                  : 'qwen3:14b'
+                })`}
+                className="w-full text-sm"
+                autoComplete="off"
+              />
+              {/* Show available models as chips for quick selection */}
+              {(availableModels[char.modelConfig.provider]?.length ?? 0) > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginTop: '0.5rem' }}>
+                  {availableModels[char.modelConfig.provider].map(m => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setField('modelConfig.model', m)}
+                      style={{
+                        padding: '2px 10px',
+                        borderRadius: '999px',
+                        fontSize: '0.65rem',
+                        border: `1px solid ${char.modelConfig.model === m ? 'var(--teal)' : 'var(--bg-border)'}`,
+                        backgroundColor: char.modelConfig.model === m ? 'rgba(20,184,166,0.15)' : 'var(--bg-elevated)',
+                        color: char.modelConfig.model === m ? 'var(--teal)' : 'var(--text-muted)',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </section>
         )}

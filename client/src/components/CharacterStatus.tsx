@@ -66,7 +66,7 @@ function CharCard({ char }: { char: CharacterState }) {
           {!char.indefiniteInsanity && char.temporaryInsanity && <span style={{ fontSize: '0.58rem', color: '#fbbf24', backgroundColor: 'rgba(251,191,36,0.1)', padding: '1px 5px', borderRadius: '999px' }}>불안정</span>}
         </div>
         <div style={{ fontSize: '0.62rem', color: 'var(--teal)', opacity: 0.8, marginTop: '1px' }}>
-          {char.provider} · {char.model.split('-').slice(0, 2).join('-')}
+          {char.provider} · {char.model.length > 18 ? char.model.slice(0, 16) + '…' : char.model}
         </div>
       </div>
 

@@ -110,6 +110,7 @@ export interface AppState {
   turnOrder: string[]
   chatMessages: ChatMessage[]
   isProcessingTurn: boolean
+  turnQueueSize: number
   npcs: NPC[]
 
   // WebSocket
@@ -141,6 +142,7 @@ export interface AppState {
   setMessages: (msgs: ChatMessage[]) => void
   updateMessage: (id: string, update: Partial<ChatMessage>) => void
   setProcessing: (v: boolean) => void
+  setTurnQueueSize: (size: number) => void
   setNpcs: (npcs: NPC[]) => void
   setWs: (ws: WebSocket | null) => void
   setWsReady: (ready: boolean) => void
@@ -161,6 +163,7 @@ export const useStore = create<AppState>((set) => ({
   turnOrder: [],
   chatMessages: [],
   isProcessingTurn: false,
+  turnQueueSize: 0,
   npcs: [],
   ws: null,
   wsReady: false,
@@ -181,6 +184,7 @@ export const useStore = create<AppState>((set) => ({
     chatMessages: s.chatMessages.map(m => m.id === id ? { ...m, ...update } : m),
   })),
   setProcessing: (v) => set({ isProcessingTurn: v }),
+  setTurnQueueSize: (size) => set({ turnQueueSize: size }),
   setNpcs: (npcs) => set({ npcs }),
   setWs: (ws) => set({ ws }),
   setWsReady: (ready) => set({ wsReady: ready }),
@@ -199,6 +203,7 @@ export const useStore = create<AppState>((set) => ({
       turnOrder: [],
       chatMessages: [],
       isProcessingTurn: false,
+      turnQueueSize: 0,
       npcs: [],
       ws: null,
       wsReady: false,

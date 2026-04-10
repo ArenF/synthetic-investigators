@@ -20,6 +20,7 @@ export default function App() {
     setMessages,
     updateMessage,
     setProcessing,
+    setTurnQueueSize,
     setWs,
     setWsReady,
     setPendingSetup,
@@ -96,6 +97,26 @@ export default function App() {
         break
       }
 
+      case 'judgment_result':
+        addMessage({
+          id: `judgment-${Date.now()}`,
+          type: 'dice_result',
+          charId: msg.charId,
+          charName: msg.charName,
+          text: `${msg.charName} — ${msg.skill} 판정`,
+          timestamp: new Date().toISOString(),
+          done: true,
+          diceData: {
+            skill: msg.skill,
+            difficulty: msg.difficulty,
+            roll: msg.roll,
+            target: msg.target,
+            outcome: msg.outcome,
+            resultText: msg.outcomeDesc,
+          },
+        })
+        break
+
       case 'dice_result':
         addMessage({
           id: `dice-${Date.now()}`,
@@ -122,6 +143,10 @@ export default function App() {
 
       case 'mode_changed':
         store.setPlayMode(msg.mode)
+        break
+
+      case 'queue_update':
+        setTurnQueueSize(msg.remaining ?? 0)
         break
 
       case 'turn_complete':
