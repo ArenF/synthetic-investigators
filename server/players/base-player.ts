@@ -48,6 +48,7 @@ export abstract class BasePlayer {
    */
   async takeTurn(ctx: TurnContext): Promise<TurnRecord> {
     const userMessage = buildTurnMessage(ctx)
+    const historySnapshot = this.history.length
     this.history.push({ role: 'user', content: userMessage })
 
     const tag = `${this.character.modelConfig.provider.toUpperCase()}:${this.character.name}`
@@ -59,13 +60,14 @@ export abstract class BasePlayer {
     try {
       rawResponse = await this.chat(this.systemPrompt, this.history)
     } catch (err: any) {
+      // API 호출 실패 시 히스토리 롤백 (user 메시지 push 취소)
+      this.history.splice(historySnapshot)
       log.error(tag, `AI 호출 실패 (${Date.now() - t0}ms): ${err.message}`)
       throw err
     }
     const elapsed = Date.now() - t0
     log.ok(tag, `응답 수신 (${elapsed}ms) — ${rawResponse.length}자`)
     log.ai(tag, `응답 미리보기: ${rawResponse.slice(0, 150).replace(/\n/g, ' ')}${rawResponse.length > 150 ? '...' : ''}`)
-
     this.history.push({ role: 'assistant', content: rawResponse })
 
     // Sliding window: keep only the last 30 messages (15 turns)

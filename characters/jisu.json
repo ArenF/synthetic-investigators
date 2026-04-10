@@ -6,22 +6,35 @@
   "occupation": "형사",
   "birthplace": "서울",
   "residence": "서울 마포구",
-
   "characteristics": {
-    "STR": 50, "CON": 55, "SIZ": 55, "DEX": 70,
-    "APP": 60, "INT": 80, "POW": 60, "EDU": 65
+    "STR": 50,
+    "CON": 55,
+    "SIZ": 55,
+    "DEX": 70,
+    "APP": 60,
+    "INT": 80,
+    "POW": 60,
+    "EDU": 65
   },
-
   "derived": {
-    "hp":   { "current": 11, "max": 11 },
-    "mp":   { "current": 12, "max": 12 },
-    "san":  { "current": 60, "starting": 60, "max": 99 },
+    "hp": {
+      "current": 11,
+      "max": 11
+    },
+    "mp": {
+      "current": 12,
+      "max": 12
+    },
+    "san": {
+      "current": 60,
+      "starting": 60,
+      "max": 99
+    },
     "luck": 55,
     "build": 0,
     "moveRate": 8,
     "damageBonus": "0"
   },
-
   "skills": {
     "흔적발견": 60,
     "도서관이용": 55,
@@ -34,7 +47,6 @@
     "청취": 50,
     "회피": 35
   },
-
   "backstory": {
     "personalDescription": "날카로운 눈매와 단정한 단발. 항상 관찰하는 듯한 시선. 감정을 잘 드러내지 않는 무표정한 얼굴.",
     "ideology": "진실은 반드시 논리적으로 설명된다. 설명할 수 없는 것은 아직 이해하지 못한 것일 뿐이다.",
@@ -60,9 +72,16 @@
     "arcaneTomesSpells": "",
     "encountersWithStrangeEntities": "10년 전 파트너 사망 현장에서 목격한 '그것' — 공식 보고서에는 기록하지 않았다."
   },
-
   "equipment": {
-    "items": ["38구경 리볼버", "수갑", "메모장과 펜", "손전등", "경찰 배지", "휴대폰", "예비 탄약 (6발)"],
+    "items": [
+      "38구경 리볼버",
+      "수갑",
+      "메모장과 펜",
+      "손전등",
+      "경찰 배지",
+      "휴대폰",
+      "예비 탄약 (6발)"
+    ],
     "weapons": [
       {
         "name": "38구경 리볼버",
@@ -84,10 +103,9 @@
     "assets": "월세 아파트, 중고차",
     "spendingLevel": "보통"
   },
-
   "modelConfig": {
     "provider": "claude",
-    "model": "claude-opus-4-5",
+    "model": "claude-sonnet-4-5",
     "temperature": 0.75
   }
 }

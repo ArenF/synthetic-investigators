@@ -32,7 +32,7 @@ export class OllamaPlayer extends BasePlayer {
       })
 
       const content = response.message?.content
-      if (!content) throw new Error('No content in Ollama response')
+      if (!content) throw new Error(`Ollama 응답에 content 없음 (model: ${model})`)
       log.ok('OLLAMA', `응답 수신 — ${content.length}자`)
       return content
     } catch (err: any) {

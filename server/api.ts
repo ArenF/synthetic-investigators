@@ -117,7 +117,13 @@ const sessions = new Map<string, GameSession>()
 // Helper: timeout wrapper for AI turns
 // ─────────────────────────────────────────
 
-const TURN_TIMEOUT_MS = 30_000
+const TURN_TIMEOUT_MS: Record<string, number> = {
+  claude: 30_000,
+  gemini: 30_000,
+  openai: 30_000,
+  ollama: 180_000,  // 로컬 모델 로딩 + 생성 시간 고려 (3분)
+}
+const DEFAULT_TURN_TIMEOUT_MS = 30_000
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout>
@@ -337,7 +343,8 @@ async function runTurn(
       done: false,
     })
 
-    const record = await withTimeout(player.takeTurn(ctx), TURN_TIMEOUT_MS, char.name)
+    const turnTimeout = TURN_TIMEOUT_MS[player.provider] ?? DEFAULT_TURN_TIMEOUT_MS
+    const record = await withTimeout(player.takeTurn(ctx), turnTimeout, char.name)
 
     // Fix statsBefore/statsAfter: use the snapshot we captured before the turn
     const beforeSnap = statsBefore.get(charId)
