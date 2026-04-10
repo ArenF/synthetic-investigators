@@ -95,7 +95,17 @@ AI [시도] → attempt_declared → AttemptReviewModal (풀 에디터)
 - `AttemptReviewModal`: 동일 처리
 - AI 자동 감지(`detectSkillFromText`)는 값과 무관하게 동작 (GM이 최종 결정하므로)
 
-**4. 현재 `getCharacterStates()`에서 `char.equipment.items` 사용**
+**4. 턴 플로우 구조 개편 (미정 / 설계 필요)**
+
+현재 문제: GM이 매 턴마다 타겟 캐릭터를 직접 지정해야 해서 세션 진행이 복잡해질 수 있음
+
+방향성 (미정):
+- 턴 단위로 각 캐릭터의 행동을 명확하게 구분하는 구조
+- GM이 "전체 턴 진행" / "특정 캐릭터 턴" / "자유 행동" 등을 쉽게 선택할 수 있도록
+- 턴 순서(현재 드래그 앤 드롭)와 연계해 자동으로 다음 캐릭터로 넘어가는 옵션 고려
+- 설계 확정 후 구현 예정
+
+**5. 현재 `getCharacterStates()`에서 `char.equipment.items` 사용**
 - 세션 중 변경된 아이템 반영 안 됨 → `s.currentItems` 사용으로 변경 필요
 
 ---
