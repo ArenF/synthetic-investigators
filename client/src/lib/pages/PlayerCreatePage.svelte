@@ -3,23 +3,29 @@
 	import NameTagRadioInput from './../components/NameTagRadioInput.svelte';
 	import NameTagInput from './../components/NameTagInput.svelte';
 	import FlexibleInputList from './../components/FlexibleInputList.svelte';
+    import AISelectableInput from '../components/AISelectableInput.svelte';
 
 </script>
 
 <main>
     <form action="method" class="player_create_page">
+        <div class="investigator_info">
+            <NameTagInput
+                name={"이름"}
+                placeholder={"ex) 이지수, 한민철"}
+            />
+            <AISelectableInput
+                name={"플레이어"}
+            />
+            <NameTagInput
+                name={"나이"}
+                placeholder={"ex) 26"}
+            />
+            <NameTagInput
+                name={"생일"}
+            />
+        </div>
 
-        <NameTagInput
-            name={"이름"}
-            placeholder={"이름을 입력하세요."}
-        />
-        <NameTagInput
-            name={"나이"}
-            placeholder={"ex) 26"}
-        />
-        <NameTagInput
-            name={"생일"}
-        />
         <NameTagRadioInput
             name={"성별"}
             radios={[
@@ -77,6 +83,8 @@
     align-items: center;
 }
 
+.investigator_info {
 
+}
 
 </style> 
