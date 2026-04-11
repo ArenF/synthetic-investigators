@@ -124,24 +124,7 @@ const sessions = new Map<string, GameSession>()
 // Helper: timeout wrapper for AI turns
 // ─────────────────────────────────────────
 
-const TURN_TIMEOUT_MS: Record<string, number> = {
-  claude: 90_000,   // Extended Thinking 포함 (최대 ~60s)
-  gemini: 90_000,   // 사고 트리 3단계 × 30s
-  openai: 30_000,
-  ollama: 180_000,  // 로컬 모델 로딩 + 생성 시간 고려 (3분)
-}
-const DEFAULT_TURN_TIMEOUT_MS = 30_000
-
-function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
-  let timer: ReturnType<typeof setTimeout>
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(
-      () => reject(new Error(`AI 턴 타임아웃 (${ms / 1000}초 초과): ${label}`)),
-      ms,
-    )
-  })
-  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer))
-}
+// 타임아웃 없음 — 사고 트리 추론에 소요되는 시간은 문제 없음
 
 // ─────────────────────────────────────────
 // Helper: load character JSON
@@ -352,8 +335,7 @@ async function runTurn(
       done: false,
     })
 
-    const turnTimeout = TURN_TIMEOUT_MS[player.provider] ?? DEFAULT_TURN_TIMEOUT_MS
-    const record = await withTimeout(player.thinkingTakeTurn(ctx), turnTimeout, char.name)
+    const record = await player.thinkingTakeTurn(ctx)
 
     // Fix statsBefore/statsAfter: use the snapshot we captured before the turn
     const beforeSnap = statsBefore.get(charId)
