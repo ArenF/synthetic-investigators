@@ -4,7 +4,10 @@
  */
 
 import type { CoCCharacter, TurnContext, TurnRecord, PlayMode } from '../characters/types.js'
-import { generateSystemPrompt, buildTurnMessage, parseResponse } from '../characters/prompt-generator.js'
+import {
+  generateSystemPrompt, buildTurnMessage, parseResponse,
+  buildInnerStageInstruction, buildAttemptStageInstruction, buildActionStageInstruction,
+} from '../characters/prompt-generator.js'
 import { log } from '../game/dev-logger.js'
 
 export interface Message {
@@ -89,6 +92,82 @@ export abstract class BasePlayer {
       statsBefore: { hp: s.hp, san: s.san, luck: s.luck },
       statsAfter: { hp: s.hp, san: s.san, luck: s.luck },
       response: { ...parsed, rawText: rawResponse },
+    }
+  }
+
+  /**
+   * 사고 트리 방식으로 턴을 수행.
+   * [내면] → [시도] → [행동] 순서로 3번 호출하여 각 단계가 이전 단계를 뿌리로 삼아 깊어짐.
+   * ClaudePlayer는 Extended Thinking으로 오버라이드하여 1회 호출로 처리.
+   */
+  async thinkingTakeTurn(ctx: TurnContext): Promise<TurnRecord> {
+    const baseMessage = buildTurnMessage(ctx)
+    const historySnapshot = this.history.length
+    const tag = `${this.character.modelConfig.provider.toUpperCase()}:${this.character.name}[TREE]`
+
+    log.ai(tag, `턴 ${ctx.turnNumber} 사고 트리 시작 — 모델: ${this.character.modelConfig.model}`)
+    log.ai(tag, `GM 메시지: ${ctx.gmMessage.slice(0, 120).replace(/\n/g, ' ')}${ctx.gmMessage.length > 120 ? '...' : ''}`)
+
+    const t0 = Date.now()
+    let innerText = ''
+    let attemptText = ''
+    let actionText = ''
+
+    try {
+      // ── Stage 1: 내면 (감정 + 즉각적 생각) ──
+      this.history.push({ role: 'user', content: `${baseMessage}\n\n${buildInnerStageInstruction()}` })
+      innerText = await this.chat(this.systemPrompt, this.history)
+      this.history.push({ role: 'assistant', content: innerText })
+      log.ai(tag, `[내면] 완료 (${Date.now() - t0}ms) — ${innerText.length}자`)
+
+      // ── Stage 2: 시도 (상황 직시 + 행동 판단) ──
+      this.history.push({ role: 'user', content: buildAttemptStageInstruction() })
+      attemptText = await this.chat(this.systemPrompt, this.history)
+      this.history.push({ role: 'assistant', content: attemptText })
+      log.ai(tag, `[시도] 완료 (${Date.now() - t0}ms) — ${attemptText.length}자`)
+
+      // ── Stage 3: 행동 (실제 행동 + 묘사) ──
+      this.history.push({ role: 'user', content: buildActionStageInstruction() })
+      actionText = await this.chat(this.systemPrompt, this.history)
+      log.ai(tag, `[행동] 완료 (${Date.now() - t0}ms) — ${actionText.length}자`)
+
+    } catch (err: any) {
+      // 실패 시 전체 스테이징 히스토리 롤백
+      this.history.splice(historySnapshot)
+      log.error(tag, `사고 트리 실패 (${Date.now() - t0}ms): ${err.message}`)
+      throw err
+    }
+
+    // 세 단계 합성 — 최종 응답
+    const fullResponse = [innerText, attemptText, actionText].filter(Boolean).join('\n')
+    log.ok(tag, `사고 트리 완료 (${Date.now() - t0}ms) — 총 ${fullResponse.length}자`)
+    log.ai(tag, `응답 미리보기: ${fullResponse.slice(0, 150).replace(/\n/g, ' ')}${fullResponse.length > 150 ? '...' : ''}`)
+
+    // 히스토리 정리: 스테이징 메시지를 단일 턴으로 교체
+    // (다음 턴에서 모델이 중간 단계 프롬프트를 보지 않도록)
+    this.history.splice(historySnapshot)
+    this.history.push({ role: 'user', content: baseMessage })
+    this.history.push({ role: 'assistant', content: fullResponse })
+
+    // 슬라이딩 윈도우 (30개 = 15턴)
+    if (this.history.length > 30) {
+      this.history = this.history.slice(this.history.length - 30)
+    }
+
+    const parsed = parseResponse(fullResponse)
+    const s = ctx.sessionState
+
+    return {
+      turnNumber: ctx.turnNumber,
+      timestamp: new Date().toISOString(),
+      characterId: this.character.id,
+      characterName: this.character.name,
+      modelProvider: this.character.modelConfig.provider,
+      modelName: this.character.modelConfig.model,
+      gmInput: ctx.gmMessage,
+      statsBefore: { hp: s.hp, san: s.san, luck: s.luck },
+      statsAfter: { hp: s.hp, san: s.san, luck: s.luck },
+      response: { ...parsed, rawText: fullResponse },
     }
   }
 

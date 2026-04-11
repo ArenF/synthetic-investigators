@@ -125,8 +125,8 @@ const sessions = new Map<string, GameSession>()
 // ─────────────────────────────────────────
 
 const TURN_TIMEOUT_MS: Record<string, number> = {
-  claude: 30_000,
-  gemini: 30_000,
+  claude: 90_000,   // Extended Thinking 포함 (최대 ~60s)
+  gemini: 90_000,   // 사고 트리 3단계 × 30s
   openai: 30_000,
   ollama: 180_000,  // 로컬 모델 로딩 + 생성 시간 고려 (3분)
 }
@@ -353,7 +353,7 @@ async function runTurn(
     })
 
     const turnTimeout = TURN_TIMEOUT_MS[player.provider] ?? DEFAULT_TURN_TIMEOUT_MS
-    const record = await withTimeout(player.takeTurn(ctx), turnTimeout, char.name)
+    const record = await withTimeout(player.thinkingTakeTurn(ctx), turnTimeout, char.name)
 
     // Fix statsBefore/statsAfter: use the snapshot we captured before the turn
     const beforeSnap = statsBefore.get(charId)
