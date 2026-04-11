@@ -77,12 +77,6 @@
     align-items: center;
 }
 
-.number_form {
-    display: flex;
-    flex-wrap: wrap;
-    flex-direction: row;
-    max-width: 380px;
-}
 
 
 </style> 
