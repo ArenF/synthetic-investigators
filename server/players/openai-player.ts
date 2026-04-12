@@ -1,12 +1,12 @@
 import OpenAI from 'openai'
 import { BasePlayer, type Message } from './base-player.js'
-import type { CoCCharacter } from '../characters/types.js'
+import type { CoCCharacter, PlayMode } from '../characters/types.js'
 
 export class OpenAIPlayer extends BasePlayer {
   private client: OpenAI
 
-  constructor(character: CoCCharacter) {
-    super(character)
+  constructor(character: CoCCharacter, mode: PlayMode = 'immersion') {
+    super(character, mode)
     const apiKey = process.env.OPENAI_API_KEY
     if (!apiKey) throw new Error('OPENAI_API_KEY가 설정되지 않았습니다. .env 파일을 확인하세요.')
     this.client = new OpenAI({ apiKey })

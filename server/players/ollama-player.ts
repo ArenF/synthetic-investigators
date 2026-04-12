@@ -1,14 +1,14 @@
 import { Ollama } from 'ollama'
 import { BasePlayer, type Message } from './base-player.js'
-import type { CoCCharacter } from '../characters/types.js'
+import type { CoCCharacter, PlayMode } from '../characters/types.js'
 import { log } from '../game/dev-logger.js'
 
 export class OllamaPlayer extends BasePlayer {
   private client: Ollama
   private host: string
 
-  constructor(character: CoCCharacter) {
-    super(character)
+  constructor(character: CoCCharacter, mode: PlayMode = 'immersion') {
+    super(character, mode)
     this.host = process.env.OLLAMA_HOST ?? 'http://localhost:11434'
     this.client = new Ollama({ host: this.host })
     log.info('OLLAMA', `플레이어 생성 — ${character.name}, 모델: ${character.modelConfig.model}, 호스트: ${this.host}`)

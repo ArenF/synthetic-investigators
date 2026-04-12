@@ -1,12 +1,12 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { BasePlayer, type Message } from './base-player.js'
-import type { CoCCharacter } from '../characters/types.js'
+import type { CoCCharacter, PlayMode } from '../characters/types.js'
 
 export class GeminiPlayer extends BasePlayer {
   private client: GoogleGenerativeAI
 
-  constructor(character: CoCCharacter) {
-    super(character)
+  constructor(character: CoCCharacter, mode: PlayMode = 'immersion') {
+    super(character, mode)
     this.client = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY ?? '')
   }
 

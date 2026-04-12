@@ -219,7 +219,7 @@ function createSession(sessionId: string, setup: SessionSetupData): GameSession 
   for (const charId of setup.characterIds) {
     const char = loadCharacter(charId)
     characters.set(char.id, char)
-    players.set(char.id, createPlayer(char))
+    players.set(char.id, createPlayer(char, setup.playMode ?? 'immersion'))
     state.addCharacter(char)
   }
 
