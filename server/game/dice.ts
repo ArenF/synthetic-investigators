@@ -19,7 +19,11 @@ export function rollDice(expression: string): number {
   const match = expression.match(/^(\d+)d(\d+)([+-]\d+)?$/)
   if (!match) {
     const fixed = parseInt(expression)
-    return isNaN(fixed) ? 0 : fixed
+    if (isNaN(fixed)) {
+      console.warn(`[rollDice] 잘못된 표현식: "${expression}" — 0 반환`)
+      return 0
+    }
+    return fixed
   }
   const [, count, sides, modifier] = match
   let total = 0
@@ -92,11 +96,11 @@ export function outcomeLabel(outcome: string): string {
 }
 
 /** Check if an outcome is a success tier */
-export function isSuccess(outcome: string): boolean {
+export function isSuccess(outcome: DiceResult['outcome']): boolean {
   return outcome === 'extreme_success' || outcome === 'hard_success' || outcome === 'regular_success'
 }
 
 /** Check if an outcome is a failure tier */
-export function isFailure(outcome: string): boolean {
+export function isFailure(outcome: DiceResult['outcome']): boolean {
   return outcome === 'regular_failure' || outcome === 'bad_failure' || outcome === 'fumble' || outcome === 'failure'
 }

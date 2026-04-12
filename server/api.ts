@@ -261,6 +261,25 @@ function createSession(sessionId: string, setup: SessionSetupData): GameSession 
 }
 
 // ─────────────────────────────────────────
+// Helper: build accumulated GM context for current turn
+// ─────────────────────────────────────────
+
+function buildTurnContext(
+  gmText: string,
+  diceContext: string,
+  previousResponses: { charName: string; text: string }[],
+): string {
+  let ctx = diceContext ? `${diceContext}\n\n${gmText}` : gmText
+  if (previousResponses.length > 0) {
+    ctx += '\n\n[이번 턴 다른 탐사자들의 행동]\n'
+    for (const prev of previousResponses) {
+      ctx += `\n${prev.charName}: ${prev.text}`
+    }
+  }
+  return ctx
+}
+
+// ─────────────────────────────────────────
 // Run turn: send GM message to AIs sequentially
 // ─────────────────────────────────────────
 
@@ -283,15 +302,7 @@ async function runTurn(
   const diceContext = pendingDice
     .map(r => `[판정 결과 — ${r.charName} · ${r.skill}: ${r.outcome}] ${r.resultText}`.trim())
     .join('\n')
-  let accumulatedContext = diceContext ? `${diceContext}\n\n${gmText}` : gmText
-
-  // Build accumulated context from previous AI responses in this turn
-  if (previousResponses.length > 0) {
-    accumulatedContext += '\n\n[이번 턴 다른 탐사자들의 행동]\n'
-    for (const prev of previousResponses) {
-      accumulatedContext += `\n${prev.charName}: ${prev.text}`
-    }
-  }
+  let accumulatedContext = buildTurnContext(gmText, diceContext, previousResponses)
 
   for (const charId of targetIds) {
     const player = players.get(charId)
@@ -373,12 +384,9 @@ async function runTurn(
       })
     }
 
-    // Add to accumulated context for next AI (preserve diceContext for all characters)
+    // Update accumulated context for the next AI in this turn
     previousResponses.push({ charName: char.name, text: record.response.action })
-    accumulatedContext = (diceContext ? `${diceContext}\n\n` : '') + gmText + '\n\n[이번 턴 다른 탐사자들의 행동]\n'
-    for (const prev of previousResponses) {
-      accumulatedContext += `\n${prev.charName}: ${prev.text}`
-    }
+    accumulatedContext = buildTurnContext(gmText, diceContext, previousResponses)
 
     // Save turn record
     scenario.addTurn(record)

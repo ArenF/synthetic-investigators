@@ -37,13 +37,15 @@ export interface JudgmentResult {
  * Map JudgmentOutcomes key by outcome tier
  */
 function getOutcomeForTier(outcomes: JudgmentOutcomes, tier: JudgmentOutcomeKey): Outcome | null {
+  // 성공 계열: 미정의 시 한 단계 낮은 성공으로 폴백 (extreme→hard→regular)
+  // 실패 계열: 미정의 시 한 단계 낮은 실패로 폴백 (fumble→bad→regular)
   switch (tier) {
-    case 'extreme_success': return outcomes.extremeSuccess ?? null
-    case 'hard_success':    return outcomes.hardSuccess ?? outcomes.extremeSuccess ?? null
+    case 'extreme_success': return outcomes.extremeSuccess ?? outcomes.hardSuccess ?? outcomes.regularSuccess ?? null
+    case 'hard_success':    return outcomes.hardSuccess ?? outcomes.regularSuccess ?? null
     case 'regular_success': return outcomes.regularSuccess ?? null
     case 'regular_failure': return outcomes.regularFailure ?? null
     case 'bad_failure':     return outcomes.badFailure ?? outcomes.regularFailure ?? null
-    case 'fumble':          return outcomes.fumble ?? outcomes.badFailure ?? null
+    case 'fumble':          return outcomes.fumble ?? outcomes.badFailure ?? outcomes.regularFailure ?? null
   }
 }
 
@@ -81,33 +83,8 @@ export function performJudgment(
     }
   }
 
-  const naturalLanguage = judgmentToNaturalLanguage({
-    charId,
-    charName: char.name,
-    skill,
-    difficulty,
-    roll,
-    target,
-    baseSkill,
-    outcome: tier,
-    appliedOutcome,
-    effectsApplied,
-    naturalLanguage: '',
-  })
-
-  return {
-    charId,
-    charName: char.name,
-    skill,
-    difficulty,
-    roll,
-    target,
-    baseSkill,
-    outcome: tier,
-    appliedOutcome,
-    effectsApplied,
-    naturalLanguage,
-  }
+  const partial = { charId, charName: char.name, skill, difficulty, roll, target, baseSkill, outcome: tier, appliedOutcome, effectsApplied }
+  return { ...partial, naturalLanguage: judgmentToNaturalLanguage({ ...partial, naturalLanguage: '' }) }
 }
 
 /** Render a judgment result as a natural-language string for the AI context */

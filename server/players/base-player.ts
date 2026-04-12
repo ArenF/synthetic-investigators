@@ -182,8 +182,11 @@ export abstract class BasePlayer {
    */
   injectOpeningBriefing(briefing: string): void {
     const context = `[시나리오 시작]\n${briefing}\n\n이 상황에서 당신의 캐릭터로서 행동을 시작하세요.`
+    const ack = this.playMode === 'game'
+      ? '캐릭터 시트 확인했습니다. 시작할 준비됐습니다.'
+      : '네, 상황을 파악했습니다. 준비됐습니다.'
     this.history.push({ role: 'user', content: context })
-    this.history.push({ role: 'assistant', content: '네, 상황을 파악했습니다. 준비됐습니다.' })
+    this.history.push({ role: 'assistant', content: ack })
   }
 
   /**

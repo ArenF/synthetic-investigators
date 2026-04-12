@@ -8,6 +8,15 @@
 import type { CoCCharacter, TurnContext, PlayMode } from './types.js'
 
 // ─────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────
+
+/** game 모드 → [OOC], immersion 모드 → [내면] */
+function getInnerTag(mode: PlayMode): 'OOC' | '내면' {
+  return mode === 'game' ? 'OOC' : '내면'
+}
+
+// ─────────────────────────────────────────
 // System Prompt Generator
 // ─────────────────────────────────────────
 
@@ -188,7 +197,7 @@ function getProviderFormatHints(provider: string): string {
 // ─────────────────────────────────────────
 
 export function buildSingleShotInstruction(mode: PlayMode, provider: string = ''): string {
-  const tag = mode === 'game' ? 'OOC' : '내면'
+  const tag = getInnerTag(mode)
   const tagDesc = mode === 'game'
     ? `캐릭터의 감정·생각·행동 의도를 분석하는 플레이어 시각 (친근한 말투)`
     : `지금 느끼는 감정, 생각, 두려움, 의심`
@@ -302,7 +311,7 @@ export function parseResponse(raw: string): {
  * mode에 따라 [내면] (immersion) 또는 [OOC] (game) 태그 사용
  */
 export function buildInnerStageInstruction(mode: PlayMode = 'immersion'): string {
-  const tag = mode === 'game' ? 'OOC' : '내면'
+  const tag = getInnerTag(mode)
   const desc = mode === 'game'
     ? `지금 상황에서 캐릭터의 감정·생각·행동 의도를 플레이어 시각으로 분석하세요. 친근한 말투로.`
     : `지금 이 순간 캐릭터가 느끼는 감정, 두려움, 의심, 생각을 1인칭으로 서술하세요.`
@@ -317,7 +326,7 @@ export function buildInnerStageInstruction(mode: PlayMode = 'immersion'): string
  * 이전 [내면]/[OOC]이 히스토리에 있는 상태에서 호출됨
  */
 export function buildAttemptStageInstruction(mode: PlayMode = 'immersion'): string {
-  const tag = mode === 'game' ? 'OOC' : '내면'
+  const tag = getInnerTag(mode)
   return `위 [${tag}]을 바탕으로 **[시도]** 만 작성하세요.
 • 역할: 기술 판정이 필요한 행동을 선언하는 단계
 • 형식: "나는 [기술명]을 시도한다"
@@ -330,7 +339,7 @@ export function buildAttemptStageInstruction(mode: PlayMode = 'immersion'): stri
  * 이전 [내면]/[OOC] + [시도]가 히스토리에 있는 상태에서 호출됨
  */
 export function buildActionStageInstruction(mode: PlayMode = 'immersion', provider: string = ''): string {
-  const tag = mode === 'game' ? 'OOC' : '내면'
+  const tag = getInnerTag(mode)
   const formatHint = getProviderFormatHints(provider)
   return `위 [${tag}]과 [시도]를 바탕으로 **[행동]** 만 작성하세요.
 • 역할: 캐릭터가 실제로 하는 말·동작·반응의 서사적 묘사
@@ -342,7 +351,7 @@ export function buildActionStageInstruction(mode: PlayMode = 'immersion', provid
  * Claude Extended Thinking용 — system prompt 끝에 붙이는 사고 트리 지침
  */
 export function buildThinkingTreeSystemSuffix(mode: PlayMode = 'immersion', provider: string = ''): string {
-  const tag = mode === 'game' ? 'OOC' : '내면'
+  const tag = getInnerTag(mode)
   const innerDesc = mode === 'game'
     ? `캐릭터의 감정·생각·행동 의도를 플레이어 시각으로 분석 (친근한 말투)`
     : `캐릭터가 지금 느끼는 감정, 두려움, 의심, 생각을 1인칭으로`
