@@ -99,43 +99,6 @@ export class ExperimentLogger {
     return flags
   }
 
-  /** Print a summary of experiment observations */
-  printAnalysis(): void {
-    console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-    console.log('🔬 실험 관찰 요약')
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
-
-    const byChar: Record<string, ExperimentObservation[]> = {}
-    for (const obs of this.observations) {
-      byChar[obs.character] = byChar[obs.character] ?? []
-      byChar[obs.character].push(obs)
-    }
-
-    for (const [name, obs] of Object.entries(byChar)) {
-      const totalSanLoss = obs.reduce((s, o) => s + Math.max(0, -o.sanChange), 0)
-      const flagCounts: Record<string, number> = {}
-      for (const o of obs) {
-        for (const f of o.behaviorFlags) {
-          flagCounts[f] = (flagCounts[f] ?? 0) + 1
-        }
-      }
-
-      console.log(`▶ ${name} (${obs[0]?.model ?? '?'})`)
-      console.log(`  총 SAN 손실: ${Math.abs(totalSanLoss)}`)
-      console.log(`  관찰된 플래그: ${Object.entries(flagCounts).map(([k, v]) => `${k}(${v})`).join(', ') || '없음'}`)
-
-      // Print inner thoughts with high san loss
-      const notable = obs.filter(o => o.sanChange <= -3 && o.inner)
-      if (notable.length > 0) {
-        console.log(`  주목할 [내면] 반응:`)
-        for (const n of notable.slice(0, 2)) {
-          console.log(`    턴 ${n.turnNumber}: ${n.inner?.slice(0, 100)}...`)
-        }
-      }
-      console.log()
-    }
-  }
-
   private save(): void {
     if (!existsSync(LOGS_DIR)) mkdirSync(LOGS_DIR, { recursive: true })
     const path = join(LOGS_DIR, `${this.scenarioId}-experiment.json`)
@@ -146,9 +109,13 @@ export class ExperimentLogger {
     const path = join(LOGS_DIR, `${this.scenarioId}-experiment.json`)
     if (existsSync(path)) {
       try {
-        this.observations = JSON.parse(readFileSync(path, 'utf-8'))
+        const parsed = JSON.parse(readFileSync(path, 'utf-8'))
+        this.observations = Array.isArray(parsed) ? parsed : []
+        if (!Array.isArray(parsed)) {
+          console.error(`실험 로그 구조 손상: ${path} — 빈 관찰 목록으로 시작`)
+        }
       } catch {
-        console.error(`Failed to parse experiment log: ${path}`)
+        console.error(`실험 로그 파싱 실패: ${path} — 빈 관찰 목록으로 시작`)
         this.observations = []
       }
     }

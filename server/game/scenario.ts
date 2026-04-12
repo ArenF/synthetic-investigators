@@ -67,9 +67,14 @@ export class ScenarioManager {
     const path = join(SCENARIOS_DIR, `${scenarioId}.json`)
     if (!existsSync(path)) return null
     try {
-      return JSON.parse(readFileSync(path, 'utf-8'))
+      const parsed = JSON.parse(readFileSync(path, 'utf-8'))
+      if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.turns)) {
+        console.error(`시나리오 파일 구조 손상: ${path} — 새 세션으로 시작`)
+        return null
+      }
+      return parsed as ScenarioSession
     } catch {
-      console.error(`Failed to parse scenario file: ${path}`)
+      console.error(`시나리오 파일 파싱 실패: ${path} — 새 세션으로 시작`)
       return null
     }
   }
@@ -91,11 +96,4 @@ export class ScenarioManager {
     appendFileSync(path, line + '\n', 'utf-8')
   }
 
-  /** Print a summary of all turns for GM review */
-  printSummary(): void {
-    console.log(`\n시나리오: ${this.session.scenarioName}`)
-    console.log(`   총 턴 수: ${this.session.turns.length}`)
-    console.log(`   시작: ${this.session.startedAt.slice(0, 16).replace('T', ' ')}`)
-    console.log(`   마지막 업데이트: ${this.session.lastUpdatedAt.slice(0, 16).replace('T', ' ')}\n`)
-  }
 }

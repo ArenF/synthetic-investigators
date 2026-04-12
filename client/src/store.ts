@@ -213,6 +213,7 @@ export const useStore = create<AppState>((set) => ({
       pendingSetup: null,
       playMode: 'game',
       pendingAttempts: [],
+      editingScenarioId: null,
     }
   }),
 }))
