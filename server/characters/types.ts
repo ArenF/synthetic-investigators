@@ -27,34 +27,66 @@ export interface DerivedStats {
 }
 
 export interface SkillSet {
-  // Combat
+  // 전투
   격투?: number
+  도검?: number
   사격?: number
+  소총?: number
+  투척?: number
   회피?: number
-  // Investigative
+  // 탐색 / 인지
   흔적발견?: number
   청취?: number
-  도서관이용?: number
-  역사?: number
-  오컬트?: number
-  // Social
+  추적?: number
+  // 대인 관계
   설득?: number
   위협?: number
   매혹?: number
+  언변?: number
   심리학?: number
-  // Practical
-  응급처치?: number
-  운전?: number
-  은신?: number
-  잠입?: number
-  // Academic
+  정신분석?: number
+  // 학술 / 지식
+  도서관이용?: number
+  역사?: number
+  오컬트?: number
+  크툴루신화?: number
+  고고학?: number
+  인류학?: number
+  자연사?: number
+  법률?: number
+  회계?: number
+  // 의학 / 과학
   의학?: number
+  응급처치?: number
   생물학?: number
   화학?: number
   물리학?: number
-  법률?: number
-  회계?: number
-  // Other (free-form)
+  지질학?: number
+  전자공학?: number
+  // 기술 / 수리
+  전기수리?: number
+  기계수리?: number
+  컴퓨터?: number
+  자물쇠따기?: number
+  운전?: number
+  항법?: number
+  조종?: number
+  승마?: number
+  // 신체
+  은신?: number
+  잠입?: number
+  수영?: number
+  등반?: number
+  점프?: number
+  야생생존?: number
+  // 예술 / 기타
+  '예술/공예'?: number
+  사진술?: number
+  변장?: number
+  동물조련?: number
+  손재주?: number
+  감정?: number
+  // 자유 형식 기술 (캐릭터별 특수 기술 등)
   [skill: string]: number | undefined
 }
 

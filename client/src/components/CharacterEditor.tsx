@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useStore } from '../store'
-
-const COC_SKILLS = [
-  '격투', '사격', '회피', '흔적발견', '청취', '도서관이용', '역사', '오컬트',
-  '설득', '위협', '매혹', '심리학', '응급처치', '운전', '은신', '잠입',
-  '의학', '생물학', '화학', '물리학', '법률', '회계', '예술', '사진술',
-  '말돌리기', '수영', '등반', '점프', '자물쇠따기', '전기수리', '기계수리', '컴퓨터',
-]
+import { COC_SKILLS } from '../constants/skills'
 
 const PROVIDERS = ['claude', 'gemini', 'openai', 'ollama'] as const
 type Provider = typeof PROVIDERS[number]
