@@ -58,6 +58,16 @@ function makeEmptyOutcomes(): Record<OutcomeTier, TierOutcome> {
 export default function ActionRequestModal({ onClose }: Props) {
   const { characters, ws } = useStore()
   const [targetId, setTargetId] = useState<string>('all')
+
+  // 특정 캐릭터 선택 시 해당 캐릭터의 0값 기술 제외 (전체 선택 시 전체 목록 표시)
+  const visibleSkills = targetId === 'all'
+    ? COC_SKILLS
+    : (() => {
+        const char = characters.find(c => c.id === targetId)
+        if (!char) return COC_SKILLS
+        return COC_SKILLS.filter(s => (char.skills[s] ?? 0) > 0)
+      })()
+
   const [skill, setSkill] = useState(COC_SKILLS[0])
   const [customSkill, setCustomSkill] = useState('')
   const [difficulty, setDifficulty] = useState<Difficulty>('regular')
@@ -165,7 +175,20 @@ export default function ActionRequestModal({ onClose }: Props) {
           {/* Target */}
           <div className="mb-4">
             <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>대상</label>
-            <select value={targetId} onChange={e => setTargetId(e.target.value)} style={inputStyle}>
+            <select
+              value={targetId}
+              onChange={e => {
+                setTargetId(e.target.value)
+                setCustomSkill('')
+                const newTarget = e.target.value
+                const char = characters.find(c => c.id === newTarget)
+                if (char) {
+                  const firstNonZero = COC_SKILLS.find(s => (char.skills[s] ?? 0) > 0)
+                  if (firstNonZero) setSkill(firstNonZero)
+                }
+              }}
+              style={inputStyle}
+            >
               <option value="all">전체</option>
               {characters.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
@@ -182,9 +205,15 @@ export default function ActionRequestModal({ onClose }: Props) {
               disabled={!!customSkill.trim()}
               style={{ ...inputStyle, marginBottom: '0.375rem', opacity: customSkill.trim() ? 0.4 : 1 }}
             >
-              {COC_SKILLS.map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
+              {visibleSkills.map(s => {
+                const char = targetId !== 'all' ? characters.find(c => c.id === targetId) : null
+                const val = char ? (char.skills[s] ?? 0) : null
+                return (
+                  <option key={s} value={s}>
+                    {s}{val !== null ? ` (${val}%)` : ''}
+                  </option>
+                )
+              })}
             </select>
             <input
               type="text"

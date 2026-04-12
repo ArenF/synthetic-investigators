@@ -9,9 +9,18 @@ interface Props {
 }
 
 export default function AttemptReviewModal({ onClose }: Props) {
-  const { pendingAttempts, dequeuePendingAttempt, ws } = useStore()
+  const { pendingAttempts, dequeuePendingAttempt, ws, characters } = useStore()
   const pendingAttempt = pendingAttempts[0] ?? null
-  const [skill, setSkill] = useState(pendingAttempt?.detectedSkill ?? COC_SKILLS[0])
+  const char = characters.find(c => c.id === pendingAttempt?.charId)
+
+  // 해당 캐릭터의 0값 기술 제외 (자동 감지된 기술은 값과 무관하게 포함)
+  const visibleSkills = (() => {
+    if (!char) return COC_SKILLS
+    const detected = pendingAttempt?.detectedSkill
+    return COC_SKILLS.filter(s => (char.skills[s] ?? 0) > 0 || s === detected)
+  })()
+
+  const [skill, setSkill] = useState(pendingAttempt?.detectedSkill ?? visibleSkills[0] ?? COC_SKILLS[0])
   const [difficulty, setDifficulty] = useState<Difficulty>('regular')
 
   if (!pendingAttempt) return null
@@ -72,9 +81,14 @@ export default function AttemptReviewModal({ onClose }: Props) {
         <div className="mb-3">
           <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>판정 기술</label>
           <select value={skill} onChange={e => setSkill(e.target.value)} style={inputStyle}>
-            {COC_SKILLS.map(s => (
-              <option key={s} value={s}>{s}</option>
-            ))}
+            {visibleSkills.map(s => {
+              const val = char ? (char.skills[s] ?? 0) : null
+              return (
+                <option key={s} value={s}>
+                  {s}{val !== null ? ` (${val}%)` : ''}
+                </option>
+              )
+            })}
           </select>
         </div>
 

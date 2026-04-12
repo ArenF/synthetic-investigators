@@ -37,6 +37,7 @@ export interface CharacterState {
   occupation: string
   residence: string
   equipment: string[]   // equipment.items 리스트
+  skills: Record<string, number>  // 기술명 → 현재 기술값 (0 포함)
   hp: number
   hpMax: number
   san: number
@@ -170,6 +171,9 @@ function getCharacterStates(session: GameSession): CharacterState[] {
       occupation: char.occupation,
       residence: char.residence,
       equipment: s.currentItems.map(i => i.name),
+      skills: Object.fromEntries(
+        Object.entries(char.skills).filter(([, v]) => v !== undefined) as [string, number][]
+      ),
       hp: s.hp,
       hpMax: char.derived.hp.max,
       san: s.san,

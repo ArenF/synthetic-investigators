@@ -13,6 +13,7 @@ export interface CharacterState {
   occupation: string
   residence: string
   equipment: string[]
+  skills: Record<string, number>  // 기술명 → 기술값 (0 포함)
   hp: number
   hpMax: number
   san: number
