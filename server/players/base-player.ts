@@ -114,20 +114,23 @@ export abstract class BasePlayer {
     let actionText = ''
 
     try {
-      // ── Stage 1: 내면 (감정 + 즉각적 생각) ──
-      this.history.push({ role: 'user', content: `${baseMessage}\n\n${buildInnerStageInstruction()}` })
+      const mode = this.playMode
+      const innerLabel = mode === 'game' ? 'OOC' : '내면'
+
+      // ── Stage 1: 내면/OOC (감정 + 즉각적 생각) ──
+      this.history.push({ role: 'user', content: `${baseMessage}\n\n${buildInnerStageInstruction(mode)}` })
       innerText = await this.chat(this.systemPrompt, this.history)
       this.history.push({ role: 'assistant', content: innerText })
-      log.ai(tag, `[내면] 완료 (${Date.now() - t0}ms) — ${innerText.length}자`)
+      log.ai(tag, `[${innerLabel}] 완료 (${Date.now() - t0}ms) — ${innerText.length}자`)
 
       // ── Stage 2: 시도 (상황 직시 + 행동 판단) ──
-      this.history.push({ role: 'user', content: buildAttemptStageInstruction() })
+      this.history.push({ role: 'user', content: buildAttemptStageInstruction(mode) })
       attemptText = await this.chat(this.systemPrompt, this.history)
       this.history.push({ role: 'assistant', content: attemptText })
       log.ai(tag, `[시도] 완료 (${Date.now() - t0}ms) — ${attemptText.length}자`)
 
       // ── Stage 3: 행동 (실제 행동 + 묘사) ──
-      this.history.push({ role: 'user', content: buildActionStageInstruction() })
+      this.history.push({ role: 'user', content: buildActionStageInstruction(mode) })
       actionText = await this.chat(this.systemPrompt, this.history)
       log.ai(tag, `[행동] 완료 (${Date.now() - t0}ms) — ${actionText.length}자`)
 

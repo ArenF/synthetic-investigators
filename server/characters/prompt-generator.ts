@@ -258,9 +258,13 @@ export function parseResponse(raw: string): {
   inner?: string
   rawText: string
 } {
-  const actionMatch = raw.match(/\*\*\[행동\]\*\*\s*([\s\S]*?)(?=\*\*\[시도\]\*\*|\*\*\[내면\]\*\*|$)/i)
-  const attemptMatch = raw.match(/\*\*\[시도\]\*\*\s*([\s\S]*?)(?=\*\*\[내면\]\*\*|\*\*\[행동\]\*\*|$)/i)
-  const innerMatch = raw.match(/\*\*\[내면\]\*\*\s*([\s\S]*?)(?=\*\*\[행동\]\*\*|\*\*\[시도\]\*\*|$)/i)
+  // [OOC]는 game 모드에서 [내면] 대신 사용 — 동일한 inner 필드로 파싱
+  const innerTag = /\*\*\[내면\]\*\*|\*\*\[OOC\]\*\*/i
+  const innerTagStr = '(?:\\*\\*\\[내면\\]\\*\\*|\\*\\*\\[OOC\\]\\*\\*)'
+
+  const actionMatch = raw.match(new RegExp(`\\*\\*\\[행동\\]\\*\\*\\s*([\\s\\S]*?)(?=\\*\\*\\[시도\\]\\*\\*|${innerTagStr}|$)`, 'i'))
+  const attemptMatch = raw.match(new RegExp(`\\*\\*\\[시도\\]\\*\\*\\s*([\\s\\S]*?)(?=${innerTagStr}|\\*\\*\\[행동\\]\\*\\*|$)`, 'i'))
+  const innerMatch = raw.match(new RegExp(`${innerTagStr}\\s*([\\s\\S]*?)(?=\\*\\*\\[행동\\]\\*\\*|\\*\\*\\[시도\\]\\*\\*|$)`, 'i'))
 
   return {
     action: actionMatch?.[1]?.trim() ?? raw.trim(),
@@ -275,30 +279,34 @@ export function parseResponse(raw: string): {
 // ─────────────────────────────────────────
 
 /**
- * Stage 1: 내면 — 캐릭터 심리 분석
+ * Stage 1: 내면/OOC — 캐릭터 심리 분석
+ * mode에 따라 [내면] (immersion) 또는 [OOC] (game) 태그 사용
  */
-export function buildInnerStageInstruction(): string {
-  return `**[내면]만** 작성하세요.
+export function buildInnerStageInstruction(mode: PlayMode = 'immersion'): string {
+  const tag = mode === 'game' ? 'OOC' : '내면'
+  return `**[${tag}]만** 작성하세요.
 현 상황에서 캐릭터가 어떤 감정을 갖고 어떤 행동을 시도할 지 분석하고 생각하세요.
-기술 판정 선언은 포함하지 마세요. **[내면]** 태그로 시작하세요.`
+기술 판정 선언은 포함하지 마세요. **[${tag}]** 태그로 시작하세요.`
 }
 
 /**
  * Stage 2: 시도 — 상황 직시 + 행동 판단
- * 이전 [내면]이 히스토리에 있는 상태에서 호출됨
+ * 이전 [내면]/[OOC]이 히스토리에 있는 상태에서 호출됨
  */
-export function buildAttemptStageInstruction(): string {
-  return `위 [내면]을 바탕으로 **[시도]만** 작성하세요.
+export function buildAttemptStageInstruction(mode: PlayMode = 'immersion'): string {
+  const tag = mode === 'game' ? 'OOC' : '내면'
+  return `위 [${tag}]을 바탕으로 **[시도]만** 작성하세요.
 이 캐릭터라면 지금 상황에서 무엇을 해야 한다고 판단할지 서술하세요.
 기술 판정이 필요하다면 "나는 [기술명]을 시도한다"를 포함하세요. **[시도]** 태그로 시작하세요.`
 }
 
 /**
  * Stage 3: 행동 — 실제 행동 + 장면 묘사
- * 이전 [내면] + [시도]가 히스토리에 있는 상태에서 호출됨
+ * 이전 [내면]/[OOC] + [시도]가 히스토리에 있는 상태에서 호출됨
  */
-export function buildActionStageInstruction(): string {
-  return `위 [내면]과 [시도]를 바탕으로 **[행동]만** 작성하세요.
+export function buildActionStageInstruction(mode: PlayMode = 'immersion'): string {
+  const tag = mode === 'game' ? 'OOC' : '내면'
+  return `위 [${tag}]과 [시도]를 바탕으로 **[행동]만** 작성하세요.
 실제로 시도하는 것과 그 장면의 묘사 문장을 담으세요.
 최대 3개의 묘사로 간결하게. **[행동]** 태그로 시작하세요.`
 }
@@ -306,7 +314,8 @@ export function buildActionStageInstruction(): string {
 /**
  * Claude Extended Thinking용 — system prompt 끝에 붙이는 사고 트리 지침
  */
-export function buildThinkingTreeSystemSuffix(): string {
+export function buildThinkingTreeSystemSuffix(mode: PlayMode = 'immersion'): string {
+  const tag = mode === 'game' ? 'OOC' : '내면'
   return `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 사고 트리 지침 (내부 추론)
@@ -314,11 +323,11 @@ export function buildThinkingTreeSystemSuffix(): string {
 
 응답하기 전 반드시 다음 순서로 내부 사고를 진행하세요:
 
-1단계 [내면]: 현 상황에서 캐릭터가 어떤 감정을 갖고 어떤 행동을 시도할 지 분석하고 생각하세요.
+1단계 [${tag}]: 현 상황에서 캐릭터가 어떤 감정을 갖고 어떤 행동을 시도할 지 분석하고 생각하세요.
 2단계 [시도]: 이 캐릭터라면 지금 상황에서 무엇을 해야 한다고 판단할지 서술하세요.
 3단계 [행동]: 위 사고를 바탕으로 실제로 무엇을 하는가?
 
 각 단계가 이전 단계를 뿌리로 삼아 깊어져야 합니다.
-최종 출력에는 **[내면]**, **[시도]** (선택), **[행동]** 세 태그를 모두 포함하세요.`
+최종 출력에는 **[${tag}]**, **[시도]** (선택), **[행동]** 세 태그를 모두 포함하세요.`
 }
 
