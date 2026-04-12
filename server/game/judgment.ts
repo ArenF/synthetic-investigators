@@ -7,8 +7,8 @@
  * - Generates natural language text for the AI context
  */
 
-import { d100, isSuccess, isFailure } from './dice.js'
-import type { JudgmentOutcomes, Outcome, Effect, ItemObject } from '../characters/types.js'
+import { skillCheck } from './dice.js'
+import type { JudgmentOutcomes, Outcome, Effect } from '../characters/types.js'
 import type { GameSession } from '../api.js'
 
 export type JudgmentOutcomeKey =
@@ -61,28 +61,10 @@ export function performJudgment(
   if (!char) throw new Error(`Character ${charId} not found`)
 
   const baseSkill = char.skills[skill] ?? 0
-  let target = baseSkill
-  if (difficulty === 'hard') target = Math.floor(baseSkill / 2)
-  if (difficulty === 'extreme') target = Math.floor(baseSkill / 5)
-
-  const roll = d100()
-  const regularFailureMax = Math.floor((baseSkill + 95) / 2)
-  const fumbleThreshold = baseSkill < 50 ? 100 : 96
-
-  let tier: JudgmentOutcomeKey
-  if (roll >= fumbleThreshold) {
-    tier = 'fumble'
-  } else if (roll <= Math.floor(target / 5)) {
-    tier = 'extreme_success'
-  } else if (roll <= Math.floor(target / 2)) {
-    tier = 'hard_success'
-  } else if (roll <= target) {
-    tier = 'regular_success'
-  } else if (roll <= regularFailureMax) {
-    tier = 'regular_failure'
-  } else {
-    tier = 'bad_failure'
-  }
+  const rolled = skillCheck(baseSkill, skill, difficulty)
+  const roll = rolled.roll
+  const target = rolled.target
+  const tier = rolled.outcome as JudgmentOutcomeKey
 
   const appliedOutcome = getOutcomeForTier(outcomes, tier)
   const effectsApplied: Effect[] = []

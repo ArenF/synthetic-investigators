@@ -41,12 +41,19 @@ export function rollDice(expression: string): number {
  *   bad_failure      — roll > midpoint AND ≤ 95 (or < fumble threshold)
  *   fumble           — roll ≥ 96 (skill ≥ 50) or 100 (skill < 50)
  */
-export function skillCheck(skillValue: number, skillName: string = ''): DiceResult & { roll: number } {
+export function skillCheck(
+  skillValue: number,
+  skillName: string = '',
+  difficulty: 'regular' | 'hard' | 'extreme' = 'regular',
+): DiceResult & { roll: number; baseSkill: number } {
   const roll = d100()
-  const hard = Math.floor(skillValue / 2)
-  const extreme = Math.floor(skillValue / 5)
 
-  // Midpoint between skill and 95 — boundary between regular_failure and bad_failure
+  // Apply difficulty to target
+  let target = skillValue
+  if (difficulty === 'hard') target = Math.floor(skillValue / 2)
+  if (difficulty === 'extreme') target = Math.floor(skillValue / 5)
+
+  // Midpoint between baseSkill and 95 — boundary between regular_failure and bad_failure
   const regularFailureMax = Math.floor((skillValue + 95) / 2)
 
   // CoC 7e fumble rules: skill < 50 → fumble only on 100; skill ≥ 50 → fumble on 96-100
@@ -55,11 +62,11 @@ export function skillCheck(skillValue: number, skillName: string = ''): DiceResu
   let outcome: DiceResult['outcome']
   if (roll >= fumbleThreshold) {
     outcome = 'fumble'
-  } else if (roll <= extreme) {
+  } else if (roll <= Math.floor(target / 5)) {
     outcome = 'extreme_success'
-  } else if (roll <= hard) {
+  } else if (roll <= Math.floor(target / 2)) {
     outcome = 'hard_success'
-  } else if (roll <= skillValue) {
+  } else if (roll <= target) {
     outcome = 'regular_success'
   } else if (roll <= regularFailureMax) {
     outcome = 'regular_failure'
@@ -67,23 +74,7 @@ export function skillCheck(skillValue: number, skillName: string = ''): DiceResu
     outcome = 'bad_failure'
   }
 
-  return { skill: skillName, target: skillValue, roll, outcome }
-}
-
-/** CoC 7e SAN check */
-export function sanCheck(sanValue: number): {
-  roll: number
-  success: boolean
-  lossSanSuccess: string  // e.g. "0" or "1"
-  lossSanFailure: string  // e.g. "1d6"
-} {
-  const roll = d100()
-  return {
-    roll,
-    success: roll <= sanValue,
-    lossSanSuccess: '0',
-    lossSanFailure: '1d6',
-  }
+  return { skill: skillName, target, roll, baseSkill: skillValue, outcome }
 }
 
 /** Pretty-print an outcome with Korean label */

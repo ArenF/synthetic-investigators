@@ -186,23 +186,4 @@ export class GameState {
     this.getState(charId).temporaryInsanity = false
   }
 
-  /** Print a readable status table */
-  printStatusTable(): void {
-    console.log('\n┌─────────────────────────────────────────────────────────┐')
-    console.log('│  캐릭터 현황                                              │')
-    console.log('├──────────┬──────────┬──────────┬──────────┬─────────────┤')
-    console.log('│  이름    │  HP      │  SAN     │  행운    │  모델       │')
-    console.log('├──────────┼──────────┼──────────┼──────────┼─────────────┤')
-
-    for (const [id, state] of this.states) {
-      const char = this.getCharacter(id)
-      const hp = `${state.hp}/${char.derived.hp.max}`
-      const san = `${state.san}/${char.derived.san.starting}`
-      const name = char.name.padEnd(8)
-      const model = char.modelConfig.model.split('-').slice(0, 2).join('-').padEnd(11)
-      const insane = state.temporaryInsanity ? '⚠️' : state.indefiniteInsanity ? '🔴' : '  '
-      console.log(`│ ${name} │ ${hp.padEnd(8)} │ ${san.padEnd(8)} │ ${String(state.luck).padEnd(8)} │ ${model} ${insane}│`)
-    }
-    console.log('└──────────┴──────────┴──────────┴──────────┴─────────────┘\n')
-  }
 }

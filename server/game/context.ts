@@ -4,11 +4,6 @@
 
 import type { TurnRecord } from '../characters/types.js'
 
-export interface Message {
-  role: 'user' | 'assistant'
-  content: string
-}
-
 /** Number of recent turns to keep as full messages */
 const FULL_CONTEXT_TURNS = 8
 
@@ -48,19 +43,3 @@ export function buildContextMessages(
   return { summary, recentTurns }
 }
 
-/**
- * Build the full message context array for an AI player.
- * Prepends the compressed summary before recent turn messages.
- */
-export function buildFullContext(
-  history: TurnRecord[],
-  currentGmMessage: string,
-  fullTurns: number = FULL_CONTEXT_TURNS,
-): string {
-  const { summary } = buildContextMessages(history, fullTurns)
-
-  if (summary) {
-    return `${summary}\n\n${currentGmMessage}`
-  }
-  return currentGmMessage
-}

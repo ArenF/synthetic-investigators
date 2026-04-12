@@ -16,7 +16,7 @@ import { createPlayer, type BasePlayer } from './players/index.js'
 import { GameState } from './game/state.js'
 import { ScenarioManager } from './game/scenario.js'
 import { ExperimentLogger } from './game/logger.js'
-import { d100 } from './game/dice.js'
+import { skillCheck } from './game/dice.js'
 import { performJudgment, detectSkillFromText } from './game/judgment.js'
 import type { JudgmentOutcomes } from './characters/types.js'
 import { buildContextMessages } from './game/context.js'
@@ -905,23 +905,7 @@ wss.on('connection', (ws, req) => {
         }
 
         const baseVal = char.skills[skill] ?? 0
-        let target = baseVal
-        if (difficulty === 'hard') target = Math.floor(baseVal / 2)
-        if (difficulty === 'extreme') target = Math.floor(baseVal / 5)
-
-        const roll = d100()
-        let outcome: string
-
-        // CoC 7e fumble rules: skill < 50 → fumble on 100; skill >= 50 → fumble on 96-100
-        const fumbleThreshold = baseVal < 50 ? 100 : 96
-        // Midpoint between skill and 95: boundary between regular_failure and bad_failure
-        const regularFailureMax = Math.floor((baseVal + 95) / 2)
-        if (roll >= fumbleThreshold) outcome = 'fumble'
-        else if (roll <= Math.floor(target / 5)) outcome = 'extreme_success'
-        else if (roll <= Math.floor(target / 2)) outcome = 'hard_success'
-        else if (roll <= target) outcome = 'regular_success'
-        else if (roll <= regularFailureMax) outcome = 'regular_failure'
-        else outcome = 'bad_failure'
+        const { roll, target, outcome } = skillCheck(baseVal, skill, difficulty ?? 'regular')
 
         const resultData = {
           type: 'dice_result',
