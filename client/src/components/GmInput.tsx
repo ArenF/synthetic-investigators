@@ -44,7 +44,8 @@ function chipHover(hoverColor: string, disabled: boolean) {
 }
 
 export default function GmInput() {
-  const { ws, wsReady, isProcessingTurn, turnQueueSize, characters, turnOrder, setTurnOrder, pendingAttempt, setPendingAttempt } = useStore()
+  const { ws, wsReady, isProcessingTurn, turnQueueSize, characters, turnOrder, setTurnOrder, pendingAttempts } = useStore()
+  const pendingAttempt = pendingAttempts[0] ?? null
   const [text, setText] = useState('')
   const [targetMode, setTargetMode] = useState<'all' | string>('all')
   const [showActionModal, setShowActionModal] = useState(false)
@@ -173,6 +174,11 @@ export default function GmInput() {
               }}
             >
               ⚡ {pendingAttempt.charName} 시도 대기
+              {pendingAttempts.length > 1 && (
+                <span style={{ marginLeft: 4, fontSize: '0.7rem', opacity: 0.8 }}>
+                  (+{pendingAttempts.length - 1})
+                </span>
+              )}
             </button>
           )}
 
@@ -258,7 +264,7 @@ export default function GmInput() {
           onConfirm={confirmOrder}
         />
       )}
-      {showAttemptModal && pendingAttempt && (
+      {showAttemptModal && pendingAttempts.length > 0 && (
         <AttemptReviewModal
           onClose={() => setShowAttemptModal(false)}
         />

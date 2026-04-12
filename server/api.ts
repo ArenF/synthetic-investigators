@@ -169,7 +169,7 @@ function getCharacterStates(session: GameSession): CharacterState[] {
       age: char.age,
       occupation: char.occupation,
       residence: char.residence,
-      equipment: char.equipment?.items ?? [],
+      equipment: s.currentItems.map(i => i.name),
       hp: s.hp,
       hpMax: char.derived.hp.max,
       san: s.san,
@@ -219,7 +219,7 @@ function createSession(sessionId: string, setup: SessionSetupData): GameSession 
   for (const charId of setup.characterIds) {
     const char = loadCharacter(charId)
     characters.set(char.id, char)
-    players.set(char.id, createPlayer(char, setup.playMode ?? 'immersion'))
+    players.set(char.id, createPlayer(char, setup.playMode ?? 'game'))
     state.addCharacter(char)
   }
 
@@ -249,7 +249,7 @@ function createSession(sessionId: string, setup: SessionSetupData): GameSession 
     turnQueue: [],
     pendingStatsBefore: null,
     pendingDiceResults: [],
-    playMode: setup.playMode ?? 'immersion',
+    playMode: setup.playMode ?? 'game',
   }
 
   sessions.set(sessionId, session)

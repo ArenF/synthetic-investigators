@@ -15,7 +15,8 @@ interface Props {
 }
 
 export default function AttemptReviewModal({ onClose }: Props) {
-  const { pendingAttempt, setPendingAttempt, ws } = useStore()
+  const { pendingAttempts, dequeuePendingAttempt, ws } = useStore()
+  const pendingAttempt = pendingAttempts[0] ?? null
   const [skill, setSkill] = useState(pendingAttempt?.detectedSkill ?? COC_SKILLS[0])
   const [difficulty, setDifficulty] = useState<Difficulty>('regular')
 
@@ -36,12 +37,12 @@ export default function AttemptReviewModal({ onClose }: Props) {
       difficulty,
       outcomes: {},  // No preset outcomes — GM can set them via ActionRequestModal
     }))
-    setPendingAttempt(null)
+    dequeuePendingAttempt()
     onClose()
   }
 
   function dismissAttempt() {
-    setPendingAttempt(null)
+    dequeuePendingAttempt()
     onClose()
   }
 

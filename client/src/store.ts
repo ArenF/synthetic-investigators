@@ -130,8 +130,8 @@ export interface AppState {
   // Scenario editor state
   editingScenarioId: string | null
 
-  // Pending attempt declared by AI
-  pendingAttempt: AttemptDeclared | null
+  // Pending attempts declared by AI (queue — FIFO)
+  pendingAttempts: AttemptDeclared[]
 
   // Actions
   setScreen: (screen: Screen) => void
@@ -151,7 +151,8 @@ export interface AppState {
   setPendingSetup: (setup: SessionSetupData | null) => void
   setEditingScenarioId: (id: string | null) => void
   setPlayMode: (mode: PlayMode) => void
-  setPendingAttempt: (attempt: AttemptDeclared | null) => void
+  enqueuePendingAttempt: (attempt: AttemptDeclared) => void
+  dequeuePendingAttempt: () => void
   reset: () => void
 }
 
@@ -172,7 +173,7 @@ export const useStore = create<AppState>((set) => ({
   pendingSetup: null,
   playMode: 'game',
   editingScenarioId: null,
-  pendingAttempt: null,
+  pendingAttempts: [],
 
   setScreen: (screen) => set({ screen }),
   setSession: (id, name) => set({ sessionId: id, sessionName: name }),
@@ -193,7 +194,8 @@ export const useStore = create<AppState>((set) => ({
   setPendingSetup: (setup) => set({ pendingSetup: setup }),
   setEditingScenarioId: (id) => set({ editingScenarioId: id }),
   setPlayMode: (mode) => set({ playMode: mode }),
-  setPendingAttempt: (attempt) => set({ pendingAttempt: attempt }),
+  enqueuePendingAttempt: (attempt) => set(s => ({ pendingAttempts: [...s.pendingAttempts, attempt] })),
+  dequeuePendingAttempt: () => set(s => ({ pendingAttempts: s.pendingAttempts.slice(1) })),
   reset: () => set((state) => {
     state.ws?.close()
     return {
@@ -209,6 +211,7 @@ export const useStore = create<AppState>((set) => ({
       wsReady: false,
       pendingSetup: null,
       playMode: 'game',
+      pendingAttempts: [],
     }
   }),
 }))

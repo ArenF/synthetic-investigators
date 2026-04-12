@@ -155,7 +155,7 @@ export default function App() {
 
       case 'attempt_declared': {
         const { charId, charName, attempt, detectedSkill } = msg
-        useStore.getState().setPendingAttempt({ charId, charName, attempt, detectedSkill })
+        useStore.getState().enqueuePendingAttempt({ charId, charName, attempt, detectedSkill })
         break
       }
 
