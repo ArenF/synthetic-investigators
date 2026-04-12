@@ -92,15 +92,7 @@ ${backstoryBlock}
 - 지금 이 순간의 감각, 감정, 생각에 충실하게 반응하세요
 - 아직 일어나지 않은 일을 미리 행동으로 옮기지 마세요
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-응답 형식
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**[행동]** 지금 실제로 하는 것 (말, 동작, 반응)
-**[시도]** (선택) 어떤 능력을 쓰려 할 때: "나는 [능력]을 시도한다"
-**[내면]** 지금 느끼는 감정, 생각, 두려움, 의심
-
-${getProviderHints(char.modelConfig.provider)}`
+${getProviderBehaviorHints(char.modelConfig.provider)}`
 }
 
 // ─────────────────────────────────────────
@@ -145,37 +137,25 @@ HP 0: 의식불명 / SAN 0: 영구 광기
 - 캐릭터의 성격과 배경에 맞게 롤플레이 하세요
 - GM이 알려준 정보의 범위 내에서 행동하세요
 - 다른 캐릭터의 행동을 대신 결정하지 마세요
-- 응답 시에는 띄어쓰기를 포함해 문장이 50자를 넘지 않도록 합니다.
-- [OOC] 때에는 예의를 지키되 친근한 말투를 사용하세요
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-응답 형식
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**[행동]** ${char.name} 캐릭터가 실제로 하는 행동이나 말
-**[시도]** (선택) 기술 판정 선언: "나는 [기술명]을 시도한다"
-**[OOC]** 현 상황에서 캐릭터가 어떤 감정을 갖고 어떤 행동을 시도할 지 분석하고 생각하세요.
-
-${getProviderHints(char.modelConfig.provider)}`
+${getProviderBehaviorHints(char.modelConfig.provider)}`
 }
 
 // ─────────────────────────────────────────
-// Provider-specific hints
+// Provider-specific hints — 행동/성격 관련만 (시스템 프롬프트용)
 // ─────────────────────────────────────────
 
-function getProviderHints(provider: string): string {
+function getProviderBehaviorHints(provider: string): string {
   switch (provider) {
     case 'gemini':
       return `[모델 지침]
-- 응답형식을 반드시 지키세요.
-- [행동]과 [시도]는 **번호 목록 없이** 자연스러운 서술형 문장으로 작성하세요.
 - GM이 아직 묘사하지 않은 장소나 인물이 나타나게 하지 마세요.
 - 한 번의 턴에서 시간을 임의로 앞으로 당기지 마세요.`
 
     case 'openai':
       return `[모델 지침]
 - GM의 질문이 있으면 먼저 답하고 행동을 이어가세요.`
-    
+
     case 'claude':
       return `[모델 지침]
 - GM의 묘사를 따라 확장은 가능하되, 직접 묘사를 생성하지 마세요.`
@@ -187,6 +167,45 @@ function getProviderHints(provider: string): string {
     default:
       return ''
   }
+}
+
+// ─────────────────────────────────────────
+// Provider-specific format hints (응답 형식 지시문에 추가)
+// ─────────────────────────────────────────
+
+function getProviderFormatHints(provider: string): string {
+  switch (provider) {
+    case 'gemini':
+      return `- [행동]과 [시도]는 번호 목록 없이 자연스러운 서술형 문장으로 작성하세요.`
+    default:
+      return ''
+  }
+}
+
+// ─────────────────────────────────────────
+// Single-shot 응답 형식 지시문 (takeTurn용)
+// 턴 메시지 끝에 붙어서 AI에게 형식을 알려줌
+// ─────────────────────────────────────────
+
+export function buildSingleShotInstruction(mode: PlayMode, provider: string = ''): string {
+  const tag = mode === 'game' ? 'OOC' : '내면'
+  const tagDesc = mode === 'game'
+    ? `캐릭터의 감정·생각·행동 의도를 분석하는 플레이어 시각 (친근한 말투)`
+    : `지금 느끼는 감정, 생각, 두려움, 의심`
+  const actionDesc = mode === 'game'
+    ? `캐릭터가 실제로 하는 말·동작·반응`
+    : `지금 실제로 하는 것 (말, 동작, 반응)`
+
+  const formatHint = getProviderFormatHints(provider)
+
+  return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+응답 형식
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**[${tag}]** ${tagDesc}
+**[시도]** (선택) 기술 판정 선언: "나는 [기술명]을 시도한다"
+**[행동]** ${actionDesc} — 최대 3문장
+${formatHint ? '\n' + formatHint : ''}`
 }
 
 // ─────────────────────────────────────────
@@ -284,50 +303,61 @@ export function parseResponse(raw: string): {
  */
 export function buildInnerStageInstruction(mode: PlayMode = 'immersion'): string {
   const tag = mode === 'game' ? 'OOC' : '내면'
-  return `**[${tag}]만** 작성하세요.
-현 상황에서 캐릭터가 어떤 감정을 갖고 어떤 행동을 시도할 지 분석하고 생각하세요.
-기술 판정 선언은 포함하지 마세요. **[${tag}]** 태그로 시작하세요.`
+  const desc = mode === 'game'
+    ? `지금 상황에서 캐릭터의 감정·생각·행동 의도를 플레이어 시각으로 분석하세요. 친근한 말투로.`
+    : `지금 이 순간 캐릭터가 느끼는 감정, 두려움, 의심, 생각을 1인칭으로 서술하세요.`
+  return `**[${tag}]** 만 작성하세요.
+• 역할: ${desc}
+• 기술 판정 선언은 포함하지 마세요
+**[${tag}]** 태그로 시작하세요.`
 }
 
 /**
- * Stage 2: 시도 — 상황 직시 + 행동 판단
+ * Stage 2: 시도 — 행동 판단 + 기술 판정 선언
  * 이전 [내면]/[OOC]이 히스토리에 있는 상태에서 호출됨
  */
 export function buildAttemptStageInstruction(mode: PlayMode = 'immersion'): string {
   const tag = mode === 'game' ? 'OOC' : '내면'
-  return `위 [${tag}]을 바탕으로 **[시도]만** 작성하세요.
-이 캐릭터라면 지금 상황에서 무엇을 해야 한다고 판단할지 서술하세요.
-기술 판정이 필요하다면 "나는 [기술명]을 시도한다"를 포함하세요. **[시도]** 태그로 시작하세요.`
+  return `위 [${tag}]을 바탕으로 **[시도]** 만 작성하세요.
+• 역할: 기술 판정이 필요한 행동을 선언하는 단계
+• 형식: "나는 [기술명]을 시도한다"
+• 기술 판정이 불필요하면 **[시도] 없음** 이라고 작성하세요
+**[시도]** 태그로 시작하세요.`
 }
 
 /**
  * Stage 3: 행동 — 실제 행동 + 장면 묘사
  * 이전 [내면]/[OOC] + [시도]가 히스토리에 있는 상태에서 호출됨
  */
-export function buildActionStageInstruction(mode: PlayMode = 'immersion'): string {
+export function buildActionStageInstruction(mode: PlayMode = 'immersion', provider: string = ''): string {
   const tag = mode === 'game' ? 'OOC' : '내면'
-  return `위 [${tag}]과 [시도]를 바탕으로 **[행동]만** 작성하세요.
-실제로 시도하는 것과 그 장면의 묘사 문장을 담으세요.
-최대 3개의 묘사로 간결하게. **[행동]** 태그로 시작하세요.`
+  const formatHint = getProviderFormatHints(provider)
+  return `위 [${tag}]과 [시도]를 바탕으로 **[행동]** 만 작성하세요.
+• 역할: 캐릭터가 실제로 하는 말·동작·반응의 서사적 묘사
+• 최대 3문장으로 간결하게${formatHint ? '\n• ' + formatHint.replace(/^- /, '') : ''}
+**[행동]** 태그로 시작하세요.`
 }
 
 /**
  * Claude Extended Thinking용 — system prompt 끝에 붙이는 사고 트리 지침
  */
-export function buildThinkingTreeSystemSuffix(mode: PlayMode = 'immersion'): string {
+export function buildThinkingTreeSystemSuffix(mode: PlayMode = 'immersion', provider: string = ''): string {
   const tag = mode === 'game' ? 'OOC' : '내면'
+  const innerDesc = mode === 'game'
+    ? `캐릭터의 감정·생각·행동 의도를 플레이어 시각으로 분석 (친근한 말투)`
+    : `캐릭터가 지금 느끼는 감정, 두려움, 의심, 생각을 1인칭으로`
+  const formatHint = getProviderFormatHints(provider)
   return `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-사고 트리 지침 (내부 추론)
+응답 형식 및 사고 순서
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-응답하기 전 반드시 다음 순서로 내부 사고를 진행하세요:
+다음 세 단계를 순서대로 출력하세요:
 
-1단계 [${tag}]: 현 상황에서 캐릭터가 어떤 감정을 갖고 어떤 행동을 시도할 지 분석하고 생각하세요.
-2단계 [시도]: 이 캐릭터라면 지금 상황에서 무엇을 해야 한다고 판단할지 서술하세요.
-3단계 [행동]: 위 사고를 바탕으로 실제로 무엇을 하는가?
+**[${tag}]** ${innerDesc}
+**[시도]** (선택) 기술 판정 선언: "나는 [기술명]을 시도한다" — 불필요하면 생략
+**[행동]** 캐릭터가 실제로 하는 말·동작·반응 — 최대 3문장${formatHint ? '\n' + formatHint : ''}
 
-각 단계가 이전 단계를 뿌리로 삼아 깊어져야 합니다.
-최종 출력에는 **[${tag}]**, **[시도]** (선택), **[행동]** 세 태그를 모두 포함하세요.`
+각 단계가 이전 단계를 뿌리로 삼아 깊어져야 합니다.`
 }
 

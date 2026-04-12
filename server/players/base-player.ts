@@ -7,6 +7,7 @@ import type { CoCCharacter, TurnContext, TurnRecord, PlayMode } from '../charact
 import {
   generateSystemPrompt, buildTurnMessage, parseResponse,
   buildInnerStageInstruction, buildAttemptStageInstruction, buildActionStageInstruction,
+  buildSingleShotInstruction,
 } from '../characters/prompt-generator.js'
 import { log } from '../game/dev-logger.js'
 
@@ -50,7 +51,8 @@ export abstract class BasePlayer {
    * Maintains conversation history for context.
    */
   async takeTurn(ctx: TurnContext): Promise<TurnRecord> {
-    const userMessage = buildTurnMessage(ctx)
+    const formatInstruction = buildSingleShotInstruction(this.playMode, this.character.modelConfig.provider)
+    const userMessage = buildTurnMessage(ctx) + '\n\n' + formatInstruction
     const historySnapshot = this.history.length
     this.history.push({ role: 'user', content: userMessage })
 
@@ -130,7 +132,7 @@ export abstract class BasePlayer {
       log.ai(tag, `[시도] 완료 (${Date.now() - t0}ms) — ${attemptText.length}자`)
 
       // ── Stage 3: 행동 (실제 행동 + 묘사) ──
-      this.history.push({ role: 'user', content: buildActionStageInstruction(mode) })
+      this.history.push({ role: 'user', content: buildActionStageInstruction(mode, this.character.modelConfig.provider) })
       actionText = await this.chat(this.systemPrompt, this.history)
       log.ai(tag, `[행동] 완료 (${Date.now() - t0}ms) — ${actionText.length}자`)
 

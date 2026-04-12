@@ -48,7 +48,7 @@ export class ClaudePlayer extends BasePlayer {
 
     try {
       // Extended Thinking: temperature 제거 필수, budget_tokens 설정
-      const thinkingSystemPrompt = this.systemPrompt + '\n' + buildThinkingTreeSystemSuffix(this.playMode)
+      const thinkingSystemPrompt = this.systemPrompt + '\n' + buildThinkingTreeSystemSuffix(this.playMode, this.character.modelConfig.provider)
 
       const response = await (this.client as any).messages.create({
         model: this.character.modelConfig.model,
