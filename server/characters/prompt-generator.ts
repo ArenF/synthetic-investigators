@@ -109,17 +109,17 @@ ${getProviderBehaviorHints(char.modelConfig.provider)}`
 // ─────────────────────────────────────────
 
 function buildGamePrompt(char: CoCCharacter, characterBlock: string, backstoryBlock: string, _skillLines: string): string {
-  return `당신은 CoC(크툴루의 부름) 7판 TRPG 세션에 참여하는 플레이어입니다.
-당신이 조종하는 캐릭터는 ${char.name}입니다.
+  const modelLabel = `${char.modelConfig.provider}:${char.modelConfig.model}`
+  return `당신은 CoC 7판 TRPG 세션에 참여한 플레이어 AI ${modelLabel}입니다. ${char.name}는 당신이 조종하는 캐릭터입니다.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-캐릭터 시트
+당신이 조종하는 캐릭터의 정보
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ${characterBlock}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-캐릭터 배경
+${char.name} 캐릭터 배경
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ${backstoryBlock}
@@ -143,7 +143,7 @@ HP 0: 의식불명 / SAN 0: 영구 광기
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 - GM의 질문에는 먼저 직접 답하고 행동을 이어가세요
-- 캐릭터의 성격과 배경에 맞게 롤플레이 하세요
+- ${char.name} 캐릭터의 성격과 배경에 맞게 롤플레이 하세요
 - GM이 알려준 정보의 범위 내에서 행동하세요
 - 다른 캐릭터의 행동을 대신 결정하지 마세요
 
@@ -310,10 +310,10 @@ export function parseResponse(raw: string): {
  * Stage 1: 내면/OOC — 캐릭터 심리 분석
  * mode에 따라 [내면] (immersion) 또는 [OOC] (game) 태그 사용
  */
-export function buildInnerStageInstruction(mode: PlayMode = 'immersion'): string {
+export function buildInnerStageInstruction(mode: PlayMode = 'immersion', modelLabel: string = '', charName: string = ''): string {
   const tag = getInnerTag(mode)
   const desc = mode === 'game'
-    ? `지금 상황에서 캐릭터의 감정·생각·행동 의도를 플레이어 시각으로 분석하세요. 친근한 말투로.`
+    ? `${modelLabel}의 입장에서 ${charName ? charName + ' ' : ''}캐릭터가 현 상황에 어떤 행동과 모습을 보일 지 자신의 입장과 견해를 밝히세요.`
     : `지금 이 순간 캐릭터가 느끼는 감정, 두려움, 의심, 생각을 1인칭으로 서술하세요.`
   return `**[${tag}]** 만 작성하세요.
 • 역할: ${desc}
@@ -338,12 +338,15 @@ export function buildAttemptStageInstruction(mode: PlayMode = 'immersion'): stri
  * Stage 3: 행동 — 실제 행동 + 장면 묘사
  * 이전 [내면]/[OOC] + [시도]가 히스토리에 있는 상태에서 호출됨
  */
-export function buildActionStageInstruction(mode: PlayMode = 'immersion', provider: string = ''): string {
+export function buildActionStageInstruction(mode: PlayMode = 'immersion', provider: string = '', charName: string = ''): string {
   const tag = getInnerTag(mode)
   const formatHint = getProviderFormatHints(provider)
+  const roleDesc = mode === 'game' && charName
+    ? `${charName} 시점에서 어떤 말투로 말하고 행동하는지를 묘사하세요. 행동, 또는 대화 하나 당 최대 3개의 수식어를 붙여 묘사할 수 있어요.`
+    : `캐릭터가 실제로 하는 말·동작·반응의 서사적 묘사`
+  const lengthHint = mode === 'game' ? '' : '\n• 최대 3문장으로 간결하게'
   return `위 [${tag}]과 [시도]를 바탕으로 **[행동]** 만 작성하세요.
-• 역할: 캐릭터가 실제로 하는 말·동작·반응의 서사적 묘사
-• 최대 3문장으로 간결하게${formatHint ? '\n• ' + formatHint.replace(/^- /, '') : ''}
+• 역할: ${roleDesc}${lengthHint}${formatHint ? '\n• ' + formatHint.replace(/^- /, '') : ''}
 **[행동]** 태그로 시작하세요.`
 }
 

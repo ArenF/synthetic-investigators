@@ -120,7 +120,8 @@ export abstract class BasePlayer {
       const innerLabel = mode === 'game' ? 'OOC' : '내면'
 
       // ── Stage 1: 내면/OOC (감정 + 즉각적 생각) ──
-      this.history.push({ role: 'user', content: `${baseMessage}\n\n${buildInnerStageInstruction(mode)}` })
+      const modelLabel = `${this.character.modelConfig.provider}:${this.character.modelConfig.model}`
+      this.history.push({ role: 'user', content: `${baseMessage}\n\n${buildInnerStageInstruction(mode, modelLabel, this.character.name)}` })
       innerText = await this.chat(this.systemPrompt, this.history)
       this.history.push({ role: 'assistant', content: innerText })
       log.ai(tag, `[${innerLabel}] 완료 (${Date.now() - t0}ms) — ${innerText.length}자`)
@@ -132,7 +133,7 @@ export abstract class BasePlayer {
       log.ai(tag, `[시도] 완료 (${Date.now() - t0}ms) — ${attemptText.length}자`)
 
       // ── Stage 3: 행동 (실제 행동 + 묘사) ──
-      this.history.push({ role: 'user', content: buildActionStageInstruction(mode, this.character.modelConfig.provider) })
+      this.history.push({ role: 'user', content: buildActionStageInstruction(mode, this.character.modelConfig.provider, this.character.name) })
       actionText = await this.chat(this.systemPrompt, this.history)
       log.ai(tag, `[행동] 완료 (${Date.now() - t0}ms) — ${actionText.length}자`)
 
