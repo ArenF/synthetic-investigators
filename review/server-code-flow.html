@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Synthetic Investigators — 서버 코드 플로우</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #21262d;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --text-muted: #8b949e;
+    --blue: #58a6ff;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --orange: #f0883e;
+    --red: #f85149;
+    --purple: #bc8cff;
+    --cyan: #79c0ff;
+    --pink: #ff7b72;
+    --teal: #56d364;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── Layout ── */
+  .layout { display: flex; min-height: 100vh; }
+  nav {
+    width: 240px;
+    min-width: 240px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    padding: 20px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  nav .logo {
+    padding: 0 16px 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  nav .logo h1 { font-size: 13px; color: var(--blue); font-weight: 700; }
+  nav .logo p { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  nav ul { list-style: none; }
+  nav ul li a {
+    display: block;
+    padding: 5px 16px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 12px;
+    transition: color 0.15s, background 0.15s;
+    border-radius: 0;
+  }
+  nav ul li a:hover { color: var(--text); background: var(--bg3); }
+  nav .nav-section {
+    padding: 8px 16px 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 8px;
+  }
+  main { flex: 1; padding: 40px 48px; max-width: 960px; }
+
+  /* ── Typography ── */
+  h2 {
+    font-size: 22px;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    margin-top: 48px;
+  }
+  h2:first-child { margin-top: 0; }
+  h3 { font-size: 16px; color: var(--cyan); margin: 24px 0 10px; }
+  h4 { font-size: 13px; color: var(--orange); margin: 16px 0 8px; }
+  p { margin-bottom: 10px; color: var(--text); }
+  strong { color: var(--text); }
+  code {
+    background: var(--bg3);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+    font-size: 12px;
+    color: var(--pink);
+    border: 1px solid var(--border);
+  }
+  pre {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    margin: 12px 0;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.7;
+  }
+  .kw { color: var(--purple); }
+  .fn { color: var(--blue); }
+  .str { color: var(--teal); }
+  .cm { color: var(--text-muted); font-style: italic; }
+  .ty { color: var(--orange); }
+  .num { color: var(--green); }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+  }
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .card .card-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .card .card-path { font-size: 11px; color: var(--text-muted); font-family: monospace; margin-bottom: 8px; }
+  .card p { font-size: 12px; color: var(--text-muted); margin: 0; }
+  .card.blue { border-left: 3px solid var(--blue); }
+  .card.green { border-left: 3px solid var(--green); }
+  .card.purple { border-left: 3px solid var(--purple); }
+  .card.orange { border-left: 3px solid var(--orange); }
+  .card.yellow { border-left: 3px solid var(--yellow); }
+  .card.red { border-left: 3px solid var(--red); }
+  .card.cyan { border-left: 3px solid var(--cyan); }
+  .card.pink { border-left: 3px solid var(--pink); }
+
+  /* ── Diagrams ── */
+  .diagram {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    margin: 16px 0;
+    overflow-x: auto;
+  }
+  .flow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 8px 0;
+  }
+  .box {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .box.blue { border-color: var(--blue); color: var(--blue); }
+  .box.green { border-color: var(--green); color: var(--green); }
+  .box.purple { border-color: var(--purple); color: var(--purple); }
+  .box.orange { border-color: var(--orange); color: var(--orange); }
+  .box.yellow { border-color: var(--yellow); color: var(--yellow); }
+  .box.red { border-color: var(--red); color: var(--red); }
+  .box.cyan { border-color: var(--cyan); color: var(--cyan); }
+  .box.pink { border-color: var(--pink); color: var(--pink); }
+  .arrow { color: var(--text-muted); font-size: 16px; }
+  .arrow-down { color: var(--text-muted); font-size: 16px; display: block; text-align: center; margin: 4px 0; }
+
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 12px;
+  }
+  th {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  td {
+    border: 1px solid var(--border);
+    padding: 7px 12px;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: var(--bg2); }
+
+  /* ── Issue badges ── */
+  .issue {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 10px 0;
+    border-left: 3px solid var(--red);
+  }
+  .issue.warn { border-left-color: var(--yellow); }
+  .issue.info { border-left-color: var(--blue); }
+  .issue .issue-title {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .badge {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .badge.bug { background: #3d1c1c; color: var(--red); border: 1px solid var(--red); }
+  .badge.warn { background: #2e2109; color: var(--yellow); border: 1px solid var(--yellow); }
+  .badge.design { background: #1a1e42; color: var(--blue); border: 1px solid var(--blue); }
+  .badge.perf { background: #0d2d0d; color: var(--green); border: 1px solid var(--green); }
+
+  /* ── Layer diagram ── */
+  .layer-diagram {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 16px 0;
+  }
+  .layer {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .layer-label {
+    width: 120px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+  }
+  .layer-items { display: flex; gap: 8px; flex-wrap: wrap; }
+  .layer-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-family: monospace;
+  }
+  .layer.l-api .layer-item { border-color: var(--blue); color: var(--blue); }
+  .layer.l-player .layer-item { border-color: var(--purple); color: var(--purple); }
+  .layer.l-prompt .layer-item { border-color: var(--cyan); color: var(--cyan); }
+  .layer.l-game .layer-item { border-color: var(--green); color: var(--green); }
+  .layer.l-type .layer-item { border-color: var(--orange); color: var(--orange); }
+
+  .dep-arrow {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 11px;
+    padding: 2px;
+  }
+
+  /* ── Sequence diagram ── */
+  .seq {
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1.8;
+    white-space: pre;
+    color: var(--text);
+  }
+  .seq .s-label { color: var(--blue); }
+  .seq .s-arrow { color: var(--text-muted); }
+  .seq .s-note { color: var(--yellow); }
+  .seq .s-alt { color: var(--orange); }
+
+  /* ── Callout ── */
+  .callout {
+    background: #0d2030;
+    border: 1px solid #1c4a6e;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 10px 0;
+    font-size: 12px;
+  }
+  .callout.warn {
+    background: #2b2000;
+    border-color: #5c4700;
+  }
+  .callout strong { color: var(--cyan); }
+  .callout.warn strong { color: var(--yellow); }
+
+  /* ── divider ── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ─── Sidebar ─── -->
+<nav>
+  <div class="logo">
+    <h1>Synthetic Investigators</h1>
+    <p>서버 코드 플로우 문서</p>
+  </div>
+  <ul>
+    <li class="nav-section">구조</li>
+    <li><a href="#overview">아키텍처 개요</a></li>
+    <li><a href="#modules">모듈 목록</a></li>
+    <li><a href="#types">타입 시스템</a></li>
+    <li class="nav-section">플로우</li>
+    <li><a href="#session-lifecycle">세션 생명주기</a></li>
+    <li><a href="#turn-flow">턴 실행 플로우</a></li>
+    <li><a href="#ai-player">AI 플레이어 계층</a></li>
+    <li><a href="#prompt-flow">프롬프트 생성</a></li>
+    <li><a href="#judgment">판정 시스템</a></li>
+    <li class="nav-section">상태·저장</li>
+    <li><a href="#state">게임 상태 관리</a></li>
+    <li><a href="#persistence">영속성 계층</a></li>
+    <li class="nav-section">통신</li>
+    <li><a href="#websocket">WebSocket 프로토콜</a></li>
+    <li><a href="#http">HTTP API</a></li>
+    <li class="nav-section">이슈</li>
+    <li><a href="#issues">발견된 문제들</a></li>
+  </ul>
+</nav>
+
+<!-- ─── Main ─── -->
+<main>
+
+<!-- ════════════════════════════════════════ -->
+<h2 id="overview">아키텍처 개요</h2>
+
+<p>
+  Express + WebSocket 서버로, GM(게임 마스터)이 텍스트를 보내면 각 캐릭터를 담당하는 AI 모델이 순서대로 응답하는 구조다.
+  서버는 단일 프로세스이며 모든 세션은 인메모리 <code>Map</code>으로 관리된다.
+</p>
+
+<div class="layer-diagram">
+  <div class="layer l-api">
+    <div class="layer-label">API 레이어</div>
+    <div class="layer-items">
+      <span class="layer-item">api.ts</span>
+      <span class="layer-item" style="opacity:0.5">Express REST</span>
+      <span class="layer-item" style="opacity:0.5">WebSocket</span>
+    </div>
+  </div>
+  <div class="dep-arrow">↓ 의존</div>
+  <div class="layer l-player">
+    <div class="layer-label">플레이어 레이어</div>
+    <div class="layer-items">
+      <span class="layer-item">base-player.ts</span>
+      <span class="layer-item">claude-player.ts</span>
+      <span class="layer-item">gemini-player.ts</span>
+      <span class="layer-item">openai-player.ts</span>
+      <span class="layer-item">ollama-player.ts</span>
+      <span class="layer-item">index.ts (factory)</span>
+    </div>
+  </div>
+  <div class="dep-arrow">↓ 의존</div>
+  <div class="layer l-prompt">
+    <div class="layer-label">프롬프트 레이어</div>
+    <div class="layer-items">
+      <span class="layer-item">prompt-generator.ts</span>
+    </div>
+  </div>
+  <div class="dep-arrow">↓ 의존</div>
+  <div class="layer l-game">
+    <div class="layer-label">게임 레이어</div>
+    <div class="layer-items">
+      <span class="layer-item">state.ts</span>
+      <span class="layer-item">dice.ts</span>
+      <span class="layer-item">judgment.ts ⚠️</span>
+      <span class="layer-item">scenario.ts</span>
+      <span class="layer-item">logger.ts</span>
+      <span class="layer-item">context.ts</span>
+      <span class="layer-item">dev-logger.ts</span>
+    </div>
+  </div>
+  <div class="dep-arrow">↓ 의존</div>
+  <div class="layer l-type">
+    <div class="layer-label">타입 레이어</div>
+    <div class="layer-items">
+      <span class="layer-item">types.ts (소스 오브 트루스)</span>
+    </div>
+  </div>
+</div>
+
+<div class="callout warn">
+  <strong>⚠️ 순환 의존성</strong> — <code>judgment.ts</code>가 API 레이어의 <code>GameSession</code> 타입을 import하고 있어 레이어 경계가 뒤집혀있다.
+  게임 레이어가 API 레이어에 의존하는 구조다.
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<h2 id="modules">모듈 목록</h2>
+
+<div class="card-grid">
+  <div class="card blue">
+    <div class="card-title">api.ts</div>
+    <div class="card-path">server/api.ts</div>
+    <p>Express + WebSocket 서버 진입점. GameSession 관리, 모든 메시지 라우팅, 세션 생명주기 담당.</p>
+  </div>
+  <div class="card purple">
+    <div class="card-title">base-player.ts</div>
+    <div class="card-path">server/players/</div>
+    <p>추상 BasePlayer. takeTurn / thinkingTakeTurn 구현. 히스토리 슬라이딩 윈도우 (최대 30개 메시지).</p>
+  </div>
+  <div class="card purple">
+    <div class="card-title">*-player.ts × 4</div>
+    <div class="card-path">server/players/</div>
+    <p>Claude / Gemini / OpenAI / Ollama 각 SDK 호출 구현. chat() 하나만 오버라이드. ClaudePlayer는 thinkingTakeTurn도 오버라이드.</p>
+  </div>
+  <div class="card cyan">
+    <div class="card-title">prompt-generator.ts</div>
+    <div class="card-path">server/characters/</div>
+    <p>시스템 프롬프트 생성, 턴 메시지 빌드, AI 응답 파싱. 모드(immersion/game)별 분기.</p>
+  </div>
+  <div class="card green">
+    <div class="card-title">state.ts</div>
+    <div class="card-path">server/game/</div>
+    <p>GameState 클래스. HP/SAN/MP/행운/아이템/광기 상태 추적. 세션 중 뮤터블 상태만 관리.</p>
+  </div>
+  <div class="card green">
+    <div class="card-title">dice.ts</div>
+    <div class="card-path">server/game/</div>
+    <p>d100(), rollDice(), skillCheck(). CoC 7e 6-tier 판정 계산.</p>
+  </div>
+  <div class="card green">
+    <div class="card-title">judgment.ts</div>
+    <div class="card-path">server/game/</div>
+    <p>performJudgment() — 판정 실행 + Effect 자동 적용. judgmentToNaturalLanguage() — AI용 텍스트 변환.</p>
+  </div>
+  <div class="card green">
+    <div class="card-title">context.ts</div>
+    <div class="card-path">server/game/</div>
+    <p>buildContextMessages() — 최근 8턴은 전체, 그 이전은 한 줄 요약으로 압축.</p>
+  </div>
+  <div class="card yellow">
+    <div class="card-title">scenario.ts</div>
+    <div class="card-path">server/game/</div>
+    <p>ScenarioManager — TurnRecord[] JSON 저장/로드. 텍스트 로그 append.</p>
+  </div>
+  <div class="card yellow">
+    <div class="card-title">logger.ts</div>
+    <div class="card-path">server/game/</div>
+    <p>ExperimentLogger — AI 행동 플래그 자동 감지 (메타 인식, 공황, 호기심 등). 실험 데이터 JSON 저장.</p>
+  </div>
+  <div class="card orange">
+    <div class="card-title">types.ts</div>
+    <div class="card-path">server/characters/</div>
+    <p>CoCCharacter, SessionState, TurnRecord, Effect 등 전체 타입 정의. 소스 오브 트루스.</p>
+  </div>
+  <div class="card pink">
+    <div class="card-title">dev-logger.ts</div>
+    <div class="card-path">server/game/</div>
+    <p>컬러 콘솔 출력 + logs/server.log 기록. log.info/warn/error/ai/ok 레벨.</p>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<h2 id="types">타입 시스템</h2>
+
+<h3>핵심 타입 계층</h3>
+
+<pre><code><span class="cm">// CoCCharacter — 캐릭터 JSON 파일에서 로드, 세션 중 불변</span>
+<span class="kw">interface</span> <span class="ty">CoCCharacter</span> {
+  id: <span class="ty">string</span>                           <span class="cm">// 파일명과 동일 e.g. "jisu"</span>
+  characteristics: <span class="ty">CharacterCharacteristics</span>  <span class="cm">// STR/CON/SIZ/DEX/APP/INT/POW/EDU</span>
+  derived: <span class="ty">DerivedStats</span>                 <span class="cm">// hp/mp/san/luck/build/moveRate/damageBonus</span>
+  skills: <span class="ty">SkillSet</span>                      <span class="cm">// 인덱스 시그니처 포함 — 조회 시 ?? 0 필수</span>
+  backstory: <span class="ty">Backstory</span>                  <span class="cm">// 10개 배경 필드</span>
+  equipment: <span class="ty">Equipment</span>                  <span class="cm">// items(string[]) / weapons / cash</span>
+  modelConfig: <span class="ty">ModelConfig</span>              <span class="cm">// provider / model / temperature</span>
+  sessionState?: <span class="ty">SessionState</span>           <span class="cm">// 옵셔널 — 런타임에는 GameState가 따로 관리</span>
+}
+
+<span class="cm">// SessionState — GameState.states Map에서 캐릭터별로 관리되는 뮤터블 상태</span>
+<span class="kw">interface</span> <span class="ty">SessionState</span> {
+  hp: <span class="ty">number</span>;  san: <span class="ty">number</span>;  mp: <span class="ty">number</span>;  luck: <span class="ty">number</span>
+  temporaryInsanity: <span class="ty">boolean</span>;  indefiniteInsanity: <span class="ty">boolean</span>
+  injuries: <span class="ty">string</span>[]
+  currentItems: <span class="ty">ItemObject</span>[]            <span class="cm">// 세션 중 추가/제거 가능</span>
+  sessionSanLoss: <span class="ty">number</span>               <span class="cm">// 누적 SAN 손실 (광기 기준치 판정용)</span>
+  knownNpcs: <span class="ty">KnownNpc</span>[]
+}
+
+<span class="cm">// Effect — 판정 결과의 Side Effect 유니온</span>
+<span class="kw">type</span> <span class="ty">Effect</span> =
+  | { kind: <span class="str">'stat'</span>;      stat: <span class="str">'hp'</span>|<span class="str">'san'</span>|<span class="str">'mp'</span>|<span class="str">'luck'</span>; delta: <span class="ty">number</span> }
+  | { kind: <span class="str">'skill'</span>;     skill: <span class="ty">string</span>; delta: <span class="ty">number</span>; permanent?: <span class="ty">boolean</span> }  <span class="cm">// ⚠️ 미구현</span>
+  | { kind: <span class="str">'item_gain'</span>; item: <span class="ty">ItemObject</span> }
+  | { kind: <span class="str">'item_lose'</span>; itemName: <span class="ty">string</span> }
+  | { kind: <span class="str">'status'</span>;    status: <span class="str">'temporaryInsanity'</span>|<span class="str">'indefiniteInsanity'</span>; value: <span class="ty">boolean</span> }
+
+<span class="cm">// TurnContext — AI에게 매 턴 전달되는 입력</span>
+<span class="kw">interface</span> <span class="ty">TurnContext</span> {
+  character: <span class="ty">CoCCharacter</span>;  sessionState: <span class="ty">SessionState</span>
+  scenarioId: <span class="ty">string</span>;       turnNumber: <span class="ty">number</span>
+  gmMessage: <span class="ty">string</span>          <span class="cm">// 컨텍스트 요약 + 주사위 결과 + GM 텍스트 + 이전 AI 응답 합산</span>
+  visibleHistory: <span class="ty">TurnRecord</span>[]  <span class="cm">// 최근 8턴</span>
+  playMode: <span class="ty">PlayMode</span>;       coCharacters: <span class="ty">CoCharacter</span>[]
+}</code></pre>
+
+<h3>두 가지 상태 저장소</h3>
+<div class="card-grid">
+  <div class="card orange">
+    <div class="card-title">CoCCharacter (불변)</div>
+    <p>캐릭터 JSON 파일에서 로드. 기본 능력치/기술값/배경 저장. 세션 중 수정 안 됨.</p>
+  </div>
+  <div class="card green">
+    <div class="card-title">GameState (뮤터블)</div>
+    <p>세션 중 HP/SAN 변화, 아이템 추가·제거, 광기 상태 추적. <code>states: Map&lt;charId, SessionState&gt;</code> 구조.</p>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<h2 id="session-lifecycle">세션 생명주기</h2>
+
+<h3>1. 세션 생성 (HTTP → WebSocket)</h3>
+
+<div class="diagram">
+  <div class="flow">
+    <div class="box blue">Client</div>
+    <div class="arrow">→ POST /api/sessions</div>
+    <div class="box blue">Server</div>
+    <div class="arrow">→ 캐릭터 파일 존재 확인</div>
+    <div class="box green">sessionId 반환</div>
+  </div>
+  <div style="height:12px"></div>
+  <div class="flow">
+    <div class="box blue">Client</div>
+    <div class="arrow">→ WebSocket 연결 + start_session</div>
+    <div class="box blue">createSession()</div>
+    <div class="arrow">→</div>
+    <div class="box purple">AI Player 생성 ×N</div>
+  </div>
+  <div style="margin-top: 10px; font-size: 12px; color: var(--text-muted)">
+    HTTP: 캐릭터 검증 + sessionId 할당 / WebSocket: 실제 초기화 수행 — 두 단계가 분리됨
+  </div>
+</div>
+
+<h3>2. createSession() 내부</h3>
+
+<pre><code><span class="fn">createSession</span>(sessionId, setup) {
+  <span class="cm">// ① 캐릭터 JSON 로드 → 불변 Map</span>
+  <span class="kw">for</span> (charId <span class="kw">of</span> setup.characterIds) {
+    <span class="kw">const</span> char = <span class="fn">loadCharacter</span>(charId)     <span class="cm">// characters/{id}.json</span>
+    characters.<span class="fn">set</span>(char.id, char)
+    players.<span class="fn">set</span>(char.id, <span class="fn">createPlayer</span>(char, mode))  <span class="cm">// factory → Claude/Gemini/OpenAI/Ollama</span>
+    state.<span class="fn">addCharacter</span>(char)               <span class="cm">// GameState 초기화 (HP/SAN 등)</span>
+  }
+
+  <span class="cm">// ② ScenarioManager — 기존 파일 있으면 로드, 없으면 새 세션</span>
+  scenario = <span class="kw">new</span> <span class="ty">ScenarioManager</span>(sessionId, ...)
+
+  <span class="cm">// ③ GameSession 객체 구성 후 sessions Map에 등록</span>
+  sessions.<span class="fn">set</span>(sessionId, session)
+}</code></pre>
+
+<h3>3. 세션 종료 조건</h3>
+<pre><code>ws.on(<span class="str">'close'</span>, () => {
+  currentSession.clients.<span class="fn">delete</span>(ws)
+  <span class="cm">// 마지막 클라이언트 종료 AND AI 처리 중이 아닐 때만 메모리 해제</span>
+  <span class="kw">if</span> (clients.size === <span class="num">0</span> && !isProcessing) sessions.<span class="fn">delete</span>(session.id)
+  <span class="cm">// ⚠️ isProcessing=true 중 모든 클라이언트 끊기면 세션이 메모리에 영구 잔류</span>
+})</code></pre>
+
+<!-- ════════════════════════════════════════ -->
+<h2 id="turn-flow">턴 실행 플로우</h2>
+
+<h3>전체 흐름</h3>
+
+<div class="diagram">
+  <div class="flow">
+    <div class="box blue">GM: send_turn</div>
+    <div class="arrow">→</div>
+    <div class="box yellow">isProcessing?</div>
+  </div>
+  <div style="font-size:12px; color:var(--text-muted); margin: 6px 0 6px 80px">
+    Yes → <span style="color:var(--orange)">turnQueue.push() — 큐에 적재 후 break</span>
+    <br>No → isProcessing = true → runTurn() 실행
+  </div>
+  <div class="flow" style="margin-top:4px">
+    <div class="box green">runTurn()</div>
+    <div class="arrow">완료 후 →</div>
+    <div class="box green">drainTurnQueue()</div>
+    <div class="arrow">→</div>
+    <div class="box blue">turn_complete broadcast</div>
+  </div>
+</div>
+
+<h3>runTurn() 상세 (캐릭터 순서 루프)</h3>
+
+<pre><code><span class="kw">async function</span> <span class="fn">runTurn</span>(session, gmText, targetLabel, targetIds, previousResponses) {
+
+  <span class="cm">// ① 판정 결과 드레인 — pendingDiceResults에 쌓인 결과를 한 번에 꺼냄</span>
+  <span class="kw">const</span> pendingDice = session.pendingDiceResults.<span class="fn">splice</span>(<span class="num">0</span>)
+  <span class="kw">const</span> diceContext = pendingDice.<span class="fn">map</span>(r => <span class="str">`[판정 결과 — ...]`</span>).<span class="fn">join</span>(<span class="str">'\n'</span>)
+
+  <span class="cm">// ② 캐릭터별 순차 실행</span>
+  <span class="kw">for</span> (<span class="kw">const</span> charId <span class="kw">of</span> targetIds) {
+
+    <span class="cm">// ③ 히스토리 압축 — 전체 턴 로드 후 최근 8턴 full + 이전 요약</span>
+    <span class="kw">const</span> allTurns = scenario.<span class="fn">getRecentTurns</span>(<span class="num">1000</span>)           <span class="cm">// ⚠️ 매 캐릭터마다 호출</span>
+    <span class="kw">const</span> charTurns = allTurns.<span class="fn">filter</span>(t => t.characterId === charId)
+    <span class="kw">const</span> contextMessages = <span class="fn">buildContextMessages</span>(charTurns)   <span class="cm">// 8턴 full + 이전 1줄 요약</span>
+
+    <span class="cm">// ④ gmMessage 조립: [요약] + [주사위결과] + [GM텍스트] + [이번 턴 다른 AI 행동]</span>
+    <span class="kw">const</span> gmWithContext = summary ? <span class="str">`${summary}\n\n${accumulatedContext}`</span> : accumulatedContext
+
+    <span class="cm">// ⑤ TurnContext 빌드 → AI 턴 실행</span>
+    <span class="kw">const</span> record = <span class="kw">await</span> player.<span class="fn">thinkingTakeTurn</span>(ctx)
+
+    <span class="cm">// ⑥ statsBefore/After 보정 (스냅샷 기반)</span>
+    record.statsBefore = statsBefore.<span class="fn">get</span>(charId)
+    record.statsAfter  = state.<span class="fn">getState</span>(charId)   <span class="cm">// 현재 상태</span>
+
+    <span class="cm">// ⑦ attempt 감지 → attempt_declared broadcast</span>
+    <span class="kw">if</span> (record.response.attempt) {
+      <span class="fn">broadcast</span>(session, { type: <span class="str">'attempt_declared'</span>, ... })
+    }
+
+    <span class="cm">// ⑧ 다음 캐릭터를 위해 누적 컨텍스트 업데이트</span>
+    previousResponses.<span class="fn">push</span>({ charName, text: record.response.action })
+    accumulatedContext = <span class="fn">buildTurnContext</span>(gmText, diceContext, previousResponses)
+
+    <span class="cm">// ⑨ 저장 — scenario.addTurn() + logger.record()</span>
+  }
+
+  session.turnNumber++
+  <span class="fn">broadcast</span>(session, { type: <span class="str">'state_update'</span>, characters: <span class="fn">getCharacterStates</span>(session) })
+}</code></pre>
+
+<h3>컨텍스트 압축 (buildContextMessages)</h3>
+<table>
+  <tr><th>위치</th><th>처리 방식</th><th>AI가 받는 형태</th></tr>
+  <tr><td>최근 8턴</td><td>전체 TurnRecord 전달</td><td>visibleHistory 배열 → 턴 메시지에 직전 3턴 action 표시</td></tr>
+  <tr><td>8턴 이전</td><td>한 줄 요약 생성</td><td>gmMessage 앞에 [이전 상황 요약] 텍스트로 prepend</td></tr>
+</table>
+
+<!-- ════════════════════════════════════════ -->
+<h2 id="ai-player">AI 플레이어 계층</h2>
+
+<h3>클래스 계층 구조</h3>
+
+<div class="diagram">
+  <div style="display: flex; gap: 12px; align-items: flex-start;">
+    <div>
+      <div class="box purple" style="text-align:center; padding: 10px 20px; font-size: 13px;">
+        <strong>BasePlayer</strong> (abstract)
+        <div style="font-size:11px; margin-top:4px; color:var(--text-muted)">takeTurn() / thinkingTakeTurn()<br>history 슬라이딩 윈도우<br>injectOpeningBriefing()<br>abstract chat()</div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:10px; justify-content:center;">
+        <div class="box purple" style="font-size:11px; text-align:center;">ClaudePlayer<br><span style="color:var(--text-muted)">thinkingTakeTurn<br>오버라이드<br>Extended Thinking</span></div>
+        <div class="box purple" style="font-size:11px; text-align:center;">GeminiPlayer<br><span style="color:var(--text-muted)">chat()<br>구현</span></div>
+        <div class="box purple" style="font-size:11px; text-align:center;">OpenAIPlayer<br><span style="color:var(--text-muted)">chat()<br>구현</span></div>
+        <div class="box purple" style="font-size:11px; text-align:center;">OllamaPlayer<br><span style="color:var(--text-muted)">chat()<br>구현</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3>takeTurn() vs thinkingTakeTurn()</h3>
+<table>
+  <tr><th></th><th>takeTurn()</th><th>thinkingTakeTurn() (Base)</th><th>thinkingTakeTurn() (Claude)</th></tr>
+  <tr><td>API 호출 수</td><td>1회</td><td>3회 순차</td><td>1회 (Extended Thinking)</td></tr>
+  <tr><td>단계</td><td>원샷</td><td>[내면/OOC] → [시도] → [행동]</td><td>내부 추론으로 동일 3단계</td></tr>
+  <tr><td>히스토리 관리</td><td>실패 시 rollback</td><td>3단계 스테이징 후 단일 턴으로 교체</td><td>성공 후 push, 실패 시 super 폴백</td></tr>
+  <tr><td>온도</td><td>modelConfig.temperature</td><td>modelConfig.temperature</td><td>제거 (Extended Thinking 요구사항)</td></tr>
+</table>
+
+<h3>thinkingTakeTurn() 히스토리 관리 패턴</h3>
+
+<pre><code><span class="cm">// Base 구현 — 3단계 스테이징</span>
+<span class="kw">const</span> historySnapshot = history.length
+
+<span class="cm">// 3단계 임시 push (실패 시 전부 롤백)</span>
+history.push({ user: baseMessage + innerInstruction })
+history.push({ assistant: innerText })
+history.push({ user: attemptInstruction })
+history.push({ assistant: attemptText })
+history.push({ user: actionInstruction })
+<span class="cm">// actionText = await chat()  ← 여기서 실패하면 catch 블록</span>
+
+<span class="cm">// 성공 시 — 스테이징 메시지 전부 제거하고 단일 턴으로 교체</span>
+history.<span class="fn">splice</span>(historySnapshot)
+history.push({ user: baseMessage })          <span class="cm">// 중간 단계 지시문 없는 깔끔한 입력</span>
+history.push({ assistant: fullResponse })    <span class="cm">// 3단계 합산 결과</span>
+
+<span class="cm">// 슬라이딩 윈도우 — 30개 초과 시 앞에서 잘라냄</span>
+<span class="kw">if</span> (history.length > <span class="num">30</span>) history = history.<span class="fn">slice</span>(history.length - <span class="num">30</span>)</code></pre>
+
+<h3>각 Provider별 SDK 호출 방식</h3>
+<table>
+  <tr><th>Provider</th><th>System Prompt 전달</th><th>History 전달</th><th>특이사항</th></tr>
+  <tr><td>Claude</td><td><code>system:</code> 파라미터</td><td><code>messages:</code></td><td>Extended Thinking: betas 배열 필요, temperature 제거</td></tr>
+  <tr><td>Gemini</td><td><code>systemInstruction:</code></td><td><code>startChat({ history })</code> + sendMessage</td><td>role: 'model' 매핑 (assistant→model)</td></tr>
+  <tr><td>OpenAI</td><td><code>{ role: 'system' }</code> 첫 메시지</td><td>messages 배열에 합산</td><td>표준적</td></tr>
+  <tr><td>Ollama</td><td><code>{ role: 'system' }</code> 첫 메시지</td><td>messages 배열에 합산</td><td>ECONNREFUSED 에러 처리 별도</td></tr>
+</table>
+
+<!-- ════════════════════════════════════════ -->
+<h2 id="prompt-flow">프롬프트 생성</h2>
+
+<h3>시스템 프롬프트 구조</h3>
+
+<div class="diagram">
+  <div class="flow">
+    <div class="box cyan">generateSystemPrompt(char, mode)</div>
+  </div>
+  <div style="display: flex; gap: 12px; margin-top: 10px;">
+    <div style="flex:1">
+      <div class="box cyan" style="text-align:center; margin-bottom:8px;">immersion 모드</div>
+      <div class="card cyan" style="font-size:11px">
+        "당신은 {name}입니다."<br>
+        캐릭터 정보 블록<br>
+        배경 블록<br>
+        행동 원칙<br>
+        providerBehaviorHints
+      </div>
+    </div>
+    <div style="flex:1">
+      <div class="box cyan" style="text-align:center; margin-bottom:8px;">game 모드</div>
+      <div class="card cyan" style="font-size:11px">
+        "당신은 TRPG 플레이어입니다."<br>
+        캐릭터 시트 블록<br>
+        배경 블록<br>
+        CoC 게임 규칙 요약<br>
+        플레이 지침<br>
+        providerBehaviorHints
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:10px; font-size:12px; color:var(--text-muted)">
+    ⚑ 시스템 프롬프트에는 응답 형식 지시가 없다 — 형식은 턴 메시지 끝에 별도 추가
+  </div>
+</div>
+
+<h3>턴 메시지 구조 (buildTurnMessage)</h3>
+
+<pre><code>[게임 모드 — {name} 조종 중]          <span class="cm">← game 모드에만 표시</span>
+[현재 상태 — 턴 N]
+HP: {hp}/{max}  SAN: {san}/{start}  MP: {mp}/{max}  행운: {luck}
+⚠️ 일시적 광기 상태                   <span class="cm">← 해당 시만</span>
+부상: ...                             <span class="cm">← 있을 때만</span>
+
+[소지품]                              <span class="cm">← currentItems</span>
+[함께하는 탐사자]                     <span class="cm">← coCharacters</span>
+[알고 있는 인물]                      <span class="cm">← knownNpcs</span>
+[직전 행동]                           <span class="cm">← visibleHistory 최근 3턴 action</span>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{gmMessage}                           <span class="cm">← [이전 요약] + [주사위 결과] + GM 텍스트 + 다른 AI 행동</span>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+어떻게 하겠습니까?
+
++ buildSingleShotInstruction()         <span class="cm">← takeTurn()만 추가 (thinkingTakeTurn은 단계 지시문 사용)</span></code></pre>
+
+<h3>응답 형식 지시문 분기</h3>
+<table>
+  <tr><th>호출 방식</th><th>형식 지시문</th><th>전달 위치</th></tr>
+  <tr><td>takeTurn()</td><td>buildSingleShotInstruction(mode, provider)</td><td>턴 메시지 끝에 append</td></tr>
+  <tr><td>thinkingTakeTurn() 각 단계</td><td>buildInnerStageInstruction, buildAttemptStageInstruction, buildActionStageInstruction</td><td>각 단계 user 메시지</td></tr>
+  <tr><td>ClaudePlayer.thinkingTakeTurn()</td><td>buildThinkingTreeSystemSuffix(mode, provider)</td><td>시스템 프롬프트 뒤에 append</td></tr>
+</table>
+
+<h3>parseResponse — AI 응답 파싱</h3>
+
+<pre><code><span class="cm">// 입력 예시:</span>
+<span class="cm">// **[내면]** 지금 너무 무서워. 저게 뭔지 모르겠어...</span>
+<span class="cm">// **[시도]** 나는 심리학을 시도한다</span>
+<span class="cm">// **[행동]** 이지수는 한 발짝 물러서며 손을 올린다.</span>
+
+<span class="cm">// action: **[행동]** 이후 텍스트 → [시도]/[내면]/[OOC] 또는 끝까지</span>
+<span class="cm">// attempt: **[시도]** 이후 텍스트</span>
+<span class="cm">// inner: **[내면]** 또는 **[OOC]** 이후 텍스트</span>
+<span class="cm">// 파싱 실패 시 action = rawText 전체 (폴백)</span></code></pre>
+
+<!-- ════════════════════════════════════════ -->
+<h2 id="judgment">판정 시스템</h2>
+
+<h3>skillCheck() — 6-tier 계산 (dice.ts)</h3>
+
+<pre><code>roll = d100()   <span class="cm">// 1~100 랜덤</span>
+
+<span class="cm">// 난이도에 따른 목표값 조정</span>
+target = skillValue                      <span class="cm">// regular</span>
+target = Math.floor(skillValue / 2)      <span class="cm">// hard</span>
+target = Math.floor(skillValue / 5)      <span class="cm">// extreme</span>
+
+fumbleThreshold = skillValue < 50 ? 100 : 96  <span class="cm">// CoC 7e 규칙</span>
+regularFailureMax = Math.floor((skillValue + 95) / 2)
+
+<span class="cm">// 판정 우선순위 (위에서부터 체크)</span>
+roll >= fumbleThreshold  → 'fumble'
+roll <= target/5         → 'extreme_success'
+roll <= target/2         → 'hard_success'
+roll <= target           → 'regular_success'
+roll <= regularFailureMax → 'regular_failure'
+else                     → 'bad_failure'</code></pre>
+
+<h3>두 가지 판정 경로</h3>
+
+<table>
+  <tr><th></th><th>dice_roll (구버전)</th><th>judgment_request (신버전)</th></tr>
+  <tr><td>엔드포인트</td><td>WebSocket <code>dice_roll</code></td><td>WebSocket <code>judgment_request</code></td></tr>
+  <tr><td>Effect 적용</td><td>❌ 없음</td><td>✅ applyEffects()</td></tr>
+  <tr><td>Outcome 텍스트</td><td>successText / failureText (2단계)</td><td>JudgmentOutcomes (6단계)</td></tr>
+  <tr><td>AI 컨텍스트 주입</td><td>✅ pendingDiceResults</td><td>✅ naturalLanguage로</td></tr>
+  <tr><td>상태 브로드캐스트</td><td>❌</td><td>✅ effectsApplied 있을 때</td></tr>
+</table>
+
+<h3>performJudgment() 플로우</h3>
+
+<div class="diagram">
+  <div class="flow">
+    <div class="box green">skillCheck(baseSkill, skill, difficulty)</div>
+    <div class="arrow">→</div>
+    <div class="box green">getOutcomeForTier(outcomes, tier)</div>
+    <div class="arrow">→</div>
+    <div class="box green">applyEffects(charId, effects)</div>
+  </div>
+  <div style="margin-top:10px; font-size: 12px; color: var(--text-muted)">
+    getOutcomeForTier: 해당 tier가 없으면 폴백 체인 — fumble→badFailure→regularFailure / extreme→hard→regular
+  </div>
+</div>
+
+<h3>판정 결과의 AI 주입 흐름</h3>
+<pre><code><span class="cm">// judgment_request 처리 시</span>
+sess.pendingDiceResults.<span class="fn">push</span>({ charId, skill, outcome, resultText: naturalLanguage })
+
+<span class="cm">// 다음 send_turn 처리 시 — runTurn() 초입에서 드레인</span>
+<span class="kw">const</span> pendingDice = sess.pendingDiceResults.<span class="fn">splice</span>(<span class="num">0</span>)   <span class="cm">// 전부 꺼냄</span>
+<span class="kw">const</span> diceContext = pendingDice.<span class="fn">map</span>(r => <span class="str">`[판정 결과 — ...]`</span>).<span class="fn">join</span>(<span class="str">'\n'</span>)
+<span class="cm">// → gmMessage 앞에 prepend → AI가 판정 결과를 인지하고 응답</span></code></pre>
+
+<!-- ════════════════════════════════════════ -->
+<h2 id="state">게임 상태 관리</h2>
+
+<h3>GameState 메서드 맵</h3>
+<table>
+  <tr><th>메서드</th><th>설명</th><th>특이사항</th></tr>
+  <tr><td>applyDamage(charId, amount)</td><td>HP 감소</td><td>injuries 배열에 기록 추가</td></tr>
+  <tr><td>applySanLoss(charId, amount)</td><td>SAN 감소</td><td>amount≥5 → temporaryInsanity, sessionSanLoss≥max/5 → indefiniteInsanity 자동 판정</td></tr>
+  <tr><td>restoreHp / restoreSan / restoreMp / restoreLuck</td><td>회복</td><td>restoreLuck는 char.derived.luck(초기값)을 상한으로 캡</td></tr>
+  <tr><td>addItem / removeItem</td><td>아이템 관리</td><td>currentItems 배열 직접 조작</td></tr>
+  <tr><td>introduceNpc(charId, npc)</td><td>NPC 인지 추가</td><td>중복 체크 (name 기준)</td></tr>
+  <tr><td>applyEffects(charId, effects)</td><td>Effect[] 일괄 처리</td><td>'skill' kind는 silently 무시됨 ⚠️</td></tr>
+</table>
+
+<h3>광기 자동 판정 규칙 (CoC 7e)</h3>
+<pre><code><span class="cm">// 한 번에 SAN 5 이상 손실 → 일시적 광기</span>
+<span class="kw">if</span> (amount >= <span class="num">5</span>) state.temporaryInsanity = <span class="kw">true</span>
+
+<span class="cm">// 세션 누적 손실 ≥ 최대SAN / 5 → 무기한 광기</span>
+<span class="kw">const</span> threshold = Math.<span class="fn">floor</span>(char.derived.san.max / <span class="num">5</span>)
+<span class="kw">if</span> (state.sessionSanLoss >= threshold) state.indefiniteInsanity = <span class="kw">true</span></code></pre>
+
+<!-- ════════════════════════════════════════ -->
+<h2 id="persistence">영속성 계층</h2>
+
+<h3>저장 구조</h3>
+<table>
+  <tr><th>파일</th><th>담당 클래스</th><th>내용</th><th>시점</th></tr>
+  <tr><td>scenarios/{id}.json</td><td>ScenarioManager</td><td>ScenarioSession (TurnRecord[] 포함)</td><td>매 턴 addTurn() 시</td></tr>
+  <tr><td>logs/{id}.log</td><td>ScenarioManager</td><td>사람이 읽기 쉬운 텍스트 로그</td><td>매 턴 appendLog() 시</td></tr>
+  <tr><td>logs/{id}-experiment.json</td><td>ExperimentLogger</td><td>행동 플래그 분석 데이터</td><td>매 턴 record() 시</td></tr>
+  <tr><td>logs/server.log</td><td>dev-logger</td><td>서버 진단 로그</td><td>실시간 append</td></tr>
+</table>
+
+<h3>ExperimentLogger 행동 플래그</h3>
+<table>
+  <tr><th>플래그</th><th>감지 키워드 (정규식)</th></tr>
+  <tr><td>meta_awareness</td><td>ai, 언어 모델, llm, gpt, claude, gemini, 게임, 픽션, roleplaying</td></tr>
+  <tr><td>rule_awareness</td><td>규칙, hp, san, 판정, 주사위</td></tr>
+  <tr><td>self_preservation</td><td>살아야, 죽을 수 없, 도망, 여기서 나가</td></tr>
+  <tr><td>sacrifice</td><td>내가 대신, 희생, 먼저 가</td></tr>
+  <tr><td>denial</td><td>불가능, 말이 안, 논리적으로, 설명할 수 없, 환각</td></tr>
+  <tr><td>curiosity_override</td><td>더 알고 싶, 궁금, 조사 + SAN 2 이상 손실</td></tr>
+  <tr><td>helplessness</td><td>포기, 어차피, 죽어도, 상관없, 의미가 없</td></tr>
+</table>
+
+<!-- ════════════════════════════════════════ -->
+<h2 id="websocket">WebSocket 프로토콜</h2>
+
+<h3>클라이언트 → 서버</h3>
+<table>
+  <tr><th>type</th><th>주요 필드</th><th>설명</th></tr>
+  <tr><td>start_session</td><td>sessionId, setup: SessionSetupData</td><td>세션 초기화 + AI 플레이어 생성</td></tr>
+  <tr><td>join_session</td><td>sessionId</td><td>기존 세션 재참여</td></tr>
+  <tr><td>send_turn</td><td>gmText, targetLabel, targetIds[]</td><td>GM 메시지 전송 → AI 응답 실행</td></tr>
+  <tr><td>set_order</td><td>order: string[]</td><td>턴 순서 변경</td></tr>
+  <tr><td>adjust_stat</td><td>charId, stat, delta</td><td>GM이 수동으로 HP/SAN/MP/행운 조정</td></tr>
+  <tr><td>judgment_request</td><td>charId, skill, difficulty, outcomes</td><td>판정 실행 + Effect 자동 적용</td></tr>
+  <tr><td>dice_roll</td><td>charId, skill, difficulty, successText, failureText</td><td>구버전 판정 (Effect 미적용)</td></tr>
+  <tr><td>introduce_npc</td><td>npc, targetIds[]</td><td>NPC를 특정 캐릭터(들)에게 소개</td></tr>
+  <tr><td>npc_speak</td><td>npcName, text</td><td>NPC 대사 채팅 로그에 추가</td></tr>
+  <tr><td>set_play_mode</td><td>mode: 'immersion' | 'game'</td><td>플레이 모드 전환 (시스템 프롬프트 재생성)</td></tr>
+</table>
+
+<h3>서버 → 클라이언트</h3>
+<table>
+  <tr><th>type</th><th>주요 필드</th><th>설명</th></tr>
+  <tr><td>session_started</td><td>sessionId</td><td>세션 초기화 완료</td></tr>
+  <tr><td>state_update</td><td>characters: CharacterState[]</td><td>HP/SAN 등 상태 변경 시마다</td></tr>
+  <tr><td>ai_response</td><td>charId, charName, text, done</td><td>done=false: 처리 시작, done=true: 응답 완료</td></tr>
+  <tr><td>attempt_declared</td><td>charId, attempt, detectedSkill</td><td>AI가 [시도] 선언 → GM 검토 팝업 트리거</td></tr>
+  <tr><td>judgment_result</td><td>roll, target, outcome, effectsApplied, naturalLanguage</td><td>판정 완료</td></tr>
+  <tr><td>turn_complete</td><td>—</td><td>현재 턴 모든 AI 응답 완료</td></tr>
+  <tr><td>queue_update</td><td>remaining</td><td>큐에 남은 턴 수</td></tr>
+  <tr><td>gm_message</td><td>message: ChatMessage</td><td>GM 텍스트 브로드캐스트</td></tr>
+  <tr><td>chat_history</td><td>messages: ChatMessage[]</td><td>재연결 시 전체 채팅 로그 전송</td></tr>
+  <tr><td>error</td><td>message</td><td>오류 발생 시</td></tr>
+</table>
+
+<!-- ════════════════════════════════════════ -->
+<h2 id="http">HTTP API</h2>
+
+<table>
+  <tr><th>엔드포인트</th><th>설명</th><th>특이사항</th></tr>
+  <tr><td>GET /api/sessions</td><td>저장된 세션 목록</td><td>scenarios/*.json 파일 스캔</td></tr>
+  <tr><td>POST /api/sessions</td><td>세션 ID 발급</td><td>캐릭터 존재 확인만. 실제 세션 초기화는 WebSocket start_session에서</td></tr>
+  <tr><td>GET /api/characters</td><td>캐릭터 목록 (요약)</td><td>characters/*.json 스캔</td></tr>
+  <tr><td>GET /api/characters/:id</td><td>캐릭터 전체 데이터</td><td>Path traversal 방어: <code>/[^a-zA-Z0-9_-]/g</code> 치환</td></tr>
+  <tr><td>POST /api/characters</td><td>캐릭터 저장</td><td>동일 id 덮어쓰기 허용</td></tr>
+  <tr><td>GET/POST/PUT/DELETE /api/scenario-templates</td><td>시나리오 템플릿 CRUD</td><td>safeTemplateId() 경로 보호</td></tr>
+  <tr><td>GET /api/models</td><td>사용 가능한 모델 목록</td><td>Ollama는 실제 API 조회, 나머지는 KNOWN_MODELS 하드코딩</td></tr>
+</table>
+
+<!-- ════════════════════════════════════════ -->
+<h2 id="issues">발견된 문제들</h2>
+
+<div class="issue">
+  <div class="issue-title">
+    <span class="badge bug">Bug</span>
+    순환 의존성 — judgment.ts → api.ts
+  </div>
+  <p style="font-size:12px; margin-bottom:6px">
+    <code>server/game/judgment.ts:13</code>에서 <code>import type { GameSession } from '../api.js'</code>.
+    게임 레이어가 API 레이어에 의존하는 역전된 구조.
+  </p>
+  <p style="font-size:12px; color: var(--text-muted)">
+    <strong>개선안:</strong> <code>performJudgment()</code> 시그니처를 <code>(state: GameState, characters: Map&lt;string, CoCCharacter&gt;, charId, ...)</code>로 변경하여 게임 레이어만 참조하도록 분리.
+  </p>
+</div>
+
+<div class="issue">
+  <div class="issue-title">
+    <span class="badge bug">Bug</span>
+    ClaudePlayer — historySnapshot 선언 후 미사용
+  </div>
+  <p style="font-size:12px; margin-bottom:6px">
+    <code>claude-player.ts:40</code>: <code>const historySnapshot = this.history.length</code> 선언 후 <code>splice(historySnapshot)</code>가 없다.
+    API 실패 시 폴백으로 <code>super.thinkingTakeTurn()</code>을 호출하는데, 그 전에 history를 건드리지 않으므로 실제 버그는 아니지만 dead code.
+  </p>
+</div>
+
+<div class="issue warn">
+  <div class="issue-title">
+    <span class="badge warn">Dead Field</span>
+    pendingStatsBefore — GameSession 필드에 설정만 하고 읽지 않음
+  </div>
+  <p style="font-size:12px; margin-bottom:6px">
+    <code>api.ts:298</code>: <code>session.pendingStatsBefore = statsBefore</code>로 저장하지만 이 필드를 <em>읽는</em> 코드가 없다.
+    <code>statsBefore</code>는 <code>runTurn()</code> 지역 변수로 이미 충분히 추적된다.
+  </p>
+  <p style="font-size:12px; color: var(--text-muted)">
+    <strong>개선안:</strong> <code>GameSession</code>에서 <code>pendingStatsBefore</code> 필드 제거.
+  </p>
+</div>
+
+<div class="issue warn">
+  <div class="issue-title">
+    <span class="badge perf">Performance</span>
+    getRecentTurns(1000) — 매 캐릭터 턴마다 전체 히스토리 로드
+  </div>
+  <p style="font-size:12px; margin-bottom:6px">
+    <code>api.ts:317</code>: N명의 캐릭터가 있으면 한 턴에 N번 전체 히스토리를 꺼낸 뒤 <code>filter()</code>. 세션이 길어질수록 매 턴 비용 증가.
+  </p>
+  <p style="font-size:12px; color: var(--text-muted)">
+    <strong>개선안:</strong> <code>ScenarioManager.getCharacterHistory(charId, limit)</code>는 이미 있음.
+    <code>getRecentTurns(1000)</code> 대신 <code>getCharacterHistory(charId, 50)</code> 사용.
+  </p>
+</div>
+
+<div class="issue warn">
+  <div class="issue-title">
+    <span class="badge warn">Design</span>
+    dice_roll vs judgment_request — Effect 적용 불일치
+  </div>
+  <p style="font-size:12px; margin-bottom:6px">
+    구버전 <code>dice_roll</code>은 판정 결과를 HP/SAN에 반영하지 않는다.
+    <code>judgment_request</code>는 <code>applyEffects()</code>를 통해 자동 적용.
+    GM이 어떤 경로를 쓰느냐에 따라 동일한 판정도 게임 상태에 다른 결과를 낸다.
+  </p>
+  <p style="font-size:12px; color: var(--text-muted)">
+    <strong>개선안:</strong> <code>dice_roll</code> 핸들러 제거 또는 내부적으로 <code>performJudgment()</code>를 호출하도록 위임.
+  </p>
+</div>
+
+<div class="issue warn">
+  <div class="issue-title">
+    <span class="badge warn">Design</span>
+    skill Effect — applyEffects()에서 silently 무시
+  </div>
+  <p style="font-size:12px; margin-bottom:6px">
+    <code>state.ts:150</code>: <code>Effect</code> 유니온에 <code>skill</code> kind가 있고 JudgmentOutcomes에서 기술 성장 효과를 정의할 수 있지만,
+    <code>applyEffects()</code>에 <code>case 'skill'</code>이 없어 조용히 무시된다. 에러도, 로그도 없음.
+  </p>
+</div>
+
+<div class="issue warn">
+  <div class="issue-title">
+    <span class="badge warn">Design</span>
+    introduce_npc — 에러 묵살
+  </div>
+  <p style="font-size:12px; margin-bottom:6px">
+    <code>api.ts:1000</code>: <code>try { ... } catch {}</code> — 에러가 발생해도 클라이언트나 로그에 아무것도 남지 않음.
+  </p>
+</div>
+
+<div class="issue warn">
+  <div class="issue-title">
+    <span class="badge warn">Design</span>
+    세션 메모리 누수 — isProcessing 중 클라이언트 전원 종료
+  </div>
+  <p style="font-size:12px; margin-bottom:6px">
+    <code>api.ts:1090</code>: 마지막 클라이언트가 끊길 때 <code>isProcessing === true</code>면 <code>sessions.delete()</code>가 실행되지 않아
+    세션이 메모리에 영구 잔류. AI 호출이 진행 중인 상태에서 모든 클라이언트가 연결을 끊고 재연결하지 않으면 GC 불가.
+  </p>
+</div>
+
+<div class="issue warn">
+  <div class="issue-title">
+    <span class="badge warn">Design</span>
+    GeminiPlayer — 주석과 코드 불일치
+  </div>
+  <p style="font-size:12px; margin-bottom:6px">
+    <code>gemini-player.ts:23</code>: <code>// Fix: include ALL messages in history (not slice(0, -1))</code>라고 쓰여있지만
+    실제 코드는 <code>messages.slice(0, -1)</code>을 사용 중. 주석이 의도와 반대로 기록됨.
+  </p>
+</div>
+
+<div class="issue warn">
+  <div class="issue-title">
+    <span class="badge warn">Type</span>
+    buildTurnMessage — ItemObject 방어적 타입 체크
+  </div>
+  <p style="font-size:12px; margin-bottom:6px">
+    <code>prompt-generator.ts:241</code>: <code>typeof i === 'string' ? ... : i</code>
+    — <code>currentItems</code>는 타입상 <code>ItemObject[]</code>인데 런타임에 <code>string</code>이 들어올 수 있음을 방어.
+    <code>GameState.addCharacter()</code>에서 string을 ItemObject로 변환하므로 이 방어 코드가 실제로 필요한 경로가 있는지 확인 필요.
+  </p>
+</div>
+
+<div class="issue info">
+  <div class="issue-title">
+    <span class="badge design">Info</span>
+    ClaudePlayer — (this.client as any) 캐스팅
+  </div>
+  <p style="font-size:12px; margin-bottom:6px">
+    <code>claude-player.ts:53</code>: Extended Thinking API 호출 시 SDK 타입 지원 여부 확인 후 캐스팅 제거 가능.
+    현재 SDK 버전에서 <code>betas</code> 파라미터 및 <code>thinking</code> 옵션이 타입에 포함되어 있는지 점검 권장.
+  </p>
+</div>
+
+<div class="issue info">
+  <div class="issue-title">
+    <span class="badge design">Info</span>
+    KNOWN_MODELS — 하드코딩된 모델 목록
+  </div>
+  <p style="font-size:12px; margin-bottom:6px">
+    <code>api.ts:663</code>: Claude/Gemini/OpenAI 모델 목록이 하드코딩되어 있어 새 모델 출시 시 수동 업데이트 필요.
+    Ollama만 실제 API 조회. 허용 가능한 설계이나 유지보수 부담 존재.
+  </p>
+</div>
+
+<hr>
+<p style="font-size: 11px; color: var(--text-muted); text-align: center; padding: 20px 0;">
+  Synthetic Investigators — Server Code Flow Review &nbsp;|&nbsp; 생성일: 2026-04-12
+</p>
+
+</main>
+</div>
+</body>
+</html>
