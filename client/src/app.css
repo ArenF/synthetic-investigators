@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-base:     #0a0e1a;
+  --bg-panel:    #0f1526;
+  --bg-elevated: #161d33;
+  --bg-border:   #1e2744;
+  --teal:        #14b8a6;
+  --teal-light:  #2dd4bf;
+  --text-primary: #e2e8f0;
+  --text-muted:   #94a3b8;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+#root {
+  height: 100%;
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: 'Inter', 'Noto Sans KR', system-ui, sans-serif;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--bg-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--teal); }
+
+/* Input base */
+input, textarea, select {
+  background-color: var(--bg-elevated) !important;
+  border: 1px solid var(--bg-border) !important;
+  color: var(--text-primary) !important;
+  border-radius: 6px;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--teal) !important;
+}
