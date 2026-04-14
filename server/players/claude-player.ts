@@ -32,8 +32,8 @@ export class ClaudePlayer extends BasePlayer {
   }
 
   /**
-   * Extended Thinking으로 사고 트리 구현 — 1회 호출로 내면→시도→행동 내부 추론.
-   * 실패 시 base의 3단계 루프로 폴백.
+   * Extended Thinking으로 사고 트리 구현 — 1회 호출로 내면→행동 내부 추론.
+   * 실패 시 base의 2단계 루프로 폴백.
    */
   override async thinkingTakeTurn(ctx: TurnContext): Promise<TurnRecord> {
     if (!this.character.modelConfig.extendedThinking) {
@@ -81,7 +81,7 @@ export class ClaudePlayer extends BasePlayer {
 
     } catch (err: any) {
       const elapsed = Date.now() - t0
-      log.warn(tag, `Extended Thinking 실패 (${elapsed}ms): ${err.message} — 3단계 루프로 폴백`)
+      log.warn(tag, `Extended Thinking 실패 (${elapsed}ms): ${err.message} — 2단계 루프로 폴백`)
       // 히스토리 건드리지 않고 부모 구현으로 폴백
       return super.thinkingTakeTurn(ctx)
     }

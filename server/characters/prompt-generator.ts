@@ -185,8 +185,6 @@ function getProviderFormatHints(provider: string): string {
   switch (provider) {
     case 'gemini':
       return `- [행동]은 번호 목록 없이 자연스러운 서술형 문장으로 작성하세요.`
-    case 'ollama':
-      return `- 태그는 반드시 **[OOC]**, **[행동]** 형식으로 작성하세요. [] 앞뒤에 ** 필수.`
     default:
       return ''
   }
