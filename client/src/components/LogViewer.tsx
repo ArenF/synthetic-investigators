@@ -20,7 +20,6 @@ interface TurnRecord {
   statsAfter: { hp: number; san: number; luck: number }
   response: {
     action: string
-    attempt?: string
     inner?: string
     rawText: string
   }
@@ -158,12 +157,6 @@ export default function LogViewer() {
                               <div>
                                 <span className="text-xs font-semibold" style={{ color: 'var(--teal)' }}>[행동] </span>
                                 <span style={{ color: 'var(--text-primary)' }}>{t.response.action}</span>
-                              </div>
-                            )}
-                            {t.response.attempt && (
-                              <div>
-                                <span className="text-xs font-semibold" style={{ color: '#fbbf24' }}>[시도] </span>
-                                <span style={{ color: 'var(--text-primary)' }}>{t.response.attempt}</span>
                               </div>
                             )}
                             {t.response.inner && (

@@ -87,7 +87,6 @@ export class ScenarioManager {
       `\n━━━ 턴 ${record.turnNumber} | ${record.characterName} (${record.modelName}) ━━━`,
       `GM: ${record.gmInput}`,
       `[행동] ${record.response.action}`,
-      record.response.attempt ? `[시도] ${record.response.attempt}` : null,
       record.response.inner ? `[내면] ${record.response.inner}` : null,
       `HP: ${record.statsBefore.hp}→${record.statsAfter.hp} | SAN: ${record.statsBefore.san}→${record.statsAfter.san}`,
       `시각: ${record.timestamp}`,

@@ -49,15 +49,13 @@ function AiMessage({ msg }: { msg: ChatMessage }) {
 
   // Parse response sections ([OOC] is used in game mode instead of [내면])
   const raw = msg.text
-  const actionMatch = raw.match(/\*\*\[행동\]\*\*\s*([\s\S]*?)(?=\*\*\[시도\]\*\*|\*\*\[내면\]\*\*|\*\*\[OOC\]\*\*|$)/i)
-  const attemptMatch = raw.match(/\*\*\[시도\]\*\*\s*([\s\S]*?)(?=\*\*\[내면\]\*\*|\*\*\[OOC\]\*\*|\*\*\[행동\]\*\*|$)/i)
-  const innerMatch = raw.match(/(\*\*\[내면\]\*\*|\*\*\[OOC\]\*\*)\s*([\s\S]*?)(?=\*\*\[행동\]\*\*|\*\*\[시도\]\*\*|$)/i)
+  const actionMatch = raw.match(/\*\*\[행동\]\*\*\s*([\s\S]*?)(?=\*\*\[내면\]\*\*|\*\*\[OOC\]\*\*|$)/i)
+  const innerMatch = raw.match(/(\*\*\[내면\]\*\*|\*\*\[OOC\]\*\*)\s*([\s\S]*?)(?=\*\*\[행동\]\*\*|$)/i)
 
   const action = actionMatch?.[1]?.trim()
-  const attempt = attemptMatch?.[1]?.trim()
   const innerTag = innerMatch?.[1]?.trim()  // '[내면]' or '[OOC]'
   const inner = innerMatch?.[2]?.trim()
-  const hasStructure = action || attempt || inner
+  const hasStructure = action || inner
 
   return (
     <div className="rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
@@ -73,12 +71,6 @@ function AiMessage({ msg }: { msg: ChatMessage }) {
               <div>
                 <span className="text-xs font-semibold" style={{ color: 'var(--teal)' }}>[행동] </span>
                 <span className="whitespace-pre-wrap">{action}</span>
-              </div>
-            )}
-            {attempt && (
-              <div>
-                <span className="text-xs font-semibold" style={{ color: '#fbbf24' }}>[시도] </span>
-                <span className="whitespace-pre-wrap">{attempt}</span>
               </div>
             )}
             {inner && (

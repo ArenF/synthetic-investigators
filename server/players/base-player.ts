@@ -6,7 +6,7 @@
 import type { CoCCharacter, TurnContext, TurnRecord, PlayMode } from '../characters/types.js'
 import {
   generateSystemPrompt, buildTurnMessage, parseResponse,
-  buildInnerStageInstruction, buildAttemptStageInstruction, buildActionStageInstruction,
+  buildInnerStageInstruction, buildActionStageInstruction,
   buildSingleShotInstruction,
 } from '../characters/prompt-generator.js'
 import { log } from '../game/dev-logger.js'
@@ -99,7 +99,7 @@ export abstract class BasePlayer {
 
   /**
    * 사고 트리 방식으로 턴을 수행.
-   * [내면] → [시도] → [행동] 순서로 3번 호출하여 각 단계가 이전 단계를 뿌리로 삼아 깊어짐.
+   * [내면] → [행동] 순서로 2번 호출하여 각 단계가 이전 단계를 뿌리로 삼아 깊어짐.
    * ClaudePlayer는 Extended Thinking으로 오버라이드하여 1회 호출로 처리.
    */
   async thinkingTakeTurn(ctx: TurnContext): Promise<TurnRecord> {
@@ -112,7 +112,6 @@ export abstract class BasePlayer {
 
     const t0 = Date.now()
     let innerText = ''
-    let attemptText = ''
     let actionText = ''
 
     try {
@@ -126,13 +125,7 @@ export abstract class BasePlayer {
       this.history.push({ role: 'assistant', content: innerText })
       log.ai(tag, `[${innerLabel}] 완료 (${Date.now() - t0}ms) — ${innerText.length}자`)
 
-      // ── Stage 2: 시도 (상황 직시 + 행동 판단) ──
-      this.history.push({ role: 'user', content: buildAttemptStageInstruction(mode) })
-      attemptText = await this.chat(this.systemPrompt, this.history)
-      this.history.push({ role: 'assistant', content: attemptText })
-      log.ai(tag, `[시도] 완료 (${Date.now() - t0}ms) — ${attemptText.length}자`)
-
-      // ── Stage 3: 행동 (실제 행동 + 묘사) ──
+      // ── Stage 2: 행동 (실제 행동 + 묘사) ──
       this.history.push({ role: 'user', content: buildActionStageInstruction(mode, this.character.modelConfig.provider, this.character.name) })
       actionText = await this.chat(this.systemPrompt, this.history)
       log.ai(tag, `[행동] 완료 (${Date.now() - t0}ms) — ${actionText.length}자`)
@@ -144,8 +137,8 @@ export abstract class BasePlayer {
       throw err
     }
 
-    // 세 단계 합성 — 최종 응답
-    const fullResponse = [innerText, attemptText, actionText].filter(Boolean).join('\n')
+    // 두 단계 합성 — 최종 응답
+    const fullResponse = [innerText, actionText].filter(Boolean).join('\n')
     log.ok(tag, `사고 트리 완료 (${Date.now() - t0}ms) — 총 ${fullResponse.length}자`)
     log.ai(tag, `응답 미리보기: ${fullResponse.slice(0, 150).replace(/\n/g, ' ')}${fullResponse.length > 150 ? '...' : ''}`)
 

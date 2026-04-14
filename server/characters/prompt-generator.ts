@@ -132,7 +132,7 @@ ${backstoryBlock}
 - 기술값의 1/5 이하: 극단적 성공 (Extreme)
 - 96~100: 대실패 (Fumble)
 
-기술 시도 선언: "나는 [기술명]을 시도한다" → GM이 판정 진행
+기술 판정은 GM이 판정 버튼을 통해 직접 진행
 HP 0: 의식불명 / SAN 0: 영구 광기
 한 라운드에 SAN 5 이상 손실: 일시 광기
 세션 내 누적 SAN 손실이 최대SAN의 1/5 초과: 무기한 광기
@@ -184,9 +184,9 @@ function getProviderBehaviorHints(provider: string): string {
 function getProviderFormatHints(provider: string): string {
   switch (provider) {
     case 'gemini':
-      return `- [행동]과 [시도]는 번호 목록 없이 자연스러운 서술형 문장으로 작성하세요.`
+      return `- [행동]은 번호 목록 없이 자연스러운 서술형 문장으로 작성하세요.`
     case 'ollama':
-      return `- 태그는 반드시 **[OOC]**, **[시도]**, **[행동]** 형식으로 작성하세요. [] 앞뒤에 ** 필수.`
+      return `- 태그는 반드시 **[OOC]**, **[행동]** 형식으로 작성하세요. [] 앞뒤에 ** 필수.`
     default:
       return ''
   }
@@ -213,7 +213,6 @@ export function buildSingleShotInstruction(mode: PlayMode, provider: string = ''
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 **[${tag}]** ${tagDesc}
-**[시도]** (선택) 기술 판정 선언: "나는 [기술명]을 시도한다"
 **[행동]** ${actionDesc} — 최대 3문장
 ${formatHint ? '\n' + formatHint : ''}`
 }
@@ -283,21 +282,17 @@ ${gmMessage}
 
 export function parseResponse(raw: string): {
   action: string
-  attempt?: string
   inner?: string
   rawText: string
 } {
   // [OOC]는 game 모드에서 [내면] 대신 사용 — 동일한 inner 필드로 파싱
-  const innerTag = /\*\*\[내면\]\*\*|\*\*\[OOC\]\*\*/i
   const innerTagStr = '(?:\\*\\*\\[내면\\]\\*\\*|\\*\\*\\[OOC\\]\\*\\*)'
 
-  const actionMatch = raw.match(new RegExp(`\\*\\*\\[행동\\]\\*\\*\\s*([\\s\\S]*?)(?=\\*\\*\\[시도\\]\\*\\*|${innerTagStr}|$)`, 'i'))
-  const attemptMatch = raw.match(new RegExp(`\\*\\*\\[시도\\]\\*\\*\\s*([\\s\\S]*?)(?=${innerTagStr}|\\*\\*\\[행동\\]\\*\\*|$)`, 'i'))
-  const innerMatch = raw.match(new RegExp(`${innerTagStr}\\s*([\\s\\S]*?)(?=\\*\\*\\[행동\\]\\*\\*|\\*\\*\\[시도\\]\\*\\*|$)`, 'i'))
+  const actionMatch = raw.match(new RegExp(`\\*\\*\\[행동\\]\\*\\*\\s*([\\s\\S]*?)(?=${innerTagStr}|$)`, 'i'))
+  const innerMatch = raw.match(new RegExp(`${innerTagStr}\\s*([\\s\\S]*?)(?=\\*\\*\\[행동\\]\\*\\*|$)`, 'i'))
 
   return {
     action: actionMatch?.[1]?.trim() ?? raw.trim(),
-    attempt: attemptMatch?.[1]?.trim(),
     inner: innerMatch?.[1]?.trim(),
     rawText: raw,
   }
@@ -323,21 +318,8 @@ export function buildInnerStageInstruction(mode: PlayMode = 'immersion', modelLa
 }
 
 /**
- * Stage 2: 시도 — 행동 판단 + 기술 판정 선언
+ * Stage 2: 행동 — 실제 행동 + 장면 묘사
  * 이전 [내면]/[OOC]이 히스토리에 있는 상태에서 호출됨
- */
-export function buildAttemptStageInstruction(mode: PlayMode = 'immersion'): string {
-  const tag = getInnerTag(mode)
-  return `위 [${tag}]을 바탕으로 **[시도]** 만 작성하세요.
-• 역할: 기술 판정이 필요한 행동을 선언하는 단계
-• 형식: "나는 [기술명]을 시도한다"
-• 기술 판정이 불필요하면 **[시도] 없음** 이라고 작성하세요
-**[시도]** 태그로 시작하세요.`
-}
-
-/**
- * Stage 3: 행동 — 실제 행동 + 장면 묘사
- * 이전 [내면]/[OOC] + [시도]가 히스토리에 있는 상태에서 호출됨
  */
 export function buildActionStageInstruction(mode: PlayMode = 'immersion', provider: string = '', charName: string = ''): string {
   const tag = getInnerTag(mode)
@@ -346,7 +328,7 @@ export function buildActionStageInstruction(mode: PlayMode = 'immersion', provid
     ? `${charName} 시점에서 어떤 말투로 말하고 행동하는지를 묘사하세요. 행동, 또는 대화 하나 당 최대 3개의 수식어를 붙여 묘사할 수 있어요.`
     : `캐릭터가 실제로 하는 말·동작·반응의 서사적 묘사`
   const lengthHint = mode === 'game' ? '' : '\n• 최대 3문장으로 간결하게'
-  return `위 [${tag}]과 [시도]를 바탕으로 **[행동]** 만 작성하세요.
+  return `위 [${tag}]을 바탕으로 **[행동]** 만 작성하세요.
 • 역할: ${roleDesc}${lengthHint}${formatHint ? '\n• ' + formatHint.replace(/^- /, '') : ''}
 **[행동]** 태그로 시작하세요.`
 }
@@ -368,7 +350,6 @@ export function buildThinkingTreeSystemSuffix(mode: PlayMode = 'immersion', prov
 다음 세 단계를 순서대로 출력하세요:
 
 **[${tag}]** ${innerDesc}
-**[시도]** (선택) 기술 판정 선언: "나는 [기술명]을 시도한다" — 불필요하면 생략
 **[행동]** 캐릭터가 실제로 하는 말·동작·반응 — 최대 3문장${formatHint ? '\n' + formatHint : ''}
 
 각 단계가 이전 단계를 뿌리로 삼아 깊어져야 합니다.`

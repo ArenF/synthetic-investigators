@@ -17,7 +17,7 @@ import { GameState } from './game/state.js'
 import { ScenarioManager } from './game/scenario.js'
 import { ExperimentLogger } from './game/logger.js'
 import { skillCheck } from './game/dice.js'
-import { performJudgment, detectSkillFromText } from './game/judgment.js'
+import { performJudgment } from './game/judgment.js'
 import type { JudgmentOutcomes } from './characters/types.js'
 import { buildContextMessages } from './game/context.js'
 import { log, logApiKeyStatus, testOllamaConnection } from './game/dev-logger.js'
@@ -371,18 +371,6 @@ async function runTurn(
       text: responseText,
       done: true,
     })
-
-    // Broadcast attempt_declared if AI declared a skill attempt
-    if (record.response.attempt) {
-      const detectedSkill = detectSkillFromText(record.response.attempt)
-      broadcast(session, {
-        type: 'attempt_declared',
-        charId,
-        charName: char.name,
-        attempt: record.response.attempt,
-        detectedSkill,
-      })
-    }
 
     // Update accumulated context for the next AI in this turn
     previousResponses.push({ charName: char.name, text: record.response.action })

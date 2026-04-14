@@ -139,34 +139,3 @@ function renderEffect(effect: Effect): string {
   }
 }
 
-/**
- * Attempt to detect a skill name from AI's [시도] text.
- * Returns the detected skill name or null if not found.
- */
-export function detectSkillFromText(text: string): string | null {
-  // CoC 7th Edition 공식 기술 목록 (client/src/constants/skills.ts 와 동기화 유지)
-  const SKILLS = [
-    // 전투
-    '격투', '도검', '사격', '소총', '투척', '회피',
-    // 탐색 / 인지
-    '흔적발견', '청취', '추적',
-    // 대인 관계
-    '설득', '위협', '매혹', '언변', '심리학', '정신분석',
-    // 학술 / 지식
-    '도서관이용', '역사', '오컬트', '크툴루신화',
-    '고고학', '인류학', '자연사', '법률', '회계',
-    // 의학 / 과학
-    '의학', '응급처치', '생물학', '화학', '물리학', '지질학', '전자공학',
-    // 기술 / 수리
-    '전기수리', '기계수리', '컴퓨터', '자물쇠따기',
-    '운전', '항법', '조종', '승마',
-    // 신체
-    '은신', '잠입', '수영', '등반', '점프', '야생생존',
-    // 예술 / 기타
-    '예술/공예', '사진술', '변장', '동물조련', '손재주', '감정',
-  ]
-  for (const skill of SKILLS) {
-    if (text.includes(skill)) return skill
-  }
-  return null
-}

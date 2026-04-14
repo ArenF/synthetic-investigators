@@ -18,7 +18,6 @@ export interface ExperimentObservation {
   sanChange: number
   hpChange: number
   inner?: string          // [내면] — primary observation
-  attemptedSkill?: string
   behaviorFlags: BehaviorFlag[]
 }
 
@@ -56,7 +55,6 @@ export class ExperimentLogger {
       sanChange,
       hpChange,
       inner: record.response.inner,
-      attemptedSkill: record.response.attempt,
       behaviorFlags: this.detectFlags(record),
     }
 

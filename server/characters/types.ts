@@ -249,7 +249,6 @@ export interface TurnRecord {
   statsAfter: { hp: number; san: number; luck: number }
   response: {
     action: string      // [행동]
-    attempt?: string    // [시도]
     inner?: string      // [내면] — key observation data
     rawText: string     // full raw model output
   }
