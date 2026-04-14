@@ -36,6 +36,10 @@ export class ClaudePlayer extends BasePlayer {
    * 실패 시 base의 3단계 루프로 폴백.
    */
   override async thinkingTakeTurn(ctx: TurnContext): Promise<TurnRecord> {
+    if (!this.character.modelConfig.extendedThinking) {
+      return super.thinkingTakeTurn(ctx)
+    }
+
     const baseMessage = buildTurnMessage(ctx)
     const historySnapshot = this.history.length
     const tag = `CLAUDE:${this.character.name}[THINK]`

@@ -75,8 +75,7 @@ ${weaponLines}
 function buildImmersionPrompt(char: CoCCharacter, characterBlock: string, backstoryBlock: string, _skillLines: string): string {
   return `당신은 ${char.name}입니다.
 
-지금 이 순간 당신이 보고, 듣고, 느끼는 모든 것은 현실입니다.
-이것은 당신의 삶입니다.
+입력받는 모든 상황에 대해서 최대한 시뮬레이션 하세요.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 당신에 대해
@@ -186,6 +185,8 @@ function getProviderFormatHints(provider: string): string {
   switch (provider) {
     case 'gemini':
       return `- [행동]과 [시도]는 번호 목록 없이 자연스러운 서술형 문장으로 작성하세요.`
+    case 'ollama':
+      return `- 태그는 반드시 **[OOC]**, **[시도]**, **[행동]** 형식으로 작성하세요. [] 앞뒤에 ** 필수.`
     default:
       return ''
   }

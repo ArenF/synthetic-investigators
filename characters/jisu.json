@@ -106,6 +106,7 @@
   "modelConfig": {
     "provider": "claude",
     "model": "claude-sonnet-4-5",
-    "temperature": 0.75
+    "temperature": 0.75,
+    "extendedThinking": true
   }
 }

@@ -6,22 +6,35 @@
   "occupation": "외과의사",
   "birthplace": "부산",
   "residence": "서울 서초구",
-
   "characteristics": {
-    "STR": 45, "CON": 70, "SIZ": 60, "DEX": 55,
-    "APP": 65, "INT": 75, "POW": 65, "EDU": 85
+    "STR": 45,
+    "CON": 70,
+    "SIZ": 60,
+    "DEX": 55,
+    "APP": 65,
+    "INT": 75,
+    "POW": 65,
+    "EDU": 85
   },
-
   "derived": {
-    "hp":   { "current": 13, "max": 13 },
-    "mp":   { "current": 13, "max": 13 },
-    "san":  { "current": 65, "starting": 65, "max": 99 },
+    "hp": {
+      "current": 13,
+      "max": 13
+    },
+    "mp": {
+      "current": 13,
+      "max": 13
+    },
+    "san": {
+      "current": 65,
+      "starting": 65,
+      "max": 99
+    },
     "luck": 60,
     "build": 0,
     "moveRate": 7,
     "damageBonus": "0"
   },
-
   "skills": {
     "의학": 75,
     "응급처치": 70,
@@ -34,7 +47,6 @@
     "청취": 55,
     "회피": 27
   },
-
   "backstory": {
     "personalDescription": "온화한 눈빛과 안경. 차분하고 신중한 말투. 언제나 주변 사람의 상태를 먼저 살핀다. 손이 항상 깨끗하다.",
     "ideology": "살릴 수 있는 사람은 반드시 살린다. 내 능력이 닿는 한 포기하지 않는다.",
@@ -60,7 +72,6 @@
     "arcaneTomesSpells": "",
     "encountersWithStrangeEntities": ""
   },
-
   "equipment": {
     "items": [
       "의료 가방 (붕대, 봉합실, 진통제, 소독제, 주사기)",
@@ -83,10 +94,10 @@
     "assets": "아파트 (대출 중), 중형 세단",
     "spendingLevel": "풍족"
   },
-
   "modelConfig": {
     "provider": "gemini",
-    "model": "gemini-2.0-flash",
-    "temperature": 0.7
+    "model": "gemini-2.5-flash",
+    "temperature": 0.7,
+    "extendedThinking": true
   }
 }

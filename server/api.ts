@@ -670,6 +670,7 @@ const KNOWN_MODELS: Record<string, string[]> = {
     'claude-haiku-3-5',
   ],
   gemini: [
+    'gemini-2.5-flash',
     'gemini-2.5-pro-preview-03-25',
     'gemini-2.0-flash',
     'gemini-2.0-flash-lite',

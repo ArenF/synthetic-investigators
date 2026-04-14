@@ -415,6 +415,21 @@ export default function CharacterEditor() {
               </div>
             </div>
 
+            {/* Extended Thinking — Claude / Gemini only */}
+            {(char.modelConfig.provider === 'claude' || char.modelConfig.provider === 'gemini') && (
+              <div className="flex items-center gap-2 mb-3">
+                <input
+                  type="checkbox"
+                  id="extended-thinking"
+                  checked={char.modelConfig.extendedThinking ?? false}
+                  onChange={e => setField('modelConfig.extendedThinking', e.target.checked)}
+                />
+                <label htmlFor="extended-thinking" className="text-xs" style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>
+                  Extended Thinking 활성화
+                </label>
+              </div>
+            )}
+
             {/* Model name — free text + datalist suggestions */}
             <div>
               <label className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>
