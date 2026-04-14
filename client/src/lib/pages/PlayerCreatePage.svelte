@@ -85,4 +85,10 @@
     align-items: center;
 }
 
+.investigator_info {
+    position: relative;
+    border: 1px solid red;
+    
+}
+
 </style> 

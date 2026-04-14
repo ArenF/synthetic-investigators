@@ -1,8 +1,12 @@
 <script lang="ts">
-    import { isArrayLiteralExpression } from "typescript";
+    import CustomizableCheckbox from "./CustomizableCheckbox.svelte";
 
+
+    // 프론트 관련 변수
     let { name } = $props();
-    
+    let enableConfigThinking:boolean = $state(false);
+
+    // AI 관련 변수들
     const providers: Record<string, string[]> = {
         claude: [
             'claude-opus-4-6',
@@ -10,8 +14,8 @@
             'claude-haiku-4-5-20251001',
         ],
         gemini: [
-            'gemini-2.0-flash',
-            'gemini-1.5-pro',
+            'gemini-2.5-flash',
+            'gemini-2.5-pro',
         ],
         openai: [
             'gpt-4o',
@@ -21,6 +25,7 @@
     };
     let modelTypeKey:string = $state('');
 
+    // 즉시 실행함수 웹페이지 로드 때 불러옴.
     (async function getOllamaModels() {
         try {
             const resp = await fetch('http://localhost:11434/api/tags');
@@ -51,7 +56,22 @@
              {/each}
         </select>
         {/if}
-        
+        {#if modelTypeKey === 'claude' || modelTypeKey === 'gemini'}
+        <div class="extend_thinking_container">
+            <p>Extend Thinking 활성화 : </p>
+            <CustomizableCheckbox name="extended_thinking" id="extendedThinking" bind:checked={enableConfigThinking}>
+                {#snippet display(enableConfigThinking)}
+                    <div class="checkbox_display">
+                        <label for="extendedThinking">
+                            {#if enableConfigThinking}<span>✔</span>
+                            {:else} <span>✖</span>
+                            {/if}
+                        </label>
+                    </div>
+                {/snippet}
+            </CustomizableCheckbox>
+        </div>
+        {/if}
     </div>
 </div>
 
@@ -59,26 +79,52 @@
 
 .main_container {
     position: relative;
+    width: fit-content;
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-items: center;
+    padding: 5px;
 }
 
 p {
     width: max-content;
-
 }
 
 .input_container {
     display: flex;
     flex-direction: column;
     width: 16rem;
+    padding: 10px;
 }
 
 .input_container select {
+    position: relative;
     width: 100%;
-    margin: 10px;
+}
+
+.extend_thinking_container {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: left;
+    padding: 5px;
+    gap: 10px;
+}
+
+.checkbox_display {
+    width: 2em;
+    height: 2em;
+    background-color: #262e4c;
+    border-radius: 1em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.checkbox_display label span {
+    color: #b199db;
 }
 
 </style>

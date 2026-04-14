@@ -13,7 +13,8 @@
       "Bash(rm client/src/App.tsx client/src/main.tsx client/src/index.css client/src/store.ts)",
       "Bash(rm -rf client/src/components/)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(node -e \"const p = JSON.parse\\(require\\('fs'\\).readFileSync\\('node_modules/svelte/package.json','utf8'\\)\\); console.log\\(p.version\\)\")"
     ]
   }
 }
