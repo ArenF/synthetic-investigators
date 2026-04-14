@@ -9,7 +9,11 @@
       "Bash(git checkout:*)",
       "Bash(git commit -m ':*)",
       "mcp__ide__getDiagnostics",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(rm client/src/App.tsx client/src/main.tsx client/src/index.css client/src/store.ts)",
+      "Bash(rm -rf client/src/components/)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
