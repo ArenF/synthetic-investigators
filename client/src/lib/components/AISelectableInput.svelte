@@ -1,13 +1,17 @@
 <script lang="ts">
+    import { onMount, untrack } from "svelte";
     import CustomizableCheckbox from "./CustomizableCheckbox.svelte";
 
 
     // 프론트 관련 변수
-    let { name } = $props();
-    let enableConfigThinking:boolean = $state(false);
+    let { name, thinkConfig = false }:{ name:string, thinkConfig?:boolean } 
+    = $props();
+    // untrack: 서버에서 받은 초기값만 캡처. 이후 사용자가 자유롭게 토글 가능
+    let enableThink:boolean = $state(untrack(() => thinkConfig));
 
     // AI 관련 변수들
-    const providers: Record<string, string[]> = {
+    // $state: ollama 목록이 비동기로 업데이트될 때 재렌더링되려면 $state 필요
+    let providers = $state<Record<string, string[]>>({
         claude: [
             'claude-opus-4-6',
             'claude-sonnet-4-6',
@@ -22,11 +26,11 @@
             'gpt-4o-mini',
         ],
         ollama: [],
-    };
+    });
     let modelTypeKey:string = $state('');
 
-    // 즉시 실행함수 웹페이지 로드 때 불러옴.
-    (async function getOllamaModels() {
+    // ollama 모델 목록은 마운트 시 1회만 로드
+    onMount(async () => {
         try {
             const resp = await fetch('http://localhost:11434/api/tags');
             const data = await resp.json() as { models: { name:string }[]};
@@ -34,7 +38,8 @@
         } catch(er) {
             console.log("ollama의 모델 타입을 불러오는데 실패했습니다. ollama가 작동되고 있는지 확인해주세요.");
         }
-    }());
+    });
+
 </script>
 
 <div class="main_container">
@@ -59,11 +64,11 @@
         {#if modelTypeKey === 'claude' || modelTypeKey === 'gemini'}
         <div class="extend_thinking_container">
             <p>Extend Thinking 활성화 : </p>
-            <CustomizableCheckbox name="extended_thinking" id="extendedThinking" bind:checked={enableConfigThinking}>
-                {#snippet display(enableConfigThinking)}
+            <CustomizableCheckbox name="extended_thinking" id="extendedThinking" bind:checked={enableThink}>
+                {#snippet display(enableThink)}
                     <div class="checkbox_display">
                         <label for="extendedThinking">
-                            {#if enableConfigThinking}<span>✔</span>
+                            {#if enableThink}<span>✔</span>
                             {:else} <span>✖</span>
                             {/if}
                         </label>
