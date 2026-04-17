@@ -48,14 +48,16 @@ button {
     font-weight: bold;
 }
 
+/* Chrome 브라우저 */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
     margin: 0; 
     -webkit-appearance: none;
 }
 
+/* Firefox 전용 - 일반 -moz-appearance는 기존 appearance 속성에 포함됨. */
 input[type="number"] {
-    -moz-appearance: none;
+    appearance: none;
 }
 
 .flexible_list {

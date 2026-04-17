@@ -13,19 +13,20 @@
         <div class="headline_container">
             <div class="investigator_container">
                 <NameTagInput
-                    name={"이름"}
-                    placeholder={"ex) 이지수, 한민철"}
+                    name="이름"
+                    placeholder="ex) 이지수, 한민철"
                 />
                 <AISelectableInput
-                    name={"플레이어"}
+                    name="플레이어"
                 />
+                <div class="age_n_gender">
+                    <NameTagInput name="나이" placeholder="ex) 26"/>
+                    <NameTagInput name="성별" placeholder="성별을 정해주세요." />
+                </div>
                 <NameTagInput
-                    name={"나이"}
-                    placeholder={"ex) 26"}
+                    name="생일"
                 />
-                <NameTagInput
-                    name={"생일"}
-                />
+
             </div>
 
             <div class="attribute_container">
@@ -54,27 +55,6 @@
                 }
             ]}
         />
-        <!-- <input type="text" id="name">
-        <input type="text" id="age">
-        <input type="text" id="gender">
-        <input type="text" id="occupation">
-        <input type="text" id="birthplace">
-        <input type="text" id="residence">
-        <div class="number_form">
-            <input type="number" name="str" id="STR">
-            <input type="number" name="con" id="CON">
-            <input type="number" name="siz" id="SIZ">
-            <input type="number" name="dex" id="DEX">
-            <input type="number" name="app" id="APP">
-            <input type="number" name="int" id="INT">
-            <input type="number" name="pow" id="POW">
-            <input type="number" name="edu" id="EDU">
-            <hr>
-            <input type="number" name="hp" id="HP">
-            <input type="number" name="mp" id="MP">
-            <input type="number" name="san" id="SAN">
-            <input type="number" name="luck" id="LUCK">
-        </div> -->
 
         <div class="skill_list">
             <FlexibleInputList
@@ -118,6 +98,11 @@
 
 .investigator_container {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
 }
 
 .attribute_container {
@@ -127,6 +112,14 @@
     display: flex;
     flex-wrap: wrap;
     flex-direction: column;
+}
+
+.age_n_gender {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 8px;
 }
 
 </style> 

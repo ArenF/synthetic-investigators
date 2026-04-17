@@ -39,7 +39,6 @@ div {
 }
 
 p {
-    border: 1px solid red;
     margin: 0 0.25em 0 0;
     width: 1.5em;
     height: 4em;
@@ -77,6 +76,7 @@ input::-webkit-inner-spin-button {
     width: 2.4rem;
     height: 2.4rem;
     font-size: 16px;
+    padding: 0;
 }
 
 </style>

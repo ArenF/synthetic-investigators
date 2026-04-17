@@ -84,12 +84,11 @@
 
 .main_container {
     position: relative;
-    width: fit-content;
+    width: 100%;
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    padding: 5px;
 }
 
 p {
