@@ -42,10 +42,10 @@
 
 </script>
 
-<div class="main_container">
-    <p>{name} :</p>
-    <div class="input_container">
-        <select name="ai_selector" id="model" onchange={(e:Event) => {
+<div class="align_center flex-row relative w-full">
+    <p class="w-max">{name} :</p>
+    <div class="flex flex-col w-64 p-2.5">
+        <select class="relative w-full" name="ai_selector" id="model" onchange={(e:Event) => {
             const target = e.target as HTMLSelectElement;
             modelTypeKey = target.value;
         }}>
@@ -55,7 +55,7 @@
             {/each}
         </select>
         {#if modelTypeKey.length !== 0}
-        <select name="model_type_selector" id="model_version">
+        <select class="relative w-full" name="model_type_selector" id="model_version">
              {#each providers[modelTypeKey] as value}
                 <option value={value}>{value}</option>
              {/each}
@@ -63,13 +63,13 @@
         {/if}
         {#if modelTypeKey === 'claude' || modelTypeKey === 'gemini'}
         <div class="extend_thinking_container">
-            <p>Extend Thinking 활성화 : </p>
+            <p class="w-max">Extend Thinking 활성화 : </p>
             <CustomizableCheckbox name="extended_thinking" id="extendedThinking" bind:checked={enableThink}>
                 {#snippet display(enableThink)}
-                    <div class="checkbox_display">
+                    <div class="align_center w-[2em] h-[2em] bg-[#262e4c] rounded-full">
                         <label for="extendedThinking">
-                            {#if enableThink}<span>✔</span>
-                            {:else} <span>✖</span>
+                            {#if enableThink}<span class="text-[#b199db]">✔</span>
+                            {:else} <span class="text-[#b199db]">✖</span>
                             {/if}
                         </label>
                     </div>
@@ -82,31 +82,6 @@
 
 <style>
 
-.main_container {
-    position: relative;
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-}
-
-p {
-    width: max-content;
-}
-
-.input_container {
-    display: flex;
-    flex-direction: column;
-    width: 16rem;
-    padding: 10px;
-}
-
-.input_container select {
-    position: relative;
-    width: 100%;
-}
-
 .extend_thinking_container {
     position: relative;
     display: flex;
@@ -115,20 +90,6 @@ p {
     justify-content: left;
     padding: 5px;
     gap: 10px;
-}
-
-.checkbox_display {
-    width: 2em;
-    height: 2em;
-    background-color: #262e4c;
-    border-radius: 1em;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.checkbox_display label span {
-    color: #b199db;
 }
 
 </style>

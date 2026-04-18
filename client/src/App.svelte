@@ -29,7 +29,7 @@ function changePage(whichPage:PageType) {
 
 </script>
 
-<main class="main min-h-screen flex items-center justify-center bg-bg-base">
+<main class="min-h-screen w-full h-full align_center bg-bg-base">
   {#if page === 'Main'}
     <div class="main_container">
     
@@ -79,15 +79,6 @@ function changePage(whichPage:PageType) {
   box-sizing: border-box;
   margin: 0;
   position: relative;
-}
-
-.main {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 .main_container {

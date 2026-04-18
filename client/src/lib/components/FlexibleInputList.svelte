@@ -15,27 +15,19 @@
 </script>
 
 <main>
-    <div class="flexible_list">
+    <div class="align_center flex-col relative p-[5px] gap-[5px]">
         {#each skills as skill}
-            <div class="input_container">
-	            <input type='text' bind:value={skill.name} />
-				<input type='number' bind:value={skill.value} />
+            <div class="flex flex-row mx-2.5 p-[5px] gap-2.5">
+	            <input class="rounded-[15px] min-h-[20px] p-[5px] text-center w-[180px]" type='text' bind:value={skill.name} />
+				<input class="rounded-[15px] min-h-[20px] p-[5px] text-center w-[90px]" type='number' bind:value={skill.value} />
                 <button type="button" class="del_btn" on:click={() => {clickDelBtn(skill)}}>×</button>
             </div>
         {/each}    
-		<button type="button" class="add_btn" on:click={() => {clickAddBtn()}}>+</button>
+		<button type="button" class="add_btn relative" on:click={() => {clickAddBtn()}}>+</button>
     </div>
 </main>
 
 <style>
-/* global */
-input {
-	border-radius: 15px;
-	width: 80px;
-	min-height: 20px;
-	padding: 5px;
-	text-align: center;
-}
 
 button {
     background-color: #b199db;
@@ -60,35 +52,8 @@ input[type="number"] {
     appearance: none;
 }
 
-.flexible_list {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-	justify-content: center;
-	align-items: center;
-    padding: 5px;
-    gap: 5px;
-}
-
-.input_container {
-    display: flex;
-	flex-direction: row;
-    margin: 0px 10px;
-    padding: 5px;
-    gap: 10px;
-}
-
 .add_btn {
-    position: relative;
     width: 100%;
 }
-
-.input_container input {
-    width: 180px;
-}
-.input_container input[type="number"] {
-    width: 90px;
-}
-
 
 </style>

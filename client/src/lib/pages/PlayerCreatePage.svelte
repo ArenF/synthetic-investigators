@@ -1,6 +1,5 @@
 
 <script lang="ts">
-	import NameTagRadioInput from './../components/NameTagRadioInput.svelte';
 	import NameTagInput from './../components/NameTagInput.svelte';
 	import FlexibleInputList from './../components/FlexibleInputList.svelte';
     import AISelectableInput from '../components/AISelectableInput.svelte';
@@ -9,9 +8,9 @@
 </script>
 
 <main>
-    <form action="method" class="player_create_page">
-        <div class="headline_container">
-            <div class="investigator_container">
+    <form action="method" class="align_center flex-col w-[320px] h-screen">
+        <div class="align_center flex-row w-full relative py-[15px] px-[30px] gap-[50px]">
+            <div class="align_center flex-col relative gap-[5px]">
                 <NameTagInput
                     name="이름"
                     placeholder="ex) 이지수, 한민철"
@@ -19,14 +18,12 @@
                 <AISelectableInput
                     name="플레이어"
                 />
-                <div class="age_n_gender">
+                <div class="flex flex-row flex-nowrap w-full gap-2">
                     <NameTagInput name="나이" placeholder="ex) 26"/>
                     <NameTagInput name="성별" placeholder="성별을 정해주세요." />
                 </div>
-                <NameTagInput
-                    name="생일"
-                />
-
+                <NameTagInput name="거주지" />
+                <NameTagInput name="출생지" />
             </div>
 
             <div class="attribute_container">
@@ -42,19 +39,9 @@
             </div>
         </div>
 
-        <NameTagRadioInput
-            name={"성별"}
-            radios={[
-                {
-                    name: '남성',
-                    value: 'male'
-                },
-                {
-                    name: '여성',
-                    value: 'female'
-                }
-            ]}
-        />
+        <div class="align_center flex-row w-full relative py-[15px] px-[30px] gap-[50px]">
+
+        </div>
 
         <div class="skill_list">
             <FlexibleInputList
@@ -71,40 +58,6 @@
 
 <style>
 
-.player_create_page {
-    width: 320px;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-.headline_container {
-    width: 100%;
-    position: relative;
-    padding: 15px 30px;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    gap: 50px;
-}
-
-.headline_container * {
-    border: 1px solid violet;
-    padding: 10px;
-}
-
-.investigator_container {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 5px;
-}
-
 .attribute_container {
     position: relative;
     min-width: max-content;
@@ -112,14 +65,6 @@
     display: flex;
     flex-wrap: wrap;
     flex-direction: column;
-}
-
-.age_n_gender {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    gap: 8px;
 }
 
 </style> 

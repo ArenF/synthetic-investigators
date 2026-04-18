@@ -17,10 +17,10 @@
 
 </script>
 
-<div>
+<div class="align_center flex-row flex-nowrap p-[5px]">
     <p>{name}</p>
     <input type="number" placeholder="0" bind:value={value}/>
-    <div class="display_judge_container">
+    <div class="display_judge_container flex flex-col gap-[0.2rem]">
         <!-- $derived는 읽기 전용이라 bind:value 불가 → 단방향 value= 사용 -->
         <input type="number" readonly value={normalJudge}>
         <input type="number" readonly value={extremeJudge}>
@@ -28,15 +28,6 @@
 </div>
 
 <style>
-
-div {
-    padding: 5px;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    justify-content: center;
-    align-items: center;
-}
 
 p {
     margin: 0 0.25em 0 0;
@@ -64,12 +55,6 @@ input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
-}
-
-.display_judge_container {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
 }
 
 .display_judge_container input {

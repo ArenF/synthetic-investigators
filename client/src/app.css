@@ -34,6 +34,12 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--bg-border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--teal); }
 
+@layer components {
+  .align_center {
+    @apply flex justify-center items-center;
+  }
+}
+
 /* Input base */
 input, textarea, select {
   background-color: var(--bg-elevated) !important;
