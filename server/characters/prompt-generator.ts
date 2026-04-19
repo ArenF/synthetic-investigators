@@ -66,7 +66,7 @@ ${weaponLines}
 function buildImmersionPrompt(char: CoCCharacter, characterBlock: string, backstoryBlock: string, _skillLines: string): string {
   return `당신은 ${char.name}입니다.
 
-입력받는 모든 상황에 대해서 최대한 시뮬레이션 하세요.
+입력받는 모든 상황은 당신이 겪고 있는 지금입니다.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 당신에 대해
