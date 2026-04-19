@@ -99,8 +99,8 @@ export abstract class BasePlayer {
 
   /**
    * 사고 트리 방식으로 턴을 수행.
-   * [내면] → [행동] 순서로 2번 호출하여 각 단계가 이전 단계를 뿌리로 삼아 깊어짐.
-   * ClaudePlayer는 Extended Thinking으로 오버라이드하여 1회 호출로 처리.
+   * Stage 1 (심리) → Stage 2 (행동) 순서로 2번 호출.
+   * 태그 없이 stage 호출 순서로 inner/action을 직접 분리.
    */
   async thinkingTakeTurn(ctx: TurnContext): Promise<TurnRecord> {
     const baseMessage = buildTurnMessage(ctx)
@@ -116,14 +116,13 @@ export abstract class BasePlayer {
 
     try {
       const mode = this.playMode
-      const innerLabel = mode === 'game' ? 'OOC' : '내면'
-
-      // ── Stage 1: 내면/OOC (감정 + 즉각적 생각) ──
       const modelLabel = `${this.character.modelConfig.provider}:${this.character.modelConfig.model}`
+
+      // ── Stage 1: 심리 (감정 + 즉각적 생각) ──
       this.history.push({ role: 'user', content: `${baseMessage}\n\n${buildInnerStageInstruction(mode, modelLabel, this.character.name)}` })
       innerText = await this.chat(this.systemPrompt, this.history)
       this.history.push({ role: 'assistant', content: innerText })
-      log.ai(tag, `[${innerLabel}] 완료 (${Date.now() - t0}ms) — ${innerText.length}자`)
+      log.ai(tag, `[심리] 완료 (${Date.now() - t0}ms) — ${innerText.length}자`)
 
       // ── Stage 2: 행동 (실제 행동 + 묘사) ──
       this.history.push({ role: 'user', content: buildActionStageInstruction(mode, this.character.modelConfig.provider, this.character.name) })
@@ -137,23 +136,20 @@ export abstract class BasePlayer {
       throw err
     }
 
-    // 두 단계 합성 — 최종 응답
-    const fullResponse = [innerText, actionText].filter(Boolean).join('\n')
-    log.ok(tag, `사고 트리 완료 (${Date.now() - t0}ms) — 총 ${fullResponse.length}자`)
-    log.ai(tag, `응답 미리보기: ${fullResponse.slice(0, 150).replace(/\n/g, ' ')}${fullResponse.length > 150 ? '...' : ''}`)
+    log.ok(tag, `사고 트리 완료 (${Date.now() - t0}ms) — 심리 ${innerText.length}자 / 행동 ${actionText.length}자`)
+    log.ai(tag, `행동 미리보기: ${actionText.slice(0, 150).replace(/\n/g, ' ')}${actionText.length > 150 ? '...' : ''}`)
 
     // 히스토리 정리: 스테이징 메시지를 단일 턴으로 교체
     // (다음 턴에서 모델이 중간 단계 프롬프트를 보지 않도록)
     this.history.splice(historySnapshot)
     this.history.push({ role: 'user', content: baseMessage })
-    this.history.push({ role: 'assistant', content: fullResponse })
+    this.history.push({ role: 'assistant', content: actionText })
 
     // 슬라이딩 윈도우 (30개 = 15턴)
     if (this.history.length > 30) {
       this.history = this.history.slice(this.history.length - 30)
     }
 
-    const parsed = parseResponse(fullResponse)
     const s = ctx.sessionState
 
     return {
@@ -166,7 +162,7 @@ export abstract class BasePlayer {
       gmInput: ctx.gmMessage,
       statsBefore: { hp: s.hp, san: s.san, luck: s.luck },
       statsAfter: { hp: s.hp, san: s.san, luck: s.luck },
-      response: { ...parsed, rawText: fullResponse },
+      response: { action: actionText.trim(), inner: innerText.trim() || undefined, rawText: actionText },
     }
   }
 

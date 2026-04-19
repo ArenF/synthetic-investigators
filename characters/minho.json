@@ -97,7 +97,6 @@
   "modelConfig": {
     "provider": "gemini",
     "model": "gemini-2.5-flash",
-    "temperature": 0.7,
-    "extendedThinking": true
+    "temperature": 0.7
   }
 }

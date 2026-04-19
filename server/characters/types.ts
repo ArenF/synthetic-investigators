@@ -160,7 +160,6 @@ export interface ModelConfig {
   provider: ModelProvider
   model: string              // e.g. "claude-opus-4-5", "gemini-2.0-flash", "gpt-4o", "llama3.2"
   temperature?: number       // 0.0 ~ 1.0, default 0.7
-  extendedThinking?: boolean // Claude / Gemini thinking 모드 활성화 여부
 }
 
 /**

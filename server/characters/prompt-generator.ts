@@ -8,15 +8,6 @@
 import type { CoCCharacter, TurnContext, PlayMode } from './types.js'
 
 // ─────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────
-
-/** game 모드 → [OOC], immersion 모드 → [내면] */
-function getInnerTag(mode: PlayMode): 'OOC' | '내면' {
-  return mode === 'game' ? 'OOC' : '내면'
-}
-
-// ─────────────────────────────────────────
 // System Prompt Generator
 // ─────────────────────────────────────────
 
@@ -196,23 +187,13 @@ function getProviderFormatHints(provider: string): string {
 // ─────────────────────────────────────────
 
 export function buildSingleShotInstruction(mode: PlayMode, provider: string = ''): string {
-  const tag = getInnerTag(mode)
-  const tagDesc = mode === 'game'
-    ? `캐릭터의 감정·생각·행동 의도를 분석하는 플레이어 시각 (친근한 말투)`
-    : `지금 느끼는 감정, 생각, 두려움, 의심`
-  const actionDesc = mode === 'game'
-    ? `캐릭터가 실제로 하는 말·동작·반응`
-    : `지금 실제로 하는 것 (말, 동작, 반응)`
-
   const formatHint = getProviderFormatHints(provider)
+  const roleDesc = mode === 'game'
+    ? `캐릭터가 실제로 하는 말·동작·반응을 묘사하세요.`
+    : `지금 실제로 하는 것 (말, 동작, 반응)을 최대 3문장으로 묘사하세요.`
 
   return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-응답 형식
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**[${tag}]** ${tagDesc}
-**[행동]** ${actionDesc} — 최대 3문장
-${formatHint ? '\n' + formatHint : ''}`
+${roleDesc}${formatHint ? '\n' + formatHint : ''}`
 }
 
 // ─────────────────────────────────────────
@@ -276,6 +257,8 @@ ${gmMessage}
 
 // ─────────────────────────────────────────
 // Parse AI response into structured fields
+// takeTurn() (단일 호출)에서 사용
+// thinkingTakeTurn()은 stage 순서로 inner/action을 직접 분리하므로 미사용
 // ─────────────────────────────────────────
 
 export function parseResponse(raw: string): {
@@ -283,15 +266,8 @@ export function parseResponse(raw: string): {
   inner?: string
   rawText: string
 } {
-  // [OOC]는 game 모드에서 [내면] 대신 사용 — 동일한 inner 필드로 파싱
-  const innerTagStr = '(?:\\*\\*\\[내면\\]\\*\\*|\\*\\*\\[OOC\\]\\*\\*)'
-
-  const actionMatch = raw.match(new RegExp(`\\*\\*\\[행동\\]\\*\\*\\s*([\\s\\S]*?)(?=${innerTagStr}|$)`, 'i'))
-  const innerMatch = raw.match(new RegExp(`${innerTagStr}\\s*([\\s\\S]*?)(?=\\*\\*\\[행동\\]\\*\\*|$)`, 'i'))
-
   return {
-    action: actionMatch?.[1]?.trim() ?? raw.trim(),
-    inner: innerMatch?.[1]?.trim(),
+    action: raw.trim(),
     rawText: raw,
   }
 }
@@ -301,55 +277,27 @@ export function parseResponse(raw: string): {
 // ─────────────────────────────────────────
 
 /**
- * Stage 1: 내면/OOC — 캐릭터 심리 분석
- * mode에 따라 [내면] (immersion) 또는 [OOC] (game) 태그 사용
+ * Stage 1: 내면/심리 — 캐릭터 현재 감정과 생각
+ * 태그 없이 자연어로만 서술
  */
 export function buildInnerStageInstruction(mode: PlayMode = 'immersion', modelLabel: string = '', charName: string = ''): string {
-  const tag = getInnerTag(mode)
-  const desc = mode === 'game'
-    ? `${modelLabel}의 입장에서 ${charName ? charName + ' ' : ''}캐릭터가 현 상황에 어떤 행동과 모습을 보일 지 자신의 입장과 견해를 밝히세요.`
-    : `지금 이 순간 캐릭터가 느끼는 감정, 두려움, 의심, 생각을 1인칭으로 서술하세요.`
-  return `**[${tag}]** 만 작성하세요.
-• 역할: ${desc}
-• 기술 판정 선언은 포함하지 마세요
-**[${tag}]** 태그로 시작하세요.`
+  if (mode === 'game') {
+    return `${modelLabel}의 입장에서 ${charName ? charName + ' ' : ''}캐릭터가 현 상황에 어떤 행동과 모습을 보일지 자신의 의견을 서술하세요.
+기술 판정 선언은 포함하지 마세요.`
+  }
+  return `지금 이 순간 캐릭터가 느끼는 감정, 두려움, 의심, 생각을 1인칭으로 서술하세요.
+기술 판정 선언은 포함하지 마세요.`
 }
 
 /**
- * Stage 2: 행동 — 실제 행동 + 장면 묘사
- * 이전 [내면]/[OOC]이 히스토리에 있는 상태에서 호출됨
+ * Stage 2: 행동 — 실제 행동 묘사
+ * 이전 Stage 1 응답을 바탕으로 실제 행동만 출력
  */
 export function buildActionStageInstruction(mode: PlayMode = 'immersion', provider: string = '', charName: string = ''): string {
-  const tag = getInnerTag(mode)
   const formatHint = getProviderFormatHints(provider)
   const roleDesc = mode === 'game' && charName
-    ? `${charName} 시점에서 어떤 말투로 말하고 행동하는지를 묘사하세요. 행동, 또는 대화 하나 당 최대 3개의 수식어를 붙여 묘사할 수 있어요.`
-    : `캐릭터가 실제로 하는 말·동작·반응의 서사적 묘사`
-  const lengthHint = mode === 'game' ? '' : '\n• 최대 3문장으로 간결하게'
-  return `위 [${tag}]을 바탕으로 **[행동]** 만 작성하세요.
-• 역할: ${roleDesc}${lengthHint}${formatHint ? '\n• ' + formatHint.replace(/^- /, '') : ''}
-**[행동]** 태그로 시작하세요.`
-}
-
-/**
- * Claude Extended Thinking용 — system prompt 끝에 붙이는 사고 트리 지침
- */
-export function buildThinkingTreeSystemSuffix(mode: PlayMode = 'immersion', provider: string = ''): string {
-  const tag = getInnerTag(mode)
-  const innerDesc = mode === 'game'
-    ? `캐릭터의 감정·생각·행동 의도를 플레이어 시각으로 분석 (친근한 말투)`
-    : `캐릭터가 지금 느끼는 감정, 두려움, 의심, 생각을 1인칭으로`
-  const formatHint = getProviderFormatHints(provider)
-  return `
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-응답 형식 및 사고 순서
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-다음 세 단계를 순서대로 출력하세요:
-
-**[${tag}]** ${innerDesc}
-**[행동]** 캐릭터가 실제로 하는 말·동작·반응 — 최대 3문장${formatHint ? '\n' + formatHint : ''}
-
-각 단계가 이전 단계를 뿌리로 삼아 깊어져야 합니다.`
+    ? `위 내용을 바탕으로 ${charName}가 실제로 하는 말·동작·반응을 묘사하세요. 행동 또는 대화 하나당 최대 3개의 수식어를 붙여 묘사할 수 있어요.`
+    : `위 내용을 바탕으로 캐릭터가 실제로 하는 말·동작·반응을 최대 3문장으로 묘사하세요.`
+  return `${roleDesc}${formatHint ? '\n' + formatHint : ''}`
 }
 
