@@ -114,7 +114,8 @@ export default function GmInput() {
         flexShrink: 0,
         backgroundColor: 'var(--bg-panel)',
         borderTop: '1px solid var(--bg-border)',
-        padding: '0.625rem 2rem 0.75rem',
+        boxShadow: '0 -4px 20px rgba(0,0,0,0.3)',
+        padding: '0.75rem 2rem 0.875rem',
       }}>
         <div style={{ maxWidth: '820px', margin: '0 auto' }}>
         {/* ── Tag chips row ── */}
@@ -176,13 +177,14 @@ export default function GmInput() {
           display: 'flex', alignItems: 'center', gap: '0.625rem',
           backgroundColor: 'rgba(255,255,255,0.05)',
           border: '1px solid var(--bg-border)',
-          borderRadius: '0.75rem',
-          padding: '0.5rem 0.75rem',
-          transition: 'border-color 0.15s',
+          borderRadius: '1rem',
+          padding: '0.625rem 0.875rem',
+          transition: 'border-color 0.15s, box-shadow 0.15s',
+          boxShadow: 'var(--shadow-sm)',
         }}
           onFocus={() => {}}
-          onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(20,184,166,0.4)')}
-          onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--bg-border)')}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(20,184,166,0.4)'; e.currentTarget.style.boxShadow = 'var(--shadow-teal)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--bg-border)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)' }}
         >
           {/* Send icon button */}
           <button

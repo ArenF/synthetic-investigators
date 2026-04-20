@@ -24,7 +24,13 @@ const difficultyLabel: Record<string, string> = {
 
 function GmMessage({ msg }: { msg: ChatMessage }) {
   return (
-    <div className="rounded-r-lg px-4 py-3" style={{ backgroundColor: 'var(--bg-panel)', borderLeft: '2px solid var(--teal)' }}>
+    <div style={{
+      borderRadius: '0.875rem',
+      padding: '0.75rem 1rem',
+      backgroundColor: 'var(--bg-panel)',
+      borderLeft: '3px solid var(--teal)',
+      boxShadow: 'var(--shadow-sm)',
+    }}>
       <div className="flex items-center gap-2 mb-2">
         <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--teal)' }}>GM</span>
         {msg.targetLabel && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>→ {msg.targetLabel}</span>}
@@ -39,7 +45,12 @@ function GmMessage({ msg }: { msg: ChatMessage }) {
 function AiMessage({ msg }: { msg: ChatMessage }) {
   if (!msg.done) {
     return (
-      <div className="rounded-lg px-4 py-3 flex items-center gap-3" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
+      <div style={{
+        borderRadius: '0.875rem', padding: '0.75rem 1rem',
+        display: 'flex', alignItems: 'center', gap: '0.75rem',
+        backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)',
+        boxShadow: 'var(--shadow-sm)',
+      }}>
         <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{msg.charName}</span>
         <div className="flex gap-1">
           <span className="w-1.5 h-1.5 rounded-full thinking-dot" style={{ backgroundColor: 'var(--text-muted)' }}></span>
@@ -56,8 +67,16 @@ function AiMessage({ msg }: { msg: ChatMessage }) {
   const action = msg.actionText?.trim() ?? msg.text  // 구버전 호환 fallback
 
   return (
-    <div className="rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
-      <div className="flex items-center gap-2 px-4 py-2" style={{ backgroundColor: 'var(--bg-elevated)', borderBottom: '1px solid var(--bg-border)' }}>
+    <div style={{
+      borderRadius: '0.875rem', overflow: 'hidden',
+      backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)',
+      boxShadow: 'var(--shadow-sm)',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '0.5rem',
+        padding: '0.5rem 1rem',
+        backgroundColor: 'var(--bg-elevated)', borderBottom: '1px solid var(--bg-border)',
+      }}>
         <span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--teal)' }}></span>
         <span className="text-sm font-medium" style={{ color: 'var(--teal)' }}>{msg.charName}</span>
         <span className="text-xs ml-auto" style={{ color: 'var(--text-muted)' }}>{formatTime(msg.timestamp)}</span>
@@ -86,11 +105,26 @@ function AiMessage({ msg }: { msg: ChatMessage }) {
 
 function NpcMessage({ msg }: { msg: ChatMessage }) {
   return (
-    <div className="rounded-r-lg px-4 py-3" style={{ borderLeft: '2px solid rgba(167,139,250,0.5)', backgroundColor: 'rgba(88,28,135,0.15)' }}>
+    <div style={{
+      borderRadius: '0.875rem', padding: '0.75rem 1rem',
+      borderLeft: '3px solid rgba(167,139,250,0.6)',
+      backgroundColor: 'rgba(88,28,135,0.15)',
+      boxShadow: 'var(--shadow-sm)',
+    }}>
       <div className="text-xs font-semibold mb-1" style={{ color: '#a78bfa' }}>{msg.npcName} · NPC</div>
       <p className="text-sm leading-relaxed italic" style={{ color: 'var(--text-primary)' }}>"{msg.text}"</p>
     </div>
   )
+}
+
+const outcomeBgTint: Record<string, string> = {
+  extreme_success: 'rgba(251,191,36,0.07)',
+  hard_success:    'rgba(74,222,128,0.06)',
+  regular_success: 'rgba(74,222,128,0.06)',
+  regular_failure: 'rgba(248,113,113,0.06)',
+  bad_failure:     'rgba(239,68,68,0.08)',
+  fumble:          'rgba(220,38,38,0.11)',
+  failure:         'rgba(248,113,113,0.06)',
 }
 
 function DiceMessage({ msg }: { msg: ChatMessage }) {
@@ -98,14 +132,57 @@ function DiceMessage({ msg }: { msg: ChatMessage }) {
   if (!d) return null
   const outcome = outcomeLabel[d.outcome] ?? { label: d.outcome, color: 'var(--text-primary)' }
   const diff = difficultyLabel[d.difficulty] ?? d.difficulty
+  const bgTint = outcomeBgTint[d.outcome] ?? 'transparent'
 
   return (
-    <div className="flex justify-center py-2">
-      <div className="rounded-xl px-5 py-3 text-center" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
-        <div className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>{msg.charName} · {d.skill} ({diff} / 목표: {d.target})</div>
-        <div className="text-3xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>{d.roll}</div>
-        <div className="text-xs font-semibold" style={{ color: outcome.color }}>{outcome.label}</div>
-        {d.resultText && <div className="text-xs mt-2 pt-2" style={{ color: 'var(--text-muted)', borderTop: '1px solid var(--bg-border)' }}>{d.resultText}</div>}
+    <div style={{
+      borderRadius: '0.75rem',
+      overflow: 'hidden',
+      border: `1px solid ${outcome.color}35`,
+      backgroundColor: bgTint,
+    }}>
+      {/* 상단 accent bar */}
+      <div style={{ height: '3px', backgroundColor: outcome.color }} />
+
+      <div style={{ padding: '0.875rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+        {/* 큰 roll 숫자 */}
+        <div style={{
+          fontSize: '3.5rem',
+          fontWeight: 800,
+          lineHeight: 1,
+          color: outcome.color,
+          minWidth: '4.5rem',
+          textAlign: 'center',
+          fontVariantNumeric: 'tabular-nums',
+          flexShrink: 0,
+        }}>
+          {d.roll}
+        </div>
+
+        {/* 세로 구분선 */}
+        <div style={{ width: '1px', alignSelf: 'stretch', backgroundColor: 'var(--bg-border)', flexShrink: 0 }} />
+
+        {/* 상세 정보 */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>
+            {msg.charName} · {d.skill} · {diff} 난이도 · 목표 {d.target}
+          </div>
+          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: outcome.color }}>
+            {outcome.label}
+          </div>
+          {d.resultText && (
+            <div style={{
+              fontSize: '0.75rem',
+              color: 'var(--text-primary)',
+              marginTop: '0.5rem',
+              paddingTop: '0.5rem',
+              borderTop: '1px solid var(--bg-border)',
+              lineHeight: 1.5,
+            }}>
+              {d.resultText}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -113,7 +190,12 @@ function DiceMessage({ msg }: { msg: ChatMessage }) {
 
 function SystemMessage({ msg }: { msg: ChatMessage }) {
   return (
-    <div className="rounded-lg px-4 py-3 text-sm italic" style={{ backgroundColor: 'var(--bg-base)', border: '1px solid var(--bg-border)', color: 'var(--text-muted)' }}>
+    <div style={{
+      borderRadius: '0.75rem', padding: '0.75rem 1rem',
+      fontSize: '0.875rem', fontStyle: 'italic',
+      backgroundColor: 'var(--bg-base)', border: '1px solid var(--bg-border)',
+      color: 'var(--text-muted)',
+    }}>
       {msg.text}
     </div>
   )

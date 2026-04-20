@@ -24,8 +24,8 @@ export default function HomeScreen() {
 
       {/* Error */}
       {error && (
-        <div className="mb-8 w-full max-w-3xl rounded-lg px-4 py-3 text-sm text-center"
-          style={{ backgroundColor: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.4)', color: '#f87171' }}>
+        <div className="mb-8 w-full max-w-3xl px-4 py-3 text-sm text-center"
+          style={{ borderRadius: '0.875rem', backgroundColor: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.4)', color: '#f87171' }}>
           {error}
         </div>
       )}
@@ -35,10 +35,10 @@ export default function HomeScreen() {
         {/* Card 1: 새 세션 시작 */}
         <button
           onClick={() => setScreen('session_setup')}
-          className="group p-6 rounded-xl text-left transition-all duration-200"
-          style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}
-          onMouseEnter={e => (e.currentTarget.style.borderColor = '#14b8a6')}
-          onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--bg-border)')}
+          className="group p-6 text-left"
+          style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)', borderRadius: '1rem', boxShadow: 'var(--shadow-md)', transition: 'border-color 0.2s, box-shadow 0.2s' }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = '#14b8a6'; e.currentTarget.style.boxShadow = 'var(--shadow-teal)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--bg-border)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)' }}
         >
           <div className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>새 세션 시작</div>
           <div className="text-xs" style={{ color: 'var(--text-muted)' }}>캐릭터를 선택하고 새로운 실험 세션을 시작합니다</div>
@@ -47,10 +47,10 @@ export default function HomeScreen() {
         {/* Card 2: 캐릭터 편집 */}
         <button
           onClick={() => setScreen('character_editor')}
-          className="group p-6 rounded-xl text-left transition-all duration-200"
-          style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}
-          onMouseEnter={e => (e.currentTarget.style.borderColor = '#14b8a6')}
-          onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--bg-border)')}
+          className="group p-6 text-left"
+          style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)', borderRadius: '1rem', boxShadow: 'var(--shadow-md)', transition: 'border-color 0.2s, box-shadow 0.2s' }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = '#14b8a6'; e.currentTarget.style.boxShadow = 'var(--shadow-teal)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--bg-border)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)' }}
         >
           <div className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>캐릭터 편집</div>
           <div className="text-xs" style={{ color: 'var(--text-muted)' }}>CoC 7판 캐릭터 시트를 생성하거나 편집합니다</div>
@@ -59,10 +59,10 @@ export default function HomeScreen() {
         {/* Card 3: 시나리오 관리 */}
         <button
           onClick={() => setScreen('scenario_list')}
-          className="group p-6 rounded-xl text-left transition-all duration-200"
-          style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}
-          onMouseEnter={e => (e.currentTarget.style.borderColor = '#14b8a6')}
-          onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--bg-border)')}
+          className="group p-6 text-left"
+          style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)', borderRadius: '1rem', boxShadow: 'var(--shadow-md)', transition: 'border-color 0.2s, box-shadow 0.2s' }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = '#14b8a6'; e.currentTarget.style.boxShadow = 'var(--shadow-teal)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--bg-border)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)' }}
         >
           <div className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>시나리오 관리</div>
           <div className="text-xs" style={{ color: 'var(--text-muted)' }}>재사용 가능한 시나리오 파일을 만들고 관리합니다</div>
@@ -71,10 +71,10 @@ export default function HomeScreen() {
         {/* Card 4: 세션 로그 */}
         <button
           onClick={() => setScreen('log_viewer')}
-          className="group p-6 rounded-xl text-left transition-all duration-200"
-          style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}
-          onMouseEnter={e => (e.currentTarget.style.borderColor = '#14b8a6')}
-          onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--bg-border)')}
+          className="group p-6 text-left"
+          style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)', borderRadius: '1rem', boxShadow: 'var(--shadow-md)', transition: 'border-color 0.2s, box-shadow 0.2s' }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = '#14b8a6'; e.currentTarget.style.boxShadow = 'var(--shadow-teal)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--bg-border)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)' }}
         >
           <div className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>세션 로그</div>
           <div className="text-xs" style={{ color: 'var(--text-muted)' }}>과거 세션의 전체 기록을 열람합니다</div>

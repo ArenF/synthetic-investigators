@@ -149,7 +149,7 @@ export default function SessionSetup() {
 
       {/* Scenario Load Panel */}
       {templates.length > 0 && (
-        <section className="rounded-xl p-4 mb-4" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
+        <section style={{ borderRadius: '1rem', padding: '1rem', marginBottom: '1rem', backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)', boxShadow: 'var(--shadow-md)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h2 className="border-l-2 pl-3 font-semibold text-sm uppercase tracking-wide" style={{ borderColor: 'var(--teal)', color: 'var(--text-muted)', margin: 0 }}>시나리오 불러오기</h2>
             <button
@@ -181,7 +181,7 @@ export default function SessionSetup() {
       )}
 
       {/* Session Name */}
-      <section className="rounded-xl p-4 mb-4" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
+      <section style={{ borderRadius: '1rem', padding: '1rem', marginBottom: '1rem', backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)', boxShadow: 'var(--shadow-md)' }}>
         <h2 className="border-l-2 pl-3 font-semibold mb-3 text-sm uppercase tracking-wide" style={{ borderColor: 'var(--teal)', color: 'var(--text-muted)' }}>세션 이름</h2>
         <input
           type="text"
@@ -196,7 +196,7 @@ export default function SessionSetup() {
       </section>
 
       {/* Character Selection */}
-      <section className="rounded-xl p-4 mb-4" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
+      <section style={{ borderRadius: '1rem', padding: '1rem', marginBottom: '1rem', backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)', boxShadow: 'var(--shadow-md)' }}>
         <h2 className="border-l-2 pl-3 font-semibold mb-3 text-sm uppercase tracking-wide" style={{ borderColor: 'var(--teal)', color: 'var(--text-muted)' }}>캐릭터 선택</h2>
         {availableChars.length === 0 ? (
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
@@ -214,8 +214,9 @@ export default function SessionSetup() {
             {availableChars.map(char => (
               <label
                 key={char.id}
-                className="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all"
+                className="flex items-center gap-3 p-3 cursor-pointer transition-all"
                 style={{
+                  borderRadius: '0.75rem',
                   border: selectedChars.includes(char.id) ? '1px solid var(--teal)' : '1px solid var(--bg-border)',
                   backgroundColor: selectedChars.includes(char.id) ? 'rgba(20,184,166,0.1)' : 'transparent',
                 }}
@@ -240,12 +241,12 @@ export default function SessionSetup() {
       </section>
 
       {/* NPCs */}
-      <section className="rounded-xl p-4 mb-4" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
+      <section style={{ borderRadius: '1rem', padding: '1rem', marginBottom: '1rem', backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)', boxShadow: 'var(--shadow-md)' }}>
         <h2 className="border-l-2 pl-3 font-semibold mb-3 text-sm uppercase tracking-wide" style={{ borderColor: 'var(--teal)', color: 'var(--text-muted)' }}>NPC 등록</h2>
         {npcs.length > 0 && (
           <div className="mb-3 space-y-2">
             {npcs.map(npc => (
-              <div key={npc.id} className="flex items-center justify-between rounded-lg px-3 py-2 text-sm" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+              <div key={npc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '0.625rem', padding: '0.5rem 0.75rem', fontSize: '0.875rem', backgroundColor: 'var(--bg-elevated)', boxShadow: 'var(--shadow-sm)' }}>
                 <span className="font-medium">{npc.name}</span>
                 <span className="truncate ml-2 flex-1" style={{ color: 'var(--text-muted)' }}>{npc.description}</span>
                 <button
@@ -264,8 +265,8 @@ export default function SessionSetup() {
           <input type="text" value={newNpcTraits} onChange={e => setNewNpcTraits(e.target.value)} placeholder="특성 (쉼표로 구분)" className="text-sm" />
           <button
             onClick={addNpc}
-            className="rounded-lg px-3 py-2 text-sm transition-all"
-            style={{ backgroundColor: 'rgba(20,184,166,0.2)', border: '1px solid rgba(20,184,166,0.4)', color: 'var(--teal)' }}
+            className="px-3 py-2 text-sm transition-all"
+            style={{ borderRadius: '0.625rem', backgroundColor: 'rgba(20,184,166,0.2)', border: '1px solid rgba(20,184,166,0.4)', color: 'var(--teal)' }}
           >
             + NPC 추가
           </button>
@@ -273,12 +274,12 @@ export default function SessionSetup() {
       </section>
 
       {/* Items/Clues */}
-      <section className="rounded-xl p-4 mb-4" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
+      <section style={{ borderRadius: '1rem', padding: '1rem', marginBottom: '1rem', backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)', boxShadow: 'var(--shadow-md)' }}>
         <h2 className="border-l-2 pl-3 font-semibold mb-3 text-sm uppercase tracking-wide" style={{ borderColor: 'var(--teal)', color: 'var(--text-muted)' }}>아이템/단서 등록</h2>
         {items.length > 0 && (
           <div className="mb-3 space-y-2">
             {items.map((item, i) => (
-              <div key={`${item.name}-${item.location}-${i}`} className="flex items-center justify-between rounded-lg px-3 py-2 text-sm" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+              <div key={`${item.name}-${item.location}-${i}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '0.625rem', padding: '0.5rem 0.75rem', fontSize: '0.875rem', backgroundColor: 'var(--bg-elevated)', boxShadow: 'var(--shadow-sm)' }}>
                 <span className="font-medium">{item.name}</span>
                 <span className="text-xs ml-2" style={{ color: 'var(--text-muted)' }}>{item.location}</span>
                 <button
@@ -297,8 +298,8 @@ export default function SessionSetup() {
           <input type="text" value={newItemDesc} onChange={e => setNewItemDesc(e.target.value)} placeholder="설명" className="text-sm" />
           <button
             onClick={addItem}
-            className="rounded-lg px-3 py-2 text-sm transition-all"
-            style={{ backgroundColor: 'rgba(20,184,166,0.2)', border: '1px solid rgba(20,184,166,0.4)', color: 'var(--teal)' }}
+            className="px-3 py-2 text-sm transition-all"
+            style={{ borderRadius: '0.625rem', backgroundColor: 'rgba(20,184,166,0.2)', border: '1px solid rgba(20,184,166,0.4)', color: 'var(--teal)' }}
           >
             + 아이템 추가
           </button>
@@ -306,7 +307,7 @@ export default function SessionSetup() {
       </section>
 
       {/* Opening Briefing */}
-      <section className="rounded-xl p-4 mb-4" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
+      <section style={{ borderRadius: '1rem', padding: '1rem', marginBottom: '1rem', backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)', boxShadow: 'var(--shadow-md)' }}>
         <h2 className="border-l-2 pl-3 font-semibold mb-3 text-sm uppercase tracking-wide" style={{ borderColor: 'var(--teal)', color: 'var(--text-muted)' }}>오프닝 브리핑</h2>
         <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>
           세션 시작 시 모든 AI 탐사자에게 전달할 배경 설명
@@ -321,12 +322,13 @@ export default function SessionSetup() {
       </section>
 
       {/* Play Mode */}
-      <section className="rounded-xl p-4 mb-4" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
+      <section style={{ borderRadius: '1rem', padding: '1rem', marginBottom: '1rem', backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)', boxShadow: 'var(--shadow-md)' }}>
         <h2 className="border-l-2 pl-3 font-semibold mb-3 text-sm uppercase tracking-wide" style={{ borderColor: 'var(--teal)', color: 'var(--text-muted)' }}>플레이 모드</h2>
         <div className="flex gap-3">
           <label
-            className="flex-1 flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all"
+            className="flex-1 flex items-start gap-3 p-3 cursor-pointer transition-all"
             style={{
+              borderRadius: '0.75rem',
               border: playMode === 'game' ? '1px solid var(--teal)' : '1px solid var(--bg-border)',
               backgroundColor: playMode === 'game' ? 'rgba(20,184,166,0.08)' : 'transparent',
             }}
@@ -338,8 +340,9 @@ export default function SessionSetup() {
             </div>
           </label>
           <label
-            className="flex-1 flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all"
+            className="flex-1 flex items-start gap-3 p-3 cursor-pointer transition-all"
             style={{
+              borderRadius: '0.75rem',
               border: playMode === 'immersion' ? '1px solid #ef4444' : '1px solid var(--bg-border)',
               backgroundColor: playMode === 'immersion' ? 'rgba(239,68,68,0.08)' : 'transparent',
             }}
@@ -356,8 +359,8 @@ export default function SessionSetup() {
       <button
         onClick={startSession}
         disabled={loading || !sessionName.trim() || selectedChars.length === 0}
-        className="w-full font-semibold py-3 text-base rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-        style={{ backgroundColor: 'var(--teal)', color: '#0a0e1a' }}
+        className="w-full font-semibold py-3 text-base disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+        style={{ borderRadius: '0.875rem', boxShadow: 'var(--shadow-md)', backgroundColor: 'var(--teal)', color: '#0a0e1a' }}
       >
         {loading ? '세션 생성 중...' : '세션 시작'}
       </button>

@@ -11,9 +11,10 @@ export default function GameScreen() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: 'var(--bg-base)' }}>
       {/* Header */}
       <header style={{
-        height: '48px', display: 'flex', alignItems: 'center', padding: '0 1rem',
+        height: '52px', display: 'flex', alignItems: 'center', padding: '0 1.25rem',
         backgroundColor: 'var(--bg-panel)', borderBottom: '1px solid var(--bg-border)',
-        flexShrink: 0, gap: '0.75rem'
+        boxShadow: '0 2px 12px rgba(0,0,0,0.45)',
+        flexShrink: 0, gap: '0.75rem', zIndex: 10, position: 'relative'
       }}>
         <button
           onClick={() => setScreen('home')}
@@ -48,9 +49,10 @@ export default function GameScreen() {
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* Sidebar — left */}
         <aside style={{
-          width: '180px', flexShrink: 0, overflowY: 'auto',
+          width: '210px', flexShrink: 0, overflowY: 'auto',
           borderRight: '1px solid var(--bg-border)',
           backgroundColor: 'var(--bg-panel)',
+          boxShadow: '2px 0 12px rgba(0,0,0,0.25)',
         }}>
           <CharacterStatus />
         </aside>

@@ -16,11 +16,11 @@ function StatControl({ charId, stat }: StatControlProps) {
     <span style={{ display: 'inline-flex', gap: '2px', marginLeft: '4px' }}>
       <button
         onClick={() => adjust(-1)}
-        style={{ width: '16px', height: '16px', fontSize: '10px', borderRadius: '3px', border: 'none', cursor: 'pointer', backgroundColor: 'rgba(248,113,113,0.15)', color: '#f87171', lineHeight: 1, padding: 0 }}
+        style={{ width: '18px', height: '18px', fontSize: '11px', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: 'rgba(248,113,113,0.15)', color: '#f87171', lineHeight: 1, padding: 0 }}
       >−</button>
       <button
         onClick={() => adjust(1)}
-        style={{ width: '16px', height: '16px', fontSize: '10px', borderRadius: '3px', border: 'none', cursor: 'pointer', backgroundColor: 'rgba(74,222,128,0.15)', color: '#4ade80', lineHeight: 1, padding: 0 }}
+        style={{ width: '18px', height: '18px', fontSize: '11px', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: 'rgba(74,222,128,0.15)', color: '#4ade80', lineHeight: 1, padding: 0 }}
       >+</button>
     </span>
   )
@@ -41,8 +41,8 @@ function Row({ label, children, trailing }: { label: string; children: React.Rea
 function Bar({ value, max, color }: { value: number; max: number; color: string }) {
   const pct = max === 0 ? 0 : Math.max(0, Math.min(100, (value / max) * 100))
   return (
-    <div style={{ height: '3px', borderRadius: '2px', backgroundColor: 'var(--bg-elevated)', marginBottom: '5px' }}>
-      <div style={{ height: '100%', borderRadius: '2px', backgroundColor: color, width: `${pct}%`, transition: 'width 0.3s' }} />
+    <div style={{ height: '6px', borderRadius: '3px', backgroundColor: 'var(--bg-elevated)', marginBottom: '6px' }}>
+      <div style={{ height: '100%', borderRadius: '3px', backgroundColor: color, width: `${pct}%`, transition: 'width 0.3s' }} />
     </div>
   )
 }
@@ -50,14 +50,21 @@ function Bar({ value, max, color }: { value: number; max: number; color: string 
 function CharCard({ char }: { char: CharacterState }) {
   const [showEquip, setShowEquip] = useState(false)
 
-  const insanityBorder = char.indefiniteInsanity
-    ? '2px solid rgba(248,113,113,0.6)'
+  const insanityBorderColor = char.indefiniteInsanity
+    ? 'rgba(248,113,113,0.55)'
     : char.temporaryInsanity
-    ? '2px solid rgba(251,191,36,0.5)'
-    : '2px solid transparent'
+    ? 'rgba(251,191,36,0.45)'
+    : 'var(--bg-border)'
 
   return (
-    <div style={{ padding: '0.625rem 0.75rem', borderBottom: '1px solid var(--bg-border)', borderLeft: insanityBorder }}>
+    <div style={{
+      margin: '0.5rem',
+      padding: '0.75rem',
+      borderRadius: '0.875rem',
+      border: `1px solid ${insanityBorderColor}`,
+      backgroundColor: 'var(--bg-elevated)',
+      boxShadow: 'var(--shadow-sm)',
+    }}>
       {/* Name + status badge */}
       <div style={{ marginBottom: '6px' }}>
         <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -128,7 +135,7 @@ export default function CharacterStatus() {
   return (
     <div>
       <div style={{
-        padding: '0.5rem 0.75rem', fontSize: '0.62rem', fontWeight: 600,
+        padding: '0.625rem 1rem', fontSize: '0.62rem', fontWeight: 600,
         letterSpacing: '0.08em', textTransform: 'uppercase',
         color: 'var(--text-muted)', borderBottom: '1px solid var(--bg-border)'
       }}>

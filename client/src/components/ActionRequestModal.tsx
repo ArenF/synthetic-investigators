@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import ReactDOM from 'react-dom'
 import { useStore } from '../store'
 import { COC_SKILLS } from '../constants/skills'
 
@@ -58,6 +59,12 @@ function makeEmptyOutcomes(): Record<OutcomeTier, TierOutcome> {
 export default function ActionRequestModal({ onClose }: Props) {
   const { characters, ws } = useStore()
   const [targetId, setTargetId] = useState<string>('all')
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose])
 
   // 특정 캐릭터 선택 시 해당 캐릭터의 0값 기술 제외 (전체 선택 시 전체 목록 표시)
   const visibleSkills = targetId === 'all'
@@ -162,11 +169,28 @@ export default function ActionRequestModal({ onClose }: Props) {
     width: '100%',
   }
 
-  return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
+  return ReactDOM.createPortal(
+    <div
+      style={{
+        position: 'fixed', inset: 0,
+        backgroundColor: 'rgba(0,0,0,0.72)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 50, padding: '1rem',
+      }}
+      onClick={onClose}
+    >
       <div
-        className="rounded-2xl w-full shadow-2xl overflow-hidden"
-        style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)', maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto' }}
+        className="modal-enter"
+        style={{
+          backgroundColor: 'var(--bg-panel)',
+          border: '1px solid var(--bg-border)',
+          borderRadius: '1rem',
+          width: '100%',
+          maxWidth: '560px',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
+        }}
         onClick={e => e.stopPropagation()}
       >
         <div className="p-6">
@@ -383,6 +407,7 @@ export default function ActionRequestModal({ onClose }: Props) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
