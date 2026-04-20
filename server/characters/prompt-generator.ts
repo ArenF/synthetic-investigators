@@ -366,11 +366,11 @@ export function parseResponse(raw: string): {
  */
 export function buildInnerStageInstruction(mode: PlayMode = 'immersion', modelLabel: string = '', charName: string = ''): string {
   if (mode === 'game') {
-    return `${modelLabel}의 입장에서 ${charName ? charName + ' ' : ''}캐릭터가 현 상황에 어떤 행동과 모습을 보일지 자신의 의견을 서술하세요.
-기술 판정 선언은 포함하지 마세요.`
+    return `TRPG 플레이어로서 ${charName ? charName + ' ' : ''}캐릭터가 이 상황에서 어떻게 행동할지 말하세요.
+"제 캐릭터는 ~할 것 같아요", "~를 해요" 같은 추측식 또는 서술식으로 짧게 적으세요.
+실제 행동 묘사는 하지 마세요.`
   }
-  return `지금 이 순간 캐릭터가 느끼는 감정, 두려움, 의심, 생각을 1인칭으로 서술하세요.
-기술 판정 선언은 포함하지 마세요.`
+  return `지금 이 순간 캐릭터가 느끼는 감정, 두려움, 의심, 생각을 1인칭으로 서술하세요.`
 }
 
 /**
