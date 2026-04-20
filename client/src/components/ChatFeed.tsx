@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react'
+import ReactMarkdown from 'react-markdown'
 import { useStore, type ChatMessage } from '../store'
 
 function formatTime(iso: string) {
@@ -28,7 +29,9 @@ function GmMessage({ msg }: { msg: ChatMessage }) {
         <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--teal)' }}>GM</span>
         {msg.targetLabel && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>→ {msg.targetLabel}</span>}
       </div>
-      <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--text-primary)' }}>{msg.text}</p>
+      <div className="text-sm leading-relaxed prose prose-invert prose-sm max-w-none" style={{ color: 'var(--text-primary)' }}>
+        <ReactMarkdown>{msg.text}</ReactMarkdown>
+      </div>
     </div>
   )
 }
@@ -47,15 +50,10 @@ function AiMessage({ msg }: { msg: ChatMessage }) {
     )
   }
 
-  // Parse response sections ([OOC] is used in game mode instead of [내면])
-  const raw = msg.text
-  const actionMatch = raw.match(/\*\*\[행동\]\*\*\s*([\s\S]*?)(?=\*\*\[내면\]\*\*|\*\*\[OOC\]\*\*|$)/i)
-  const innerMatch = raw.match(/(\*\*\[내면\]\*\*|\*\*\[OOC\]\*\*)\s*([\s\S]*?)(?=\*\*\[행동\]\*\*|$)/i)
-
-  const action = actionMatch?.[1]?.trim()
-  const innerTag = innerMatch?.[1]?.trim()  // '[내면]' or '[OOC]'
-  const inner = innerMatch?.[2]?.trim()
-  const hasStructure = action || inner
+  // 서버에서 구조화된 innerText / actionText 수신
+  const innerTag = msg.playMode === 'game' ? '[OOC]' : '[내면]'
+  const inner = msg.innerText?.trim()
+  const action = msg.actionText?.trim() ?? msg.text  // 구버전 호환 fallback
 
   return (
     <div className="rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--bg-border)' }}>
@@ -65,23 +63,21 @@ function AiMessage({ msg }: { msg: ChatMessage }) {
         <span className="text-xs ml-auto" style={{ color: 'var(--text-muted)' }}>{formatTime(msg.timestamp)}</span>
       </div>
       <div className="px-4 py-3 text-sm leading-relaxed space-y-2" style={{ color: 'var(--text-primary)' }}>
-        {hasStructure ? (
-          <>
-            {action && (
-              <div>
-                <span className="text-xs font-semibold" style={{ color: 'var(--teal)' }}>[행동] </span>
-                <span className="whitespace-pre-wrap">{action}</span>
-              </div>
-            )}
-            {inner && (
-              <div className="pt-2 mt-2" style={{ borderTop: '1px solid var(--bg-border)' }}>
-                <span className="text-xs font-semibold" style={{ color: '#60a5fa' }}>{innerTag ?? '[내면]'} </span>
-                <span className="italic whitespace-pre-wrap" style={{ color: 'var(--text-muted)' }}>{inner}</span>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="whitespace-pre-wrap">{raw}</div>
+        {action && (
+          <div>
+            <span className="text-xs font-semibold" style={{ color: 'var(--teal)' }}>[행동] </span>
+            <span className="prose prose-invert prose-sm max-w-none inline">
+              <ReactMarkdown>{action}</ReactMarkdown>
+            </span>
+          </div>
+        )}
+        {inner && (
+          <div className="pt-2 mt-2" style={{ borderTop: '1px solid var(--bg-border)' }}>
+            <span className="text-xs font-semibold" style={{ color: '#60a5fa' }}>{innerTag} </span>
+            <span className="prose prose-invert prose-sm max-w-none inline italic" style={{ color: 'var(--text-muted)' }}>
+              <ReactMarkdown>{inner}</ReactMarkdown>
+            </span>
+          </div>
         )}
       </div>
     </div>

@@ -103,6 +103,9 @@ export interface ChatMessage {
   charName?: string
   npcName?: string
   text: string
+  innerText?: string   // Stage 1 — 심리/OOC (서버 내부 처리 후 구조화 전송)
+  actionText?: string  // Stage 2 — 행동 (프론트 표시용)
+  playMode?: string    // 메시지 생성 시점의 모드 (내면/OOC 레이블 결정)
   timestamp: string
   done?: boolean
   diceData?: {
@@ -362,13 +365,18 @@ async function runTurn(
     record.statsAfter = { hp: afterState.hp, san: afterState.san, luck: afterState.luck }
 
     const responseText = record.response.rawText
+    const innerText = record.response.inner ?? ''
+    const actionText = record.response.action ?? responseText
 
-    // Send complete response
+    // Send complete response with structured inner/action fields
     broadcast(session, {
       type: 'ai_response',
       charId,
       charName: char.name,
       text: responseText,
+      innerText,
+      actionText,
+      playMode: session.playMode,
       done: true,
     })
 
@@ -388,6 +396,9 @@ async function runTurn(
       charId,
       charName: char.name,
       text: responseText,
+      innerText,
+      actionText,
+      playMode: session.playMode,
       timestamp: new Date().toISOString(),
       done: true,
     }

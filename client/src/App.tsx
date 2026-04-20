@@ -57,7 +57,7 @@ export default function App() {
         break
 
       case 'ai_response': {
-        const { charId, charName, text, done } = msg
+        const { charId, charName, text, innerText, actionText, playMode, done } = msg
         if (!done) {
           // Add thinking placeholder if not already present
           const existing = store.chatMessages.find(
@@ -81,7 +81,7 @@ export default function App() {
             m => m.type === 'ai_response' && m.charId === charId && m.done === false
           )
           if (placeholder) {
-            updateMessage(placeholder.id, { text, done: true })
+            updateMessage(placeholder.id, { text, innerText, actionText, playMode, done: true })
           } else {
             addMessage({
               id: `ai-${charId}-${Date.now()}`,
@@ -89,6 +89,9 @@ export default function App() {
               charId,
               charName,
               text,
+              innerText,
+              actionText,
+              playMode,
               timestamp: new Date().toISOString(),
               done: true,
             })

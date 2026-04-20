@@ -35,6 +35,9 @@ export interface ChatMessage {
   charName?: string
   npcName?: string
   text: string
+  innerText?: string   // Stage 1 — 심리/OOC
+  actionText?: string  // Stage 2 — 행동
+  playMode?: string    // 메시지 생성 시점 모드
   timestamp: string
   done?: boolean
   diceData?: {
