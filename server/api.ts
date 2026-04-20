@@ -683,6 +683,11 @@ const KNOWN_MODELS: Record<string, string[]> = {
     'gpt-4o-mini',
     'o3-mini',
   ],
+  grok: [
+    'grok-3',
+    'grok-3-mini',
+    'grok-2-1212',
+  ],
 }
 
 app.get('/api/models', async (_req, res) => {

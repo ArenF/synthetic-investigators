@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useStore } from '../store'
 import { COC_SKILLS } from '../constants/skills'
 
-const PROVIDERS = ['claude', 'gemini', 'openai', 'ollama'] as const
+const PROVIDERS = ['claude', 'gemini', 'openai', 'ollama', 'grok'] as const
 type Provider = typeof PROVIDERS[number]
 
 type TabKey = 'basic' | 'stats' | 'skills' | 'backstory' | 'ai'
@@ -454,6 +454,7 @@ export default function CharacterEditor() {
                   char.modelConfig.provider === 'claude' ? 'claude-sonnet-4-6'
                   : char.modelConfig.provider === 'gemini' ? 'gemini-2.0-flash'
                   : char.modelConfig.provider === 'openai' ? 'gpt-4o'
+                  : char.modelConfig.provider === 'grok' ? 'grok-3'
                   : 'qwen3:14b'
                 })`}
                 className="w-full text-sm"
