@@ -3,7 +3,7 @@
  * Based on official Call of Cthulhu 7e character sheet format
  */
 
-export type ModelProvider = 'claude' | 'gemini' | 'openai' | 'ollama'
+export type ModelProvider = 'claude' | 'gemini' | 'openai' | 'ollama' | 'grok'
 
 export interface CharacterCharacteristics {
   STR: number  // 근력
