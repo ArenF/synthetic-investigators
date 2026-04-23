@@ -1087,6 +1087,7 @@ wss.on('connection', (ws, req) => {
               wasPush: final.wasPush,
               wasLuckSpend: final.wasLuckSpend,
               luckSpent: final.luckSpent,
+              tensDice: final.tensDice,
             },
           }
           sess.chatLog.push(diceMsg)
