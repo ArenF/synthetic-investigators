@@ -100,7 +100,12 @@ export default function App() {
         break
       }
 
-      case 'judgment_result':
+      case 'judgment_pending':
+        store.setPendingJudgment(msg)
+        break
+
+      case 'judgment_final':
+        store.setPendingJudgment(null)
         addMessage({
           id: `judgment-${Date.now()}`,
           type: 'dice_result',
@@ -115,7 +120,35 @@ export default function App() {
             roll: msg.roll,
             target: msg.target,
             outcome: msg.outcome,
-            resultText: msg.outcomeDesc,
+            resultText: msg.appliedOutcome?.desc ?? '',
+            wasPush: msg.wasPush,
+            wasLuckSpend: msg.wasLuckSpend,
+            luckSpent: msg.luckSpent,
+            tensDice: msg.tensDice,
+          },
+        })
+        break
+
+      case 'judgment_cancelled':
+        store.setPendingJudgment(null)
+        break
+
+      case 'san_check_result':
+        addMessage({
+          id: `san-${Date.now()}`,
+          type: 'dice_result',
+          charId: msg.charId,
+          charName: msg.charName,
+          text: `${msg.charName} — SAN 체크`,
+          timestamp: new Date().toISOString(),
+          done: true,
+          diceData: {
+            skill: 'SAN',
+            difficulty: 'regular',
+            roll: msg.sanRoll,
+            target: msg.sanTarget,
+            outcome: msg.sanOutcome,
+            resultText: msg.naturalLanguage,
           },
         })
         break

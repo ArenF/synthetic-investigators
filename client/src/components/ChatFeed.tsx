@@ -167,8 +167,26 @@ function DiceMessage({ msg }: { msg: ChatMessage }) {
           <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>
             {msg.charName} · {d.skill} · {diff} 난이도 · 목표 {d.target}
           </div>
-          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: outcome.color }}>
-            {outcome.label}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: outcome.color }}>
+              {outcome.label}
+            </div>
+            {d.wasPush && (
+              <span style={{
+                fontSize: '0.6rem', fontWeight: 600,
+                padding: '1px 6px', borderRadius: '999px',
+                backgroundColor: 'rgba(249,115,22,0.2)', color: '#f97316',
+                border: '1px solid rgba(249,115,22,0.3)',
+              }}>밀어붙이기</span>
+            )}
+            {d.wasLuckSpend && (
+              <span style={{
+                fontSize: '0.6rem', fontWeight: 600,
+                padding: '1px 6px', borderRadius: '999px',
+                backgroundColor: 'rgba(251,146,60,0.2)', color: '#fb923c',
+                border: '1px solid rgba(251,146,60,0.3)',
+              }}>행운 {d.luckSpent ?? '?'}점</span>
+            )}
           </div>
           {d.resultText && (
             <div style={{

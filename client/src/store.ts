@@ -47,6 +47,10 @@ export interface ChatMessage {
     target: number
     outcome: string
     resultText: string
+    wasPush?: boolean
+    wasLuckSpend?: boolean
+    luckSpent?: number
+    tensDice?: number[]
   }
 }
 
@@ -121,6 +125,9 @@ export interface AppState {
   // Pending setup (used when transitioning to game screen)
   pendingSetup: SessionSetupData | null
 
+  // Pending judgment (multi-step flow)
+  pendingJudgment: any | null
+
   // Play mode
   playMode: PlayMode
 
@@ -143,6 +150,7 @@ export interface AppState {
   setSavedSessions: (sessions: SessionInfo[]) => void
   setAvailableCharacters: (chars: CharacterSummary[]) => void
   setPendingSetup: (setup: SessionSetupData | null) => void
+  setPendingJudgment: (j: any | null) => void
   setEditingScenarioId: (id: string | null) => void
   setPlayMode: (mode: PlayMode) => void
   reset: () => void
@@ -163,6 +171,7 @@ export const useStore = create<AppState>((set) => ({
   savedSessions: [],
   availableCharacters: [],
   pendingSetup: null,
+  pendingJudgment: null,
   playMode: 'game',
   editingScenarioId: null,
   setScreen: (screen) => set({ screen }),
@@ -182,6 +191,7 @@ export const useStore = create<AppState>((set) => ({
   setSavedSessions: (sessions) => set({ savedSessions: sessions }),
   setAvailableCharacters: (chars) => set({ availableCharacters: chars }),
   setPendingSetup: (setup) => set({ pendingSetup: setup }),
+  setPendingJudgment: (j) => set({ pendingJudgment: j }),
   setEditingScenarioId: (id) => set({ editingScenarioId: id }),
   setPlayMode: (mode) => set({ playMode: mode }),
   reset: () => set((state) => {
@@ -198,6 +208,7 @@ export const useStore = create<AppState>((set) => ({
       ws: null,
       wsReady: false,
       pendingSetup: null,
+      pendingJudgment: null,
       playMode: 'game',
       editingScenarioId: null,
     }

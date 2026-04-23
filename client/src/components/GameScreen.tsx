@@ -3,9 +3,10 @@ import { useStore } from '../store'
 import ChatFeed from './ChatFeed'
 import GmInput from './GmInput'
 import CharacterStatus from './CharacterStatus'
+import JudgmentResultOverlay from './JudgmentResultOverlay'
 
 export default function GameScreen() {
-  const { sessionName, wsReady, setScreen } = useStore()
+  const { sessionName, wsReady, setScreen, pendingJudgment } = useStore()
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: 'var(--bg-base)' }}>
@@ -58,9 +59,10 @@ export default function GameScreen() {
         </aside>
 
         {/* Chat area */}
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, position: 'relative' }}>
           <ChatFeed />
           <GmInput />
+          {pendingJudgment && <JudgmentResultOverlay />}
         </div>
       </div>
     </div>
