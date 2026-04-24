@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useStore } from '../store'
 
 const outcomeLabel: Record<string, { label: string; color: string }> = {
@@ -20,6 +20,14 @@ export default function JudgmentResultOverlay() {
   const { pendingJudgment, ws } = useStore()
   const [pushText, setPushText] = useState('')
   const [showPushInput, setShowPushInput] = useState(false)
+  const [isSending, setIsSending] = useState(false)
+
+  // Reset sending state when judgment changes
+  useEffect(() => {
+    setIsSending(false)
+    setShowPushInput(false)
+    setPushText('')
+  }, [pendingJudgment?.id])
 
   if (!pendingJudgment) return null
 
@@ -27,23 +35,27 @@ export default function JudgmentResultOverlay() {
   if (!roll) return null
 
   const outcome = outcomeLabel[pendingJudgment.outcome] ?? { label: pendingJudgment.outcome, color: 'var(--text-primary)' }
-  const diff = diffLabel[pendingJudgment.request?.difficulty] ?? pendingJudgment.request?.difficulty
+  const diff = (pendingJudgment.request?.difficulty ? diffLabel[pendingJudgment.request.difficulty] : undefined) ?? pendingJudgment.request?.difficulty
   const isSuccess = ['extreme_success', 'hard_success', 'regular_success'].includes(pendingJudgment.outcome)
 
+  const wsDisconnected = !ws || ws.readyState !== WebSocket.OPEN
+
   function sendResolve(resolution: any) {
-    if (!ws || ws.readyState !== WebSocket.OPEN) return
-    ws.send(JSON.stringify({
+    if (isSending || wsDisconnected) return
+    setIsSending(true)
+    ws!.send(JSON.stringify({
       type: 'judgment_resolve',
-      judgmentId: pendingJudgment.id,
+      judgmentId: pendingJudgment!.id,
       resolution,
     }))
   }
 
   function sendCancel() {
-    if (!ws || ws.readyState !== WebSocket.OPEN) return
-    ws.send(JSON.stringify({
+    if (isSending || wsDisconnected) return
+    setIsSending(true)
+    ws!.send(JSON.stringify({
       type: 'judgment_cancel',
-      judgmentId: pendingJudgment.id,
+      judgmentId: pendingJudgment!.id,
     }))
   }
 
@@ -86,6 +98,20 @@ export default function JudgmentResultOverlay() {
       {/* Accent bar */}
       <div style={{ height: '3px', backgroundColor: outcome.color }} />
 
+      {/* WS disconnect warning */}
+      {wsDisconnected && (
+        <div style={{
+          padding: '0.375rem 1rem',
+          backgroundColor: 'rgba(248,113,113,0.15)',
+          borderBottom: '1px solid rgba(248,113,113,0.3)',
+          fontSize: '0.65rem',
+          color: '#f87171',
+          textAlign: 'center',
+        }}>
+          서버 연결 끊김 — 재연결 대기 중
+        </div>
+      )}
+
       <div style={{ padding: '1rem 1.25rem' }}>
         {/* Header */}
         <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
@@ -124,7 +150,7 @@ export default function JudgmentResultOverlay() {
           }}>
             <span>텐다이스: {tensDice.map(t => String(t).padStart(2, '0')).join(', ')}</span>
             <span style={{ marginLeft: '0.5rem' }}>
-              (일다이스: {String((roll.roll % 10) || (roll.roll === 100 ? 0 : roll.roll % 10))})
+              (일다이스: {roll.roll % 10})
             </span>
             <br />
             <span style={{ color: bp.bonus > bp.penalty ? '#4ade80' : bp.penalty > bp.bonus ? '#f87171' : 'var(--text-muted)' }}>
@@ -204,6 +230,7 @@ export default function JudgmentResultOverlay() {
           {/* Accept */}
           <button
             onClick={handleAccept}
+            disabled={isSending || wsDisconnected}
             style={{
               flex: 1,
               padding: '8px 12px',
@@ -213,7 +240,8 @@ export default function JudgmentResultOverlay() {
               backgroundColor: 'var(--teal)',
               color: '#0a0e1a',
               border: 'none',
-              cursor: 'pointer',
+              cursor: isSending || wsDisconnected ? 'default' : 'pointer',
+              opacity: isSending || wsDisconnected ? 0.5 : 1,
             }}
           >
             수락
@@ -222,7 +250,7 @@ export default function JudgmentResultOverlay() {
           {/* Push — enabled only on failure, not fumble */}
           <button
             onClick={handlePush}
-            disabled={!pendingJudgment.canPush}
+            disabled={!pendingJudgment.canPush || isSending || wsDisconnected}
             title={
               isSuccess ? '성공 — 밀어붙이기 불필요'
               : pendingJudgment.outcome === 'fumble' ? '대실패 — 밀어붙이기 불가'
@@ -248,7 +276,7 @@ export default function JudgmentResultOverlay() {
           {/* Luck spend */}
           <button
             onClick={handleLuckSpend}
-            disabled={!pendingJudgment.canSpendLuck}
+            disabled={!pendingJudgment.canSpendLuck || isSending || wsDisconnected}
             title={
               isSuccess ? '성공 — 행운 소비 불필요'
               : pendingJudgment.outcome === 'fumble' ? '대실패 — 행운 소비 불가'
@@ -277,6 +305,7 @@ export default function JudgmentResultOverlay() {
           {/* Cancel */}
           <button
             onClick={sendCancel}
+            disabled={isSending || wsDisconnected}
             style={{
               padding: '8px 12px',
               borderRadius: '8px',

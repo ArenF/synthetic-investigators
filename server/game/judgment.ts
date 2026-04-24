@@ -156,7 +156,7 @@ function rollOpposedCheck(
     baseSkillB = charB.skills[request.sideB.skill] ?? 0
   } else {
     charBName = request.sideB.npcName ?? 'NPC'
-    baseSkillB = request.sideB.skillValue
+    baseSkillB = request.sideB.skillValue ?? 0
   }
 
   const rolledB = skillCheckWithBP(baseSkillB, request.sideB.skill, 'regular', request.sideB.bonusPenalty)
@@ -234,6 +234,7 @@ function rollCombinedCheck(
     if (difficulty === 'extreme') target = Math.floor(baseSkill / 5)
 
     const fumbleThreshold = baseSkill < 50 ? 100 : 96
+    const regularFailureMax = Math.floor((baseSkill + 95) / 2)
     let outcome: JudgmentOutcomeKey
     if (rolled.roll >= fumbleThreshold) {
       outcome = 'fumble'
@@ -243,8 +244,10 @@ function rollCombinedCheck(
       outcome = 'hard_success'
     } else if (rolled.roll <= target) {
       outcome = 'regular_success'
-    } else {
+    } else if (rolled.roll <= regularFailureMax) {
       outcome = 'regular_failure'
+    } else {
+      outcome = 'bad_failure'
     }
 
     return {
@@ -269,11 +272,11 @@ function rollCombinedCheck(
   }
 
   // Use the worst success tier or best failure tier as outcome
-  const outcome: JudgmentOutcomeKey = overallSuccess
+  const outcome: JudgmentOutcomeKey = overallSuccess && rolls.length > 0
     ? (rolls.reduce((worst, r) => {
         const rank: Record<string, number> = { extreme_success: 3, hard_success: 2, regular_success: 1 }
         return (rank[r.outcome] ?? 0) < (rank[worst.outcome] ?? 0) ? r : worst
-      }).outcome as JudgmentOutcomeKey)
+      }, rolls[0]).outcome as JudgmentOutcomeKey)
     : 'regular_failure'
 
   const appliedOutcome = request.outcomes
@@ -335,11 +338,11 @@ function rollGroupCheck(
   }
 
   // Best success outcome among participants, or regular_failure
-  const outcome: JudgmentOutcomeKey = overallSuccess
+  const outcome: JudgmentOutcomeKey = overallSuccess && successes.length > 0
     ? (successes.reduce((best, r) => {
         const rank: Record<string, number> = { extreme_success: 3, hard_success: 2, regular_success: 1 }
         return (rank[r.outcome] ?? 0) > (rank[best.outcome] ?? 0) ? r : best
-      }).outcome as JudgmentOutcomeKey)
+      }, successes[0]).outcome as JudgmentOutcomeKey)
     : 'regular_failure'
 
   const appliedOutcome = request.outcomes
@@ -403,7 +406,10 @@ function resolvePush(
   pending: PendingJudgment,
   pushConsequence: string,
 ): JudgmentFinalResult {
-  const request = pending.request as JudgmentRequest & { type: 'simple' }
+  if (pending.request.type !== 'simple') {
+    throw new Error(`밀어붙이기는 단순 판정만 가능합니다 (현재: ${pending.request.type})`)
+  }
+  const request = pending.request
   const char = session.characters.get(request.charId)
   if (!char) throw new Error(`Character ${request.charId} not found`)
 
@@ -449,6 +455,9 @@ function resolvePush(
 }
 
 function resolveLuckSpend(session: GameSession, pending: PendingJudgment): JudgmentFinalResult {
+  if (pending.request.type !== 'simple') {
+    throw new Error(`행운 소비는 단순 판정만 가능합니다 (현재: ${pending.request.type})`)
+  }
   const roll = pending.rolls[0]
   const cost = pending.luckCost!
 
@@ -457,7 +466,7 @@ function resolveLuckSpend(session: GameSession, pending: PendingJudgment): Judgm
 
   // Treat as regular_success (the lowest success tier from the original difficulty)
   const newOutcome: JudgmentOutcomeKey = 'regular_success'
-  const request = pending.request as JudgmentRequest & { type: 'simple' }
+  const request = pending.request
   const appliedOutcome = request.outcomes
     ? getOutcomeForTier(request.outcomes, newOutcome)
     : null
@@ -494,7 +503,7 @@ function buildFinalBase(
     charId: roll.charId,
     charName: roll.charName,
     skill: roll.skill,
-    difficulty: (pending.request as any).difficulty ?? 'regular',
+    difficulty: ('difficulty' in pending.request ? (pending.request as { difficulty?: Difficulty }).difficulty ?? 'regular' : 'regular') as Difficulty,
     roll: roll.roll,
     target: roll.target,
     baseSkill: roll.baseSkill,
@@ -522,6 +531,7 @@ function applyOutcomeEffects(
         applied.push(effect)
       } catch (e) {
         console.error(`Effect application error: ${e}`)
+        console.warn(`[applyOutcomeEffects] Effect 적용 실패 (${charId}):`, effect, e)
       }
     }
   }

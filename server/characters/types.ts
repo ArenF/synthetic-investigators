@@ -306,7 +306,7 @@ export interface SimpleCheckRequest {
 export interface OpposedRollRequest {
   type: 'opposed'
   sideA: { charId: string; skill: string; bonusPenalty?: BonusPenaltyDice }
-  sideB: { charId?: string; npcName?: string; skillValue: number; skill: string; bonusPenalty?: BonusPenaltyDice }
+  sideB: { charId?: string; npcName?: string; skillValue?: number; skill: string; bonusPenalty?: BonusPenaltyDice }
   tieBreaker?: 'attacker' | 'defender'
   outcomes?: JudgmentOutcomes  // optional: applied to winner's result
 }

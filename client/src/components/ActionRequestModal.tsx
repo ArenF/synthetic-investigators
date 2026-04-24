@@ -61,7 +61,7 @@ type JudgmentTab = 'skill' | 'opposed' | 'combined' | 'group' | 'san'
 export default function ActionRequestModal({ onClose }: Props) {
   const { characters, ws } = useStore()
   const [tab, setTab] = useState<JudgmentTab>('skill')
-  const [targetId, setTargetId] = useState<string>('all')
+  const [targetId, setTargetId] = useState<string>(characters[0]?.id ?? '')
 
   // Opposed state
   const [oppSideAId, setOppSideAId] = useState<string>(characters[0]?.id ?? '')
@@ -88,21 +88,14 @@ export default function ActionRequestModal({ onClose }: Props) {
   const [sanTargetId, setSanTargetId] = useState<string>(characters[0]?.id ?? '')
   const [successLoss, setSuccessLoss] = useState('0')
   const [failureLoss, setFailureLoss] = useState('1d6')
+  const [sanError, setSanError] = useState('')
 
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [onClose])
-
-  // 특정 캐릭터 선택 시 해당 캐릭터의 0값 기술 제외 (전체 선택 시 전체 목록 표시)
-  const visibleSkills = targetId === 'all'
-    ? COC_SKILLS
-    : (() => {
-        const char = characters.find(c => c.id === targetId)
-        if (!char) return COC_SKILLS
-        return COC_SKILLS.filter(s => (char.skills[s] ?? 0) > 0)
-      })()
+  // 해당 캐릭터의 0값 기술 제외
+  const visibleSkills = (() => {
+    const char = characters.find(c => c.id === targetId)
+    if (!char) return COC_SKILLS
+    return COC_SKILLS.filter(s => (char.skills[s] ?? 0) > 0)
+  })()
 
   const [skill, setSkill] = useState(COC_SKILLS[0])
   const [customSkill, setCustomSkill] = useState('')
@@ -111,6 +104,19 @@ export default function ActionRequestModal({ onClose }: Props) {
   const [penaltyDice, setPenaltyDice] = useState(0)
   const [outcomes, setOutcomes] = useState<Record<OutcomeTier, TierOutcome>>(makeEmptyOutcomes)
   const [expandedTier, setExpandedTier] = useState<OutcomeTier | null>(null)
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        const dirty = Object.values(outcomes).some(o => o.desc || o.effects.length > 0)
+          || customSkill.trim() !== '' || bonusDice > 0 || penaltyDice > 0
+        if (dirty && !window.confirm('작성 중인 내용이 있습니다. 닫으시겠습니까?')) return
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose, outcomes, customSkill, bonusDice, penaltyDice])
 
   const diffLabels: Record<Difficulty, string> = {
     regular: '보통',
@@ -149,14 +155,6 @@ export default function ActionRequestModal({ onClose }: Props) {
 
   function buildJudgmentOutcomes() {
     const result: any = {}
-    const tierMap: Record<OutcomeTier, string> = {
-      extremeSuccess: 'extremeSuccess',
-      hardSuccess: 'hardSuccess',
-      regularSuccess: 'regularSuccess',
-      regularFailure: 'regularFailure',
-      badFailure: 'badFailure',
-      fumble: 'fumble',
-    }
     for (const tier of ALL_TIERS) {
       const o = outcomes[tier]
       if (!o.desc && o.effects.length === 0) continue
@@ -167,7 +165,7 @@ export default function ActionRequestModal({ onClose }: Props) {
         if (e.kind === 'status') return { kind: 'status', status: e.status, value: e.statusValue ?? true }
         return e
       })
-      result[tierMap[tier]] = { desc: o.desc, effects }
+      result[tier] = { desc: o.desc, effects }
     }
     return result
   }
@@ -175,18 +173,15 @@ export default function ActionRequestModal({ onClose }: Props) {
   function rollDice() {
     if (!ws || ws.readyState !== WebSocket.OPEN) return
     const skillName = customSkill.trim() || skill
-    const targets = targetId === 'all' ? characters.map(c => c.id) : [targetId]
     const judgmentOutcomes = buildJudgmentOutcomes()
 
     const bp = (bonusDice > 0 || penaltyDice > 0)
       ? { bonus: bonusDice, penalty: penaltyDice }
       : undefined
 
-    // Pending flow: only one judgment at a time — send first target
-    const charId = targets[0]
     ws.send(JSON.stringify({
       type: 'judgment_request',
-      charId,
+      charId: targetId,
       skill: skillName,
       difficulty,
       outcomes: judgmentOutcomes,
@@ -198,11 +193,19 @@ export default function ActionRequestModal({ onClose }: Props) {
   function sendSanCheck() {
     if (!ws || ws.readyState !== WebSocket.OPEN) return
     if (!sanTargetId) return
+    const DICE_EXPR = /^(\d+|\d+[dD]\d+)$/
+    const sl = successLoss.trim() || '0'
+    const fl = failureLoss.trim() || '1d6'
+    if (!DICE_EXPR.test(sl) || !DICE_EXPR.test(fl)) {
+      setSanError('잘못된 주사위 표현식입니다. 예: 0, 1, 1d6, 2d10')
+      return
+    }
+    setSanError('')
     ws.send(JSON.stringify({
       type: 'san_check',
       charId: sanTargetId,
-      successLoss: successLoss.trim() || '0',
-      failureLoss: failureLoss.trim() || '1d6',
+      successLoss: sl,
+      failureLoss: fl,
     }))
     onClose()
   }
@@ -215,7 +218,7 @@ export default function ActionRequestModal({ onClose }: Props) {
         type: 'opposed',
         sideA: { charId: oppSideAId, skill: oppSideASkill },
         sideB: oppSideBId
-          ? { charId: oppSideBId, skill: oppSideBSkill, skillValue: 0 }
+          ? { charId: oppSideBId, skill: oppSideBSkill }
           : { npcName: oppSideBNpcName || 'NPC', skill: oppSideBSkill, skillValue: oppSideBSkillValue },
         tieBreaker: oppTieBreaker,
       },
@@ -342,6 +345,11 @@ export default function ActionRequestModal({ onClose }: Props) {
                   style={inputStyle}
                 />
               </div>
+              {sanError && (
+                <div className="mb-2" style={{ color: '#f87171', fontSize: '0.7rem' }}>
+                  {sanError}
+                </div>
+              )}
               <div className="flex gap-2">
                 <button
                   onClick={onClose}
@@ -576,18 +584,19 @@ export default function ActionRequestModal({ onClose }: Props) {
             <select
               value={targetId}
               onChange={e => {
-                setTargetId(e.target.value)
-                setCustomSkill('')
                 const newTarget = e.target.value
+                setTargetId(newTarget)
+                setCustomSkill('')
                 const char = characters.find(c => c.id === newTarget)
                 if (char) {
-                  const firstNonZero = COC_SKILLS.find(s => (char.skills[s] ?? 0) > 0)
-                  if (firstNonZero) setSkill(firstNonZero)
+                  const charSkills = COC_SKILLS.filter(s => (char.skills[s] ?? 0) > 0)
+                  if (!charSkills.includes(skill)) {
+                    setSkill(charSkills[0] ?? COC_SKILLS[0])
+                  }
                 }
               }}
               style={inputStyle}
             >
-              <option value="all">전체</option>
               {characters.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
@@ -604,7 +613,7 @@ export default function ActionRequestModal({ onClose }: Props) {
               style={{ ...inputStyle, marginBottom: '0.375rem', opacity: customSkill.trim() ? 0.4 : 1 }}
             >
               {visibleSkills.map(s => {
-                const char = targetId !== 'all' ? characters.find(c => c.id === targetId) : null
+                const char = characters.find(c => c.id === targetId)
                 const val = char ? (char.skills[s] ?? 0) : null
                 return (
                   <option key={s} value={s}>

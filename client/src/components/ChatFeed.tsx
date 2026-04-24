@@ -12,7 +12,7 @@ const outcomeLabel: Record<string, { label: string; color: string }> = {
   regular_success: { label: '성공', color: '#4ade80' },
   regular_failure: { label: '실패', color: '#f87171' },
   bad_failure: { label: '나쁜 실패', color: '#ef4444' },
-  fumble: { label: '대실패', color: '#f87171' },
+  fumble: { label: '대실패', color: '#dc2626' },
   failure: { label: '실패', color: '#f87171' },  // backward compat
 }
 

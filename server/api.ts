@@ -16,7 +16,6 @@ import { createPlayer, type BasePlayer } from './players/index.js'
 import { GameState } from './game/state.js'
 import { ScenarioManager } from './game/scenario.js'
 import { ExperimentLogger } from './game/logger.js'
-import { skillCheck } from './game/dice.js'
 import { rollJudgment, resolveJudgment, performSanCheck } from './game/judgment.js'
 import type { JudgmentOutcomes, PendingJudgment, JudgmentRequest, JudgmentResolution } from './characters/types.js'
 import { buildContextMessages } from './game/context.js'
@@ -917,63 +916,6 @@ wss.on('connection', (ws, req) => {
         break
       }
 
-      case 'dice_roll': {
-        if (!currentSession) break
-        const { charId, skill, difficulty } = msg
-        const sess = currentSession
-        const char = sess.characters.get(charId)
-        if (!char) {
-          ws.send(JSON.stringify({ type: 'error', message: `캐릭터를 찾을 수 없습니다: ${charId}` }))
-          break
-        }
-
-        const baseVal = char.skills[skill] ?? 0
-        const { roll, target, outcome } = skillCheck(baseVal, skill, difficulty ?? 'regular')
-
-        const resultData = {
-          type: 'dice_result',
-          charId,
-          charName: char.name,
-          skill,
-          difficulty,
-          roll,
-          target,
-          outcome,
-          resultText: (outcome === 'extreme_success' || outcome === 'hard_success' || outcome === 'regular_success')
-            ? (msg.successText ?? '')
-            : (msg.failureText ?? ''),
-        }
-        broadcast(sess, resultData)
-
-        // Store for next send_turn: AI will receive the result text
-        sess.pendingDiceResults.push({
-          charId,
-          charName: char.name,
-          skill,
-          outcome,
-          resultText: resultData.resultText,
-        })
-
-        // Add to chat log
-        const diceMsg: ChatMessage = {
-          id: `dice-${Date.now()}`,
-          type: 'dice_result',
-          charId,
-          charName: char.name,
-          text: `${char.name} — ${skill} 판정 (목표: ${target}) → ${roll} = ${outcome}`,
-          timestamp: new Date().toISOString(),
-          diceData: {
-            skill,
-            difficulty,
-            roll,
-            target,
-            outcome,
-            resultText: resultData.resultText,
-          },
-        }
-        sess.chatLog.push(diceMsg)
-        break
-      }
 
       case 'npc_speak': {
         if (!currentSession) break
@@ -1053,10 +995,15 @@ wss.on('connection', (ws, req) => {
           break
         }
 
+        const pending = sess.pendingJudgment
+        if (msg.judgmentId && msg.judgmentId !== pending.id) {
+          ws.send(JSON.stringify({ type: 'error', message: '판정 ID가 일치하지 않습니다.' }))
+          break
+        }
+        sess.pendingJudgment = null  // 즉시 클리어 — 레이스 방지
         const { resolution } = msg as { resolution: JudgmentResolution }
         try {
-          const final = resolveJudgment(sess, sess.pendingJudgment, resolution)
-          sess.pendingJudgment = null
+          const final = resolveJudgment(sess, pending, resolution)
 
           broadcast(sess, { type: 'judgment_final', ...final })
 
@@ -1109,6 +1056,10 @@ wss.on('connection', (ws, req) => {
         if (!currentSession) break
         const sess = currentSession
         if (sess.pendingJudgment) {
+          if (msg.judgmentId && msg.judgmentId !== sess.pendingJudgment.id) {
+            ws.send(JSON.stringify({ type: 'error', message: '판정 ID가 일치하지 않습니다.' }))
+            break
+          }
           const judgmentId = sess.pendingJudgment.id
           sess.pendingJudgment = null
           broadcast(sess, { type: 'judgment_cancelled', judgmentId })
@@ -1123,6 +1074,11 @@ wss.on('connection', (ws, req) => {
           charId: string
           successLoss: string
           failureLoss: string
+        }
+        const DICE_EXPR = /^(\d+|\d+[dD]\d+)$/
+        if (!DICE_EXPR.test(successLoss) || !DICE_EXPR.test(failureLoss)) {
+          ws.send(JSON.stringify({ type: 'error', message: '잘못된 주사위 표현식입니다. (예: 0, 1, 1d6, 2d10)' }))
+          break
         }
         try {
           const result = performSanCheck(sess, charId, successLoss, failureLoss)

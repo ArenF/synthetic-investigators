@@ -64,9 +64,16 @@ export class GameState {
     // Track cumulative session SAN loss
     state.sessionSanLoss = (state.sessionSanLoss ?? 0) + amount
 
-    // Check for indefinite insanity: cumulative session loss ≥ currentSAN / 5
-    const threshold = Math.floor(state.san / 5)
-    if (threshold > 0 && state.sessionSanLoss >= threshold) {
+    // SAN 0 도달 시 무기한 광기 자동 발동 (CoC 7e)
+    if (state.san === 0) {
+      state.indefiniteInsanity = true
+      return
+    }
+
+    // Check for indefinite insanity: cumulative session loss ≥ startingSAN / 5 (CoC 7e)
+    const char = this.getCharacter(charId)
+    const threshold = Math.max(1, Math.floor(char.derived.san.starting / 5))
+    if (state.sessionSanLoss >= threshold) {
       state.indefiniteInsanity = true
     }
   }
@@ -176,6 +183,7 @@ export class GameState {
           break
         }
         case 'skill': {
+          // 의도적: CoC 7e에서 기술 변경은 영구적이므로 CoCCharacter 직접 변이
           const char = this.getCharacter(charId)
           const current = char.skills[effect.skill] ?? 0
           char.skills[effect.skill] = Math.max(0, Math.min(99, current + effect.delta))

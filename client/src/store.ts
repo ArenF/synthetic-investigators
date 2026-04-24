@@ -80,6 +80,38 @@ export interface CharacterSummary {
   model: string
 }
 
+export interface ClientRollResult {
+  charId: string
+  charName: string
+  skill: string
+  baseSkill: number
+  target: number
+  roll: number
+  tensDice?: number[]
+  outcome: string
+}
+
+export interface ClientPendingJudgment {
+  id: string
+  request: {
+    type: 'simple' | 'opposed' | 'combined' | 'group'
+    difficulty?: string
+    bonusPenalty?: { bonus: number; penalty: number }
+    charId?: string
+    skill?: string
+    [key: string]: unknown
+  }
+  rolls: ClientRollResult[]
+  outcome: string
+  appliedOutcome: { desc: string; effects?: unknown[] } | null
+  canPush: boolean
+  canSpendLuck: boolean
+  luckCost: number | null
+  currentLuck: number
+  pushed: boolean
+  timestamp: string
+}
+
 export interface SessionSetupData {
   sessionName: string
   characterIds: string[]
@@ -126,7 +158,7 @@ export interface AppState {
   pendingSetup: SessionSetupData | null
 
   // Pending judgment (multi-step flow)
-  pendingJudgment: any | null
+  pendingJudgment: ClientPendingJudgment | null
 
   // Play mode
   playMode: PlayMode
@@ -150,7 +182,7 @@ export interface AppState {
   setSavedSessions: (sessions: SessionInfo[]) => void
   setAvailableCharacters: (chars: CharacterSummary[]) => void
   setPendingSetup: (setup: SessionSetupData | null) => void
-  setPendingJudgment: (j: any | null) => void
+  setPendingJudgment: (j: ClientPendingJudgment | null) => void
   setEditingScenarioId: (id: string | null) => void
   setPlayMode: (mode: PlayMode) => void
   reset: () => void

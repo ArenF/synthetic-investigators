@@ -116,7 +116,7 @@ export function d100WithBonusPenalty(
   }
 
   // d100: 00+0 = 100 (not 0)
-  const roll = chosenTens + unitsDie === 0 ? 100 : chosenTens + unitsDie
+  const roll = (chosenTens + unitsDie) === 0 ? 100 : chosenTens + unitsDie
 
   return { roll, tensDice, unitsDie }
 }

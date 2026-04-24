@@ -10,7 +10,8 @@
       "Bash(git commit -m ':*)",
       "mcp__ide__getDiagnostics",
       "Bash(grep:*)",
-      "Bash(wc -l \"/d/workspace/vscode_workspace/03_AI/synthetic-investigators/client/src/components/\"*.tsx)"
+      "Bash(wc -l \"/d/workspace/vscode_workspace/03_AI/synthetic-investigators/client/src/components/\"*.tsx)",
+      "WebSearch"
     ]
   }
 }

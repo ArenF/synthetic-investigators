@@ -518,9 +518,16 @@ PORT=3001
 
 - **기술값 0 숨김**: `ActionRequestModal` 드롭다운에서 해당 캐릭터의 0 기술값 항목 제외 구현됨 (`ActionRequestModal.tsx` 63-69행)
 
+### 완료된 작업 (2026-04-24)
+
+- **yerin 기술명 교정**: `말돌리기` → `언변`, `자동차운전` → `운전` (`characters/yerin.json`)
+- **SAN 무기한 광기 threshold 수정**: `state.san / 5` → `char.derived.san.starting / 5` (CoC 7e 규칙 준수, `state.ts`)
+- **combined roll bad_failure 누락 수정**: `rollCombinedCheck()`에 `regularFailureMax` 분기 추가 (`judgment.ts`)
+- **dice_roll 레거시 핸들러 삭제**: 클라이언트에서 미사용 데드 코드 제거 (`api.ts`)
+- **단순 판정 "전체" 대상 제거**: 첫 번째 캐릭터만 판정되던 UX 혼동 수정 → 개별 캐릭터 선택으로 변경 (`ActionRequestModal.tsx`)
+
 ### 남은 작업
 
-1. **yerin 캐릭터 기술 교정**: `말돌리기` 기술이 `COC_SKILLS` 공식 목록에 미포함 → `characters/yerin.json`에서 표준 기술명으로 교체 필요
-2. **판정 후 자동 AI 턴 실행**: `judgment_result` 수신 후 GM이 별도로 `send_turn`을 날려야 AI가 판정 결과를 인지함. 자동화 옵션 설계 필요.
-3. **턴 플로우 자동화**: 턴 순서 연동 자동 진행 옵션 (설계 미확정)
-4. **코드 정리**: 판정 시스템 중복 로직 통합, `accumulatedContext` 재구성 개선
+1. **판정 후 자동 AI 턴 실행**: `judgment_result` 수신 후 GM이 별도로 `send_turn`을 날려야 AI가 판정 결과를 인지함. 자동화 옵션 설계 필요.
+2. **턴 플로우 자동화**: 턴 순서 연동 자동 진행 옵션 (설계 미확정)
+3. **코드 정리**: `accumulatedContext` 재구성 개선
