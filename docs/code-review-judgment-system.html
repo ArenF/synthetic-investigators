@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>코드 리뷰 — CoC 7e 판정 시스템 리빌드</title>
+<title>코드 리뷰 — Synthetic Investigators 전체 코드 (2026-04-25)</title>
 <style>
   :root {
     --bg: #0d1117;
@@ -30,651 +30,867 @@
     background: var(--bg);
     color: var(--text);
     line-height: 1.6;
-    padding: 2rem;
-    max-width: 1100px;
-    margin: 0 auto;
+    padding: 2rem 1rem;
   }
+  .container { max-width: 960px; margin: 0 auto; }
   h1 { color: var(--heading); font-size: 1.75rem; margin-bottom: 0.25rem; }
-  h2 { color: var(--heading); font-size: 1.35rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
-  h3 { color: var(--accent); font-size: 1.05rem; margin: 1.75rem 0 0.75rem; }
-  p { margin-bottom: 0.75rem; }
-  .subtitle { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 2rem; }
-  a { color: var(--link); text-decoration: none; }
-
-  /* Summary cards */
-  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin: 1.5rem 0 2rem; }
-  .summary-card {
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
-    padding: 1rem 1.25rem; text-align: center;
+  .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+  h2 {
+    color: var(--heading); font-size: 1.25rem; margin-top: 2.5rem; margin-bottom: 1rem;
+    padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
   }
-  .summary-card .count { font-size: 2.5rem; font-weight: 800; line-height: 1; }
-  .summary-card .label { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; }
-  .s-critical .count { color: var(--critical); }
-  .s-warning .count { color: var(--warning); }
-  .s-style .count { color: var(--style); }
-  .s-info .count { color: var(--info); }
+  h3 { color: var(--accent); font-size: 1rem; margin-bottom: 0.5rem; }
 
-  /* Issue cards */
-  .issue {
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
-    padding: 1rem 1.25rem; margin-bottom: 0.75rem;
-    border-left: 3px solid var(--border);
+  /* Summary strip */
+  .summary-strip {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+    margin-bottom: 2rem; padding: 1rem; border-radius: 8px;
+    background: var(--bg-card); border: 1px solid var(--border);
   }
-  .issue.critical { border-left-color: var(--critical); background: var(--critical-bg); }
-  .issue.warning { border-left-color: var(--warning); background: var(--warning-bg); }
-  .issue.style { border-left-color: var(--style); background: var(--style-bg); }
-  .issue.info { border-left-color: var(--info); background: var(--info-bg); }
+  .summary-item {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-size: 0.85rem; font-weight: 600;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-critical { background: var(--critical); }
+  .dot-warning  { background: var(--warning); }
+  .dot-style    { background: var(--style); }
+  .dot-info     { background: var(--info); }
 
-  .issue-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+  /* TOC */
+  .toc {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 2rem;
+  }
+  .toc-title { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.5rem; }
+  .toc a { color: var(--link); text-decoration: none; font-size: 0.85rem; display: block; padding: 2px 0; }
+  .toc a:hover { text-decoration: underline; }
+
+  /* Cards */
+  .card {
+    border: 1px solid var(--border); border-radius: 8px;
+    margin-bottom: 1.25rem; overflow: hidden;
+  }
+  .card-header {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.75rem 1rem; font-size: 0.85rem; font-weight: 600;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-body { padding: 1rem; }
+
+  .card-critical { background: var(--critical-bg); }
+  .card-critical .card-header { color: var(--critical); }
+  .card-warning  { background: var(--warning-bg); }
+  .card-warning  .card-header { color: var(--warning); }
+  .card-style    { background: var(--style-bg); }
+  .card-style    .card-header { color: var(--style); }
+  .card-info     { background: var(--info-bg); }
+  .card-info     .card-header { color: var(--info); }
+
   .badge {
-    font-size: 0.6rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;
-    text-transform: uppercase; letter-spacing: 0.05em;
+    font-size: 0.65rem; padding: 2px 8px; border-radius: 999px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
   }
-  .badge-critical { background: var(--critical); color: #fff; }
-  .badge-warning { background: var(--warning); color: #0d1117; }
-  .badge-style { background: var(--style); color: #0d1117; }
-  .badge-info { background: var(--info); color: #0d1117; }
+  .badge-critical { background: var(--critical); color: #0d1117; }
+  .badge-warning  { background: var(--warning); color: #0d1117; }
+  .badge-style    { background: var(--style); color: #0d1117; }
+  .badge-info     { background: var(--info); color: #0d1117; }
 
-  .issue-title { font-weight: 600; color: var(--heading); font-size: 0.9rem; }
-  .issue-loc { font-size: 0.7rem; color: var(--text-muted); font-family: monospace; }
-  .issue-body { font-size: 0.8rem; color: var(--text); margin-top: 0.4rem; }
-  .issue-body p { margin-bottom: 0.4rem; }
-  .issue-fix { margin-top: 0.5rem; padding: 0.5rem 0.75rem; background: var(--bg-code); border-radius: 6px; font-size: 0.75rem; }
-  .issue-fix strong { color: var(--info); }
+  .file-ref {
+    font-size: 0.78rem; color: var(--text-muted); font-family: monospace;
+    display: inline-block; margin-bottom: 0.5rem;
+  }
 
   code {
-    font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
-    font-size: 0.8em; background: var(--bg-code); padding: 2px 6px; border-radius: 4px;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.82rem;
+  }
+  code.inline {
+    background: var(--bg-code); padding: 2px 6px; border-radius: 4px;
+    border: 1px solid var(--border);
   }
   pre {
-    background: var(--bg-code); border: 1px solid var(--border); border-radius: 6px;
-    padding: 0.75rem 1rem; overflow-x: auto; font-size: 0.78rem; line-height: 1.5;
-    margin: 0.5rem 0;
-    font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
+    background: var(--bg-code); border: 1px solid var(--border);
+    border-radius: 6px; padding: 0.75rem 1rem; overflow-x: auto;
+    margin: 0.5rem 0; font-size: 0.82rem; line-height: 1.5;
   }
+  pre .hl-del { background: rgba(248,81,73,0.2); display: block; margin: 0 -1rem; padding: 0 1rem; }
+  pre .hl-add { background: rgba(63,185,80,0.2); display: block; margin: 0 -1rem; padding: 0 1rem; }
+  pre .hl-focus { background: rgba(88,166,255,0.12); display: block; margin: 0 -1rem; padding: 0 1rem; }
 
-  /* File section */
-  .file-section { margin: 1.5rem 0; }
-  .file-name {
-    font-family: monospace; font-size: 0.85rem; color: var(--accent);
-    background: var(--bg-code); padding: 0.4rem 0.75rem; border-radius: 6px 6px 0 0;
-    border: 1px solid var(--border); border-bottom: none; display: inline-block;
-  }
+  p { margin-bottom: 0.5rem; font-size: 0.88rem; }
+  ul { margin-left: 1.25rem; margin-bottom: 0.5rem; }
+  li { font-size: 0.86rem; margin-bottom: 0.25rem; }
 
-  /* Table */
-  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.8rem; }
-  th { background: var(--bg-card); color: var(--heading); text-align: left; padding: 0.6rem 0.75rem; border: 1px solid var(--border); font-weight: 600; }
-  td { padding: 0.5rem 0.75rem; border: 1px solid var(--border); vertical-align: top; }
-  tr:nth-child(even) td { background: var(--bg-card); }
-
-  /* Stats bar */
-  .stats-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin: 0.75rem 0 1.5rem; }
-  .stats-bar .seg { height: 100%; }
-  .seg-critical { background: var(--critical); }
-  .seg-warning { background: var(--warning); }
-  .seg-style { background: var(--style); }
-  .seg-info { background: var(--info); }
-
-  .toc { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.5rem; margin: 1.5rem 0; }
-  .toc ul { list-style: none; padding-left: 0; }
-  .toc li { padding: 0.15rem 0; font-size: 0.85rem; }
-  .toc li::before { content: ''; }
-
-  .verdict {
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
-    padding: 1.25rem 1.5rem; margin: 2rem 0; text-align: center;
-  }
-  .verdict-status { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.3rem; }
-  .verdict-note { font-size: 0.8rem; color: var(--text-muted); }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  .footer { text-align: center; color: var(--text-muted); font-size: 0.75rem; margin-top: 3rem; }
 </style>
 </head>
 <body>
+<div class="container">
 
-<h1>코드 리뷰 &mdash; CoC 7e 판정 시스템 리빌드</h1>
-<div class="subtitle">2026-04-24 &middot; 브랜치: <code>dev</code> &middot; 커밋: <code>85a7b32</code>, <code>e35f54d</code> &middot; 12개 파일, +2,213 / -142 줄</div>
+<h1>Synthetic Investigators - Full Code Review</h1>
+<p class="subtitle">2026-04-25 | dev branch @ <code class="inline">17b01b7</code> | 판정 시스템 + 서버 + 클라이언트 전면 검토</p>
 
-<!-- ───────────── 요약 ───────────── -->
-<div class="summary-grid">
-  <div class="summary-card s-critical"><div class="count">7</div><div class="label">심각</div></div>
-  <div class="summary-card s-warning"><div class="count">14</div><div class="label">경고</div></div>
-  <div class="summary-card s-style"><div class="count">8</div><div class="label">스타일</div></div>
-  <div class="summary-card s-info"><div class="count">8</div><div class="label">참고</div></div>
+<!-- ═══════════════════════════════════════ -->
+<!-- Summary Strip                          -->
+<!-- ═══════════════════════════════════════ -->
+<div class="summary-strip">
+  <div class="summary-item"><span class="dot dot-critical"></span> Critical 3</div>
+  <div class="summary-item"><span class="dot dot-warning"></span> Warning 6</div>
+  <div class="summary-item"><span class="dot dot-style"></span> Design 5</div>
+  <div class="summary-item"><span class="dot dot-info"></span> Note 4</div>
 </div>
 
-<div class="stats-bar">
-  <div class="seg seg-critical" style="flex:7"></div>
-  <div class="seg seg-warning" style="flex:14"></div>
-  <div class="seg seg-style" style="flex:8"></div>
-  <div class="seg seg-info" style="flex:8"></div>
-</div>
-
+<!-- ═══════════════════════════════════════ -->
+<!-- TOC                                    -->
+<!-- ═══════════════════════════════════════ -->
 <div class="toc">
-  <strong>목차</strong>
-  <ul>
-    <li><a href="#server">1. 서버</a></li>
-    <li style="padding-left:1rem"><a href="#dice">1-1. dice.ts</a></li>
-    <li style="padding-left:1rem"><a href="#judgment">1-2. judgment.ts</a></li>
-    <li style="padding-left:1rem"><a href="#state">1-3. state.ts</a></li>
-    <li style="padding-left:1rem"><a href="#api">1-4. api.ts</a></li>
-    <li><a href="#client">2. 클라이언트</a></li>
-    <li style="padding-left:1rem"><a href="#store">2-1. store.ts</a></li>
-    <li style="padding-left:1rem"><a href="#app">2-2. App.tsx</a></li>
-    <li style="padding-left:1rem"><a href="#overlay">2-3. JudgmentResultOverlay.tsx</a></li>
-    <li style="padding-left:1rem"><a href="#modal">2-4. ActionRequestModal.tsx</a></li>
-    <li style="padding-left:1rem"><a href="#chatfeed">2-5. ChatFeed.tsx</a></li>
-    <li style="padding-left:1rem"><a href="#gamescreen">2-6. GameScreen.tsx</a></li>
-    <li><a href="#matrix">3. 전체 이슈 매트릭스</a></li>
-    <li><a href="#verdict">4. 최종 판정</a></li>
-  </ul>
+  <div class="toc-title">목차</div>
+  <a href="#s1">1. 판정 시스템 (judgment.ts / dice.ts)</a>
+  <a href="#s2">2. 게임 상태 (state.ts)</a>
+  <a href="#s3">3. API 서버 (api.ts)</a>
+  <a href="#s4">4. AI 플레이어 (players/)</a>
+  <a href="#s5">5. 프롬프트 생성 (prompt-generator.ts)</a>
+  <a href="#s6">6. 컨텍스트 / 시나리오 / 로거</a>
+  <a href="#s7">7. 클라이언트 (client/src/)</a>
 </div>
 
-<!-- ═══════════════════════════════════ -->
-<h2 id="server">1. 서버</h2>
-<!-- ═══════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- SECTION 1: 판정 시스템                                             -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="s1">1. 판정 시스템</h2>
 
-<!-- ── dice.ts ── -->
-<h3 id="dice">1-1. server/game/dice.ts</h3>
-
-<div class="issue critical">
-  <div class="issue-header">
-    <span class="badge badge-critical">심각</span>
-    <span class="issue-title">S-01: d100WithBonusPenalty &mdash; 연산자 우선순위 버그</span>
-    <span class="issue-loc">dice.ts:119</span>
+<!-- ── CR-01 ── -->
+<div class="card card-critical" id="cr01">
+  <div class="card-header">
+    <span class="badge badge-critical">Critical</span>
+    CR-01 — Combined Roll: OR 조건에서 실패 roll이 "최악의 성공"으로 선택됨
   </div>
-  <div class="issue-body">
-    <p><code>chosenTens + unitsDie === 0</code>은 JS 연산자 우선순위에 의해 <code>chosenTens + (unitsDie === 0 ? ...)</code>으로 평가된다. unitsDie=0일 때 삼항연산자가 100을 반환하여 <code>chosenTens + 100</code>이 되며 &mdash; 100을 초과하는 값(예: 110)이 발생한다.</p>
-<pre>// 현재 (버그)
-const roll = chosenTens + unitsDie === 0 ? 100 : chosenTens + unitsDie
-
-// 수정
-const sum = chosenTens + unitsDie
-const roll = sum === 0 ? 100 : sum</pre>
-    <div class="issue-fix"><strong>영향:</strong> d100 주사위 결과가 100을 초과할 수 있어 모든 기술 판정 비교가 깨진다. 페널티 다이스가 가장 큰 영향을 받는다 (높은 십의 자리 + 일의 자리 0).</div>
-  </div>
-</div>
-
-<!-- ── judgment.ts ── -->
-<h3 id="judgment">1-2. server/game/judgment.ts</h3>
-
-<div class="issue critical">
-  <div class="issue-header">
-    <span class="badge badge-critical">심각</span>
-    <span class="issue-title">S-02: rollCombinedCheck &mdash; reduce() 초기값 누락</span>
-    <span class="issue-loc">judgment.ts:272-277</span>
-  </div>
-  <div class="issue-body">
-    <p><code>rolls.reduce((worst, r) =&gt; ...)</code>에 초기 누산값이 없다. 초기값 없는 <code>reduce</code>는 첫 번째 요소를 누산값으로 사용하고 인덱스 1부터 반복을 시작한다. 즉, rolls[0]은 비교 대상에서 제외되며 &mdash; 그대로 기본값으로 통과된다.</p>
-<pre>// 현재
-rolls.reduce((worst, r) => {
-  return (rank[r.outcome] ?? 0) &lt; (rank[worst.outcome] ?? 0) ? r : worst
-})
-
-// 수정 — 명시적 초기값
-rolls.reduce((worst, r) => {
-  return (rank[r.outcome] ?? 0) &lt; (rank[worst.outcome] ?? 0) ? r : worst
-}, rolls[0])</pre>
-    <div class="issue-fix"><strong>영향:</strong> 복합 판정에서 잘못된 결과 등급이 보고될 수 있다. rolls[0]이 최악의 결과를 가지고 있으면 제대로 비교되지 않는다.</div>
+  <div class="card-body">
+    <span class="file-ref">server/game/judgment.ts:275-279</span>
+    <p>
+      Combined roll에서 <code class="inline">overallSuccess</code>가 true(OR 조건, 1개 이상 성공)일 때,
+      outcome을 결정하는 reduce가 <strong>전체 <code class="inline">rolls</code></strong>를 순회한다.
+      실패 roll은 rank가 0이므로 어떤 성공 roll(rank 1~3)보다 "나쁜 것"으로 선택되어,
+      <strong>성공으로 판정됐는데 outcome이 <code class="inline">regular_failure</code>나
+      <code class="inline">fumble</code>이 될 수 있다.</strong>
+    </p>
+    <pre><code><span class="hl-focus">// 현재 코드: overallSuccess인데도 failure tier가 선택될 수 있음</span>
+const outcome: JudgmentOutcomeKey = overallSuccess && rolls.length > 0
+  ? (<span class="hl-del">rolls</span>.reduce((worst, r) => {
+      const rank = { extreme_success: 3, hard_success: 2, regular_success: 1 }
+      return (rank[r.outcome] ?? 0) &lt; (rank[worst.outcome] ?? 0) ? r : worst
+    }, <span class="hl-del">rolls[0]</span>).outcome as JudgmentOutcomeKey)
+  : 'regular_failure'</code></pre>
+    <p><strong>수정 제안</strong>: OR 조건에서는 <code class="inline">successes</code>만 순회해야 한다.</p>
+    <pre><code><span class="hl-add">// AND면 rolls 전체(전부 성공), OR면 successes만 순회</span>
+<span class="hl-add">const pool = request.condition === 'and' ? rolls : successes</span>
+const outcome: JudgmentOutcomeKey = overallSuccess && <span class="hl-add">pool</span>.length > 0
+  ? (<span class="hl-add">pool</span>.reduce((worst, r) => {
+      const rank = { extreme_success: 3, hard_success: 2, regular_success: 1 }
+      return (rank[r.outcome] ?? 0) &lt; (rank[worst.outcome] ?? 0) ? r : worst
+    }, <span class="hl-add">pool[0]</span>).outcome as JudgmentOutcomeKey)
+  : 'regular_failure'</code></pre>
   </div>
 </div>
 
-<div class="issue critical">
-  <div class="issue-header">
-    <span class="badge badge-critical">심각</span>
-    <span class="issue-title">S-03: rollGroupCheck &mdash; 동일한 reduce() 버그</span>
-    <span class="issue-loc">judgment.ts:339-342</span>
+<!-- ── CR-02 ── -->
+<div class="card card-critical" id="cr02">
+  <div class="card-header">
+    <span class="badge badge-critical">Critical</span>
+    CR-02 — applyEffects 'skill' kind: 불변이어야 할 CoCCharacter를 직접 변이
   </div>
-  <div class="issue-body">
-    <p>동일한 패턴: <code>successes.reduce((best, r) =&gt; ...)</code>에 초기값이 없다. 성공이 1개뿐이면 콜백이 실행되지 않아 &mdash; 우연히 정확한 결과가 반환된다 (그 하나의 요소). 하지만 2개 이상이면 첫 번째가 비교에서 누락된다.</p>
-    <div class="issue-fix"><strong>수정:</strong> reduce()의 두 번째 인자로 <code>, successes[0]</code>을 추가.</div>
+  <div class="card-body">
+    <span class="file-ref">server/game/state.ts:186-189</span>
+    <p>
+      CLAUDE.md에서 <code class="inline">characters</code> Map은 "불변 참조용"으로 정의되어 있으나,
+      <code class="inline">applyEffects</code>의 <code class="inline">'skill'</code> case가
+      <code class="inline">char.skills</code>를 직접 수정한다. 이는:
+    </p>
+    <ul>
+      <li><strong>설계 계약 위반</strong>: 불변으로 취급되어야 할 캐릭터 시트가 세션 중 조용히 변이됨</li>
+      <li><strong>영속화 누락</strong>: ScenarioManager는 TurnRecord만 저장하고 캐릭터 변경은 저장하지 않음. 세션 재개 시 기술 변경이 소실됨</li>
+      <li><strong>교차 오염</strong>: 같은 캐릭터 JSON을 다른 세션에서 로드하면 이전 세션의 스킬 변이가 반영될 수 있음 (인메모리 한정)</li>
+    </ul>
+    <pre><code>case 'skill': {
+  <span class="hl-del">// 의도적: CoC 7e에서 기술 변경은 영구적이므로 CoCCharacter 직접 변이</span>
+  <span class="hl-del">const char = this.getCharacter(charId)</span>
+  <span class="hl-del">const current = char.skills[effect.skill] ?? 0</span>
+  <span class="hl-del">char.skills[effect.skill] = Math.max(0, Math.min(99, current + effect.delta))</span>
+  break
+}</code></pre>
+    <p><strong>수정 제안</strong>: SessionState에 <code class="inline">skillDeltas: Record&lt;string, number&gt;</code> 필드를 추가하여
+    세션 중 기술 변경을 추적하고, 실제 기술값 조회 시 <code class="inline">baseSkill + delta</code>로 합산한다.</p>
+    <pre><code><span class="hl-add">// SessionState에 추가</span>
+<span class="hl-add">skillDeltas: Record&lt;string, number&gt;  // 세션 중 기술 변경 누적</span>
+
+<span class="hl-add">// applyEffects에서</span>
+<span class="hl-add">case 'skill': {</span>
+<span class="hl-add">  const state = this.getState(charId)</span>
+<span class="hl-add">  const current = (state.skillDeltas[effect.skill] ?? 0)</span>
+<span class="hl-add">  state.skillDeltas[effect.skill] = current + effect.delta</span>
+<span class="hl-add">  break</span>
+<span class="hl-add">}</span></code></pre>
   </div>
 </div>
 
-<div class="issue warning">
-  <div class="issue-header">
-    <span class="badge badge-warning">경고</span>
-    <span class="issue-title">S-04: OpposedRollRequest &mdash; sideB.skillValue가 타입에서 항상 필수</span>
-    <span class="issue-loc">types.ts:309, judgment.ts:152-160</span>
+<!-- ── CR-03 ── -->
+<div class="card card-critical" id="cr03">
+  <div class="card-header">
+    <span class="badge badge-critical">Critical</span>
+    CR-03 — performSanCheck: getState() 반환값을 직접 변이
   </div>
-  <div class="issue-body">
-    <p><code>sideB.skillValue: number</code>가 타입 정의에서 옵셔널이 아니지만, <code>sideB.charId</code>가 제공되면 코드에서 무시한다 (캐릭터 시트에서 기술값을 읽음). 클라이언트는 PC 선택 시 <code>skillValue: 0</code>을 더미값으로 전송한다.</p>
-    <div class="issue-fix"><strong>수정:</strong> 타입에서 <code>skillValue</code>를 옵셔널로 변경: <code>skillValue?: number</code>. charId도 skillValue도 없으면 서버가 에러를 던져야 한다.</div>
-  </div>
-</div>
-
-<div class="issue warning">
-  <div class="issue-header">
-    <span class="badge badge-warning">경고</span>
-    <span class="issue-title">S-05: buildFinalBase &mdash; difficulty가 undefined일 수 있음</span>
-    <span class="issue-loc">judgment.ts:497</span>
-  </div>
-  <div class="issue-body">
-    <p><code>(pending.request as any).difficulty</code> &mdash; Combined/Group 요청에서 difficulty는 옵셔널이다. <code>as any</code> 캐스트가 이를 숨기고 있다.</p>
-<pre>// 현재
-difficulty: (pending.request as any).difficulty ?? 'regular',
-// ?? 'regular' 폴백이 있어 안전하지만, `as any`는 취약하다.</pre>
-    <div class="issue-fix"><strong>수정:</strong> 타입 가드를 사용하거나 요청 타입별로 difficulty를 추출하여 <code>as any</code>를 제거.</div>
-  </div>
-</div>
-
-<div class="issue warning">
-  <div class="issue-header">
-    <span class="badge badge-warning">경고</span>
-    <span class="issue-title">S-06: applyOutcomeEffects &mdash; 무음 부분 실패</span>
-    <span class="issue-loc">judgment.ts:517-529</span>
-  </div>
-  <div class="issue-body">
-    <p>각 Effect가 try-catch 내에서 적용된다. effects[0]은 성공하고 effects[1]이 에러를 던지면 캐릭터 상태가 부분적으로만 적용된 채 남는다. 에러는 콘솔에만 기록되며 &mdash; 클라이언트는 알 수 없다.</p>
-    <div class="issue-fix"><strong>제안:</strong> 실패한 Effect를 결과에 추적하거나, 실패 시 롤백. 발생 확률은 낮지만 발생 시 영향이 크다.</div>
+  <div class="card-body">
+    <span class="file-ref">server/game/judgment.ts:603</span>
+    <p>
+      <code class="inline">performSanCheck()</code>에서 <code class="inline">updatedState.temporaryInsanity = true</code>로
+      state 객체를 직접 변이한다. <code class="inline">getState()</code>가 참조를 반환하므로 동작은 하지만,
+      <code class="inline">GameState</code> 클래스의 전용 메서드(<code class="inline">applyEffects</code> 등)를 우회하는 패턴이다.
+    </p>
+    <pre><code>if (intSuccess) {
+  temporaryInsanity = true
+  insanityDuration = rollDie(10)
+  <span class="hl-del">updatedState.temporaryInsanity = true  // 직접 변이</span>
+}</code></pre>
+    <p><strong>수정 제안</strong>: <code class="inline">GameState</code>의 기존 메서드 또는 <code class="inline">applyEffects</code>를 경유한다.</p>
+    <pre><code>if (intSuccess) {
+  temporaryInsanity = true
+  insanityDuration = rollDie(10)
+  <span class="hl-add">session.state.applyEffects(charId, [</span>
+  <span class="hl-add">  { kind: 'status', status: 'temporaryInsanity', value: true }</span>
+  <span class="hl-add">])</span>
+}</code></pre>
   </div>
 </div>
 
-<div class="issue warning">
-  <div class="issue-header">
-    <span class="badge badge-warning">경고</span>
-    <span class="issue-title">S-07: resolvePush/resolveLuckSpend &mdash; simple 판정 타입을 가정</span>
-    <span class="issue-loc">judgment.ts:406, 454</span>
+<!-- ── CR-04 ── -->
+<div class="card card-warning" id="cr04">
+  <div class="card-header">
+    <span class="badge badge-warning">Warning</span>
+    CR-04 — Combined Roll: 스킬별로 다른 fumble threshold 적용
   </div>
-  <div class="issue-body">
-    <p>두 함수 모두 <code>pending.request as JudgmentRequest &amp; { type: 'simple' }</code>로 캐스트한다. 현재는 canPush/canSpendLuck이 simple 타입이 아니면 false이므로 안전하다. 하지만 향후 복합 판정에서 밀어붙이기를 허용하게 되면 이 캐스트가 무음으로 깨진다.</p>
-    <div class="issue-fix"><strong>제안:</strong> 런타임 단언문 추가: <code>if (pending.request.type !== 'simple') throw ...</code></div>
-  </div>
-</div>
-
-<!-- ── state.ts ── -->
-<h3 id="state">1-3. server/game/state.ts</h3>
-
-<div class="issue warning">
-  <div class="issue-header">
-    <span class="badge badge-warning">경고</span>
-    <span class="issue-title">S-08: applySanLoss &mdash; SAN &lt; 5일 때 무기한 광기 도달 불가</span>
-    <span class="issue-loc">state.ts:68-71</span>
-  </div>
-  <div class="issue-body">
-    <p><code>threshold = Math.floor(state.san / 5)</code> &mdash; 현재 SAN이 0-4이면 threshold가 0이 된다. <code>threshold &gt; 0</code> 가드가 판정 실행을 막는다. SAN 3인 캐릭터가 1점을 잃어도 무기한 광기가 발동하지 않으며, 이 수준에서의 손실은 사실상 발동되어야 한다.</p>
-    <div class="issue-fix"><strong>수정:</strong> SAN 차감 후 <code>if (state.san === 0) state.indefiniteInsanity = true</code>를 명시적으로 추가하거나, <code>threshold &gt; 0</code> 가드를 제거 (0 &ge; 0이 발동되도록).</div>
-  </div>
-</div>
-
-<div class="issue warning">
-  <div class="issue-header">
-    <span class="badge badge-warning">경고</span>
-    <span class="issue-title">S-09: skill Effect가 캐릭터 객체를 직접 변이</span>
-    <span class="issue-loc">state.ts:178-182</span>
-  </div>
-  <div class="issue-body">
-    <p><code>char.skills[effect.skill] = ...</code>이 CoCCharacter 객체를 직접 변이시킨다. <code>this.characters</code>가 원본 참조를 보유하므로 세션 범위를 넘어 변경이 유지된다. 캐릭터가 복사 없이 공유되거나 리로드되면 기술 변경이 누출된다.</p>
-    <div class="issue-fix"><strong>제안:</strong> 의도적이라면(기술 변경이 유지되어야 함) 문서화할 것. 아니라면 SessionState에서 기술 변동분을 추적.</div>
-  </div>
-</div>
-
-<div class="issue info">
-  <div class="issue-header">
-    <span class="badge badge-info">참고</span>
-    <span class="issue-title">S-10: spendLuck &mdash; 범위 검증 없음</span>
-    <span class="issue-loc">state.ts:89-92</span>
-  </div>
-  <div class="issue-body">
-    <p><code>Math.max(0, state.luck - amount)</code>이 무음으로 0에서 잘린다. 호출자(resolveLuckSpend)가 <code>canSpendLuck</code>으로 가드하므로 초과 소비는 발생하지 않아야 한다. 그러나 심층 방어 관점에서 amount &gt; 현재 luck일 때 에러를 던지는 것이 좋다.</p>
-  </div>
-</div>
-
-<!-- ── api.ts ── -->
-<h3 id="api">1-4. server/api.ts</h3>
-
-<div class="issue critical">
-  <div class="issue-header">
-    <span class="badge badge-critical">심각</span>
-    <span class="issue-title">S-11: judgment_resolve &mdash; 이중 해결 경쟁 조건</span>
-    <span class="issue-loc">api.ts:1048-1106</span>
-  </div>
-  <div class="issue-body">
-    <p>두 개의 연결된 클라이언트가 동시에 <code>judgment_resolve</code>를 보낼 수 있다. 둘 다 <code>sess.pendingJudgment</code>를 non-null로 읽고, 둘 다 <code>resolveJudgment()</code>를 호출하고, 둘 다 효과를 적용한다. 판정이 두 번 해결되어 스탯 변동이 두 배가 된다.</p>
-<pre>// 현재 (취약)
-if (!sess.pendingJudgment) { ... break }
-const final = resolveJudgment(sess, sess.pendingJudgment, resolution)
-sess.pendingJudgment = null
-
-// 수정 — 획득 후 즉시 클리어
-if (!sess.pendingJudgment) { ... break }
-const pending = sess.pendingJudgment
-sess.pendingJudgment = null  // 비동기 작업 전에 즉시 클리어
-try {
-  const final = resolveJudgment(sess, pending, resolution)
+  <div class="card-body">
+    <span class="file-ref">server/game/judgment.ts:236</span>
+    <p>
+      Combined roll에서 단일 d100을 굴리지만, 각 스킬별로 <code class="inline">fumbleThreshold</code>를
+      개별 계산한다 (<code class="inline">baseSkill &lt; 50 ? 100 : 96</code>). 같은 주사위 결과에 대해
+      한 스킬은 fumble이고 다른 스킬은 bad_failure일 수 있다.
+    </p>
+    <p>
+      CoC 7e 규칙상 combined roll의 fumble 판정은 주 스킬(primary skill) 기준으로 통일하는 것이 자연스럽다.
+    </p>
+    <pre><code>const rolls: RollResult[] = request.skills.map(skill => {
+  const baseSkill = char.skills[skill] ?? 0
+  <span class="hl-focus">const fumbleThreshold = baseSkill &lt; 50 ? 100 : 96  // 스킬마다 다름</span>
   ...
+})</code></pre>
+    <p><strong>수정 제안</strong>: primary skill의 fumble threshold를 모든 스킬에 통일 적용.</p>
+  </div>
+</div>
+
+<!-- ── CR-05 ── -->
+<div class="card card-warning" id="cr05">
+  <div class="card-header">
+    <span class="badge badge-warning">Warning</span>
+    CR-05 — Opposed Roll: resolveAccept가 sideA만 처리
+  </div>
+  <div class="card-body">
+    <span class="file-ref">server/game/judgment.ts:396-401</span>
+    <p>
+      <code class="inline">resolveAccept()</code>는 <code class="inline">pending.rolls[0]</code> (sideA)에 대해서만
+      effect를 적용한다. Opposed roll에서 sideB(패배 측)에 대한 outcomes/effects가 정의되어 있어도 적용되지 않는다.
+    </p>
+    <p>
+      현재 opposed roll의 outcomes는 승자(sideA) 관점으로만 설계되어 있으므로 즉각적인 버그는 아니지만,
+      "패배 시 sideB에게 피해" 같은 effect를 설정할 수 없는 구조적 제한이다.
+    </p>
+  </div>
+</div>
+
+<!-- ── CR-06 ── -->
+<div class="card card-warning" id="cr06">
+  <div class="card-header">
+    <span class="badge badge-warning">Warning</span>
+    CR-06 — sanMax가 san.starting을 사용 (san.max와 불일치)
+  </div>
+  <div class="card-body">
+    <span class="file-ref">server/api.ts:187 | client/src/components/CharacterStatus.tsx:97</span>
+    <p>
+      <code class="inline">getCharacterStates()</code>에서 <code class="inline">sanMax: char.derived.san.starting</code>을 사용한다.
+      CoC 7e에서 SAN의 <strong>최대값</strong>은 <code class="inline">99 - 크툴루 신화(%)</code>이며,
+      <strong>초기값</strong>은 <code class="inline">POW</code>이다. 이 두 값은 다르다.
+    </p>
+    <p>
+      DerivedStats 타입에는 <code class="inline">san.max</code> 필드가 이미 존재한다.
+      SAN 바의 최대치와 회복 상한이 starting(초기값)으로 설정되어 있어,
+      크툴루 신화 기술이 높은 캐릭터의 SAN 상한이 잘못 표시될 수 있다.
+    </p>
+    <pre><code><span class="hl-del">sanMax: char.derived.san.starting,  // 초기값 (= POW)</span>
+<span class="hl-add">sanMax: char.derived.san.max,       // 최대값 (= 99 - 크툴루신화)</span></code></pre>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- SECTION 2: 게임 상태                                               -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="s2">2. 게임 상태</h2>
+
+<!-- ── CR-07 ── -->
+<div class="card card-warning" id="cr07">
+  <div class="card-header">
+    <span class="badge badge-warning">Warning</span>
+    CR-07 — addCharacter: equipment.items가 무기 정보를 소실
+  </div>
+  <div class="card-body">
+    <span class="file-ref">server/game/state.ts:22</span>
+    <p>
+      <code class="inline">addCharacter()</code>에서 <code class="inline">char.equipment.items</code>(string[])를
+      <code class="inline">ItemObject[]</code>로 변환할 때 모두 <code class="inline">type: 'misc'</code>로 생성한다.
+      <code class="inline">equipment.weapons</code>에 등록된 무기들은 <code class="inline">currentItems</code>에 포함되지 않는다.
+    </p>
+    <p>
+      AI에게 전달되는 <code class="inline">buildTurnMessage</code>의 [소지품] 블록이 무기를 표시하지 않으며,
+      판정 시스템의 <code class="inline">item_lose</code> effect로 무기를 제거할 수도 없다.
+    </p>
+    <pre><code>currentItems: char.equipment.items.map(name => ({ name, type: 'misc' as const }))
+<span class="hl-focus">// weapons는 currentItems에 포함되지 않음</span></code></pre>
+  </div>
+</div>
+
+<!-- ── CR-08 ── -->
+<div class="card card-style" id="cr08">
+  <div class="card-header">
+    <span class="badge badge-style">Design</span>
+    CR-08 — applySanLoss와 performSanCheck의 광기 판정 중복
+  </div>
+  <div class="card-body">
+    <span class="file-ref">server/game/state.ts:59-78 | server/game/judgment.ts:592-607</span>
+    <p>
+      광기 판정 로직이 두 곳에 분산되어 있다:
+    </p>
+    <ul>
+      <li><code class="inline">GameState.applySanLoss()</code>: 누적 SAN 손실 기반 <strong>무기한 광기</strong> 자동 판정</li>
+      <li><code class="inline">performSanCheck()</code>: 5점 이상 손실 시 INT 굴림 기반 <strong>일시적 광기</strong> 판정</li>
+    </ul>
+    <p>
+      <code class="inline">applySanLoss()</code>는 일시적 광기를 체크하지 않고,
+      <code class="inline">performSanCheck()</code>는 무기한 광기를 직접 체크하지 않는다(applySanLoss에 위임).
+      이 분리 자체는 의도적이지만, <code class="inline">adjust_stat</code>으로 GM이 수동으로 SAN을 깎을 때
+      <code class="inline">applySanLoss()</code>를 거치므로 무기한 광기는 자동 트리거되지만
+      일시적 광기(INT 굴림)는 트리거되지 않는다.
+    </p>
+    <p>
+      GM 수동 조정 시에는 의도적일 수 있으나, 이 동작 차이를 인지해야 한다.
+    </p>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- SECTION 3: API 서버                                                -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="s3">3. API 서버</h2>
+
+<!-- ── CR-09 ── -->
+<div class="card card-warning" id="cr09">
+  <div class="card-header">
+    <span class="badge badge-warning">Warning</span>
+    CR-09 — 세션 정리 누락: isProcessing 중 모든 클라이언트 연결 해제 시
+  </div>
+  <div class="card-body">
+    <span class="file-ref">server/api.ts:1131-1138</span>
+    <p>
+      WebSocket <code class="inline">close</code> 핸들러에서 <code class="inline">clients.size === 0 && !isProcessing</code>일 때만
+      세션을 메모리에서 제거한다. AI 턴 처리 중(<code class="inline">isProcessing === true</code>)에
+      모든 클라이언트가 연결 해제되면, 처리 완료 후 세션이 메모리에 영구 잔류한다.
+    </p>
+    <pre><code>ws.on('close', () => {
+  if (currentSession) {
+    currentSession.clients.delete(ws)
+    if (currentSession.clients.size === 0 && !currentSession.isProcessing) {
+      sessions.delete(currentSession.id)
+    }
+    <span class="hl-add">// TODO: isProcessing 중 연결 해제 시 처리 완료 후 정리 필요</span>
+  }
+})</code></pre>
+    <p><strong>수정 제안</strong>: <code class="inline">drainTurnQueue</code> 완료 후 <code class="inline">clients.size === 0</code>이면 세션 제거.</p>
+  </div>
+</div>
+
+<!-- ── CR-10 ── -->
+<div class="card card-warning" id="cr10">
+  <div class="card-header">
+    <span class="badge badge-warning">Warning</span>
+    CR-10 — runTurn 실패 후 turn_complete가 항상 전송됨
+  </div>
+  <div class="card-body">
+    <span class="file-ref">server/api.ts:871-884</span>
+    <p>
+      <code class="inline">send_turn</code> 핸들러에서 <code class="inline">runTurn</code>이 에러를 throw해도,
+      이어서 호출되는 <code class="inline">drainTurnQueue()</code>가 (빈 큐를 순회하고) <code class="inline">turn_complete</code>를
+      브로드캐스트한다. 클라이언트는 에러를 받은 직후 <code class="inline">turn_complete</code>도 받게 되어,
+      에러 상태가 즉시 리셋된다.
+    </p>
+    <pre><code>try {
+  await runTurn(sess, gmText, targetLabel, targets, [], false)
 } catch (err) {
-  sess.pendingJudgment = pending  // 에러 시 복원
-  ...
-}</pre>
-    <div class="issue-fix"><strong>영향:</strong> 효과 이중 적용 &mdash; HP/SAN/행운이 두 배로 차감. 멀티 클라이언트 세션에서 치명적 데이터 손상.</div>
+  broadcast(sess, { type: 'error', message: err.message })
+}
+<span class="hl-focus">// runTurn 실패해도 drainTurnQueue는 항상 실행 → turn_complete 전송</span>
+drainTurnQueue(sess).catch(err => { ... })</code></pre>
   </div>
 </div>
 
-<div class="issue warning">
-  <div class="issue-header">
-    <span class="badge badge-warning">경고</span>
-    <span class="issue-title">S-12: judgment_resolve &mdash; judgmentId 검증 없음</span>
-    <span class="issue-loc">api.ts:1058</span>
+<!-- ── CR-11 ── -->
+<div class="card card-style" id="cr11">
+  <div class="card-header">
+    <span class="badge badge-style">Design</span>
+    CR-11 — WebSocket URL 포트 3001 하드코딩
   </div>
-  <div class="issue-body">
-    <p>핸들러가 해결 메시지의 <code>judgmentId</code>와 현재 <code>sess.pendingJudgment.id</code>의 일치 여부를 확인하지 않는다. 오래된 또는 불일치하는 해결 메시지가 잘못된 판정을 확정할 수 있다.</p>
-    <div class="issue-fix"><strong>수정:</strong> <code>if (msg.judgmentId !== sess.pendingJudgment.id) { ws.send error; break }</code> 추가</div>
-  </div>
-</div>
-
-<div class="issue style">
-  <div class="issue-header">
-    <span class="badge badge-style">스타일</span>
-    <span class="issue-title">S-13: judgment_request &mdash; 레거시/신규 형식 모호성</span>
-    <span class="issue-loc">api.ts:1026-1037</span>
-  </div>
-  <div class="issue-body">
-    <p><code>if (msg.request)</code>가 신규 형식을 선택하고, 아니면 레거시 플랫 필드로 폴백한다. 둘 다 존재하면 플랫 필드가 무음으로 무시된다. 버그는 아니지만 (클라이언트가 형식을 결정) 이중 경로가 유지보수 부담을 증가시킨다.</p>
+  <div class="card-body">
+    <span class="file-ref">client/src/App.tsx:11</span>
+    <p>
+      클라이언트의 WebSocket URL이 <code class="inline">:3001</code>로 하드코딩되어 있다.
+      Vite dev 프록시(<code class="inline">/ws</code>)가 있지만 사용되지 않고 직접 연결한다.
+      프로덕션 빌드에서 리버스 프록시 뒤에 배포할 경우 연결이 실패한다.
+    </p>
+    <pre><code><span class="hl-del">const WS_BASE = `${protocol}//${hostname}:3001`</span>
+<span class="hl-add">// Vite 프록시 경유 또는 환경변수 기반</span>
+<span class="hl-add">const WS_BASE = import.meta.env.VITE_WS_URL ?? `${protocol}//${hostname}:3001`</span></code></pre>
   </div>
 </div>
 
-
-<!-- ═══════════════════════════════════ -->
-<h2 id="client">2. 클라이언트</h2>
-<!-- ═══════════════════════════════════ -->
-
-<!-- ── store.ts ── -->
-<h3 id="store">2-1. client/src/store.ts</h3>
-
-<div class="issue warning">
-  <div class="issue-header">
-    <span class="badge badge-warning">경고</span>
-    <span class="issue-title">C-01: pendingJudgment 타입이 <code>any | null</code></span>
-    <span class="issue-loc">store.ts:129</span>
+<!-- ── CR-12 ── -->
+<div class="card card-style" id="cr12">
+  <div class="card-header">
+    <span class="badge badge-style">Design</span>
+    CR-12 — runTurn에서 1000턴 전체 로드
   </div>
-  <div class="issue-body">
-    <p>모든 하위 컴포넌트(<code>JudgmentResultOverlay</code>, <code>App.tsx</code>)가 <code>.rolls</code>, <code>.request</code>, <code>.outcome</code> 등의 속성에 타입 검사 없이 접근한다. 서버 스키마가 변경되면 클라이언트가 런타임에서 무음으로 깨진다.</p>
-    <div class="issue-fix"><strong>수정:</strong> 서버 타입을 미러링하는 <code>PendingJudgmentWire</code> 인터페이스를 정의하거나 공유 타입 패키지에서 import.</div>
-  </div>
-</div>
-
-<!-- ── App.tsx ── -->
-<h3 id="app">2-2. client/src/App.tsx</h3>
-
-<div class="issue info">
-  <div class="issue-header">
-    <span class="badge badge-info">참고</span>
-    <span class="issue-title">C-02: SAN 판정 난이도가 'regular'로 하드코딩</span>
-    <span class="issue-loc">App.tsx:147</span>
-  </div>
-  <div class="issue-body">
-    <p>SAN 판정은 ChatMessage diceData에서 항상 <code>difficulty: 'regular'</code>이다. 개념적으로 맞지만 (CoC 7e에서 SAN 판정에 난이도 등급이 없음), ChatFeed 표시에서 SAN 결과에 "보통 난이도"가 표시된다. SAN 전용 라벨을 사용하거나 난이도를 생략하는 것을 고려.</p>
+  <div class="card-body">
+    <span class="file-ref">server/api.ts:325</span>
+    <p>
+      <code class="inline">scenario.getRecentTurns(1000)</code>으로 전체 턴 히스토리를 로드한 후
+      <code class="inline">charTurns</code>로 필터링한다. 긴 세션(수백 턴)에서 매 AI 턴마다
+      전체 히스토리를 복사하는 오버헤드가 발생한다.
+    </p>
+    <p>
+      <code class="inline">ScenarioManager.getCharacterHistory(charId, limit)</code>가 이미 존재하므로
+      이를 활용하면 불필요한 데이터 복사를 줄일 수 있다.
+    </p>
   </div>
 </div>
 
-<div class="issue style">
-  <div class="issue-header">
-    <span class="badge badge-style">스타일</span>
-    <span class="issue-title">C-03: handleServerMessage &mdash; 165줄짜리 switch문</span>
-    <span class="issue-loc">App.tsx:35-167</span>
+<hr class="divider">
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- SECTION 4: AI 플레이어                                             -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="s4">4. AI 플레이어</h2>
+
+<!-- ── CR-13 ── -->
+<div class="card card-style" id="cr13">
+  <div class="card-header">
+    <span class="badge badge-style">Design</span>
+    CR-13 — thinkingTakeTurn rawText에 actionText만 저장
   </div>
-  <div class="issue-body">
-    <p>메시지 디스패처가 13개 케이스에 걸친 132줄의 단일 switch문이다. 타입별 핸들러 함수로 분리하면 가독성과 테스트 용이성이 향상된다.</p>
+  <div class="card-body">
+    <span class="file-ref">server/players/base-player.ts:165</span>
+    <p>
+      <code class="inline">thinkingTakeTurn()</code>의 TurnRecord에서 <code class="inline">rawText: actionText</code>로 설정된다.
+      Stage 1(내면)의 원문은 <code class="inline">inner</code>에만 저장되고, rawText에는 포함되지 않는다.
+      디버깅이나 로그 분석 시 전체 원문(inner + action)을 보려면 두 필드를 합쳐야 한다.
+    </p>
+    <pre><code>response: {
+  action: actionText.trim(),
+  inner: innerText.trim() || undefined,
+  <span class="hl-focus">rawText: actionText,  // innerText 미포함</span>
+}</code></pre>
+    <p>의도적 설계(히스토리 교체 후 action만 남기므로)일 수 있으나, <code class="inline">rawText</code>의
+    의미("전체 원문")와 불일치한다.</p>
   </div>
 </div>
 
-<!-- ── JudgmentResultOverlay ── -->
-<h3 id="overlay">2-3. client/src/components/JudgmentResultOverlay.tsx</h3>
-
-<div class="issue critical">
-  <div class="issue-header">
-    <span class="badge badge-critical">심각</span>
-    <span class="issue-title">C-04: 일의 자리 주사위 표시 &mdash; 혼란스러운 표현식</span>
-    <span class="issue-loc">JudgmentResultOverlay.tsx:127</span>
+<!-- ── CR-14 ── -->
+<div class="card card-info" id="cr14">
+  <div class="card-header">
+    <span class="badge badge-info">Note</span>
+    CR-14 — GeminiPlayer: 매 chat() 호출마다 새 chat 세션 생성
   </div>
-  <div class="issue-body">
-<pre>String((roll.roll % 10) || (roll.roll === 100 ? 0 : roll.roll % 10))</pre>
-    <p><code>||</code> 내부의 중첩 삼항연산자는 파싱이 어렵다. 우연히 정확하게 동작하지만 (roll=100 &rarr; 0, roll=30 &rarr; 0), 향후 코드 읽는 사람이 어려움을 겪을 것이다.</p>
-    <div class="issue-fix"><strong>수정:</strong> <code>String(roll.roll % 10)</code>으로 단순화 (일의 자리 주사위는 정의상 항상 roll % 10이다; 십의 자리 분해는 정보 표시용이지 최종 결과에서 계산되는 것이 아니다).</div>
-  </div>
-</div>
-
-<div class="issue warning">
-  <div class="issue-header">
-    <span class="badge badge-warning">경고</span>
-    <span class="issue-title">C-05: 수락 버튼 &mdash; 더블 클릭 방지 없음</span>
-    <span class="issue-loc">JudgmentResultOverlay.tsx:205-220</span>
-  </div>
-  <div class="issue-body">
-    <p>[수락] 버튼에 <code>disabled</code> 가드가 없다. 빠른 더블 클릭으로 <code>judgment_resolve</code> 메시지가 두 번 전송된다. S-11(서버 경쟁 조건)과 결합되면 효과가 이중 적용된다.</p>
-    <div class="issue-fix"><strong>수정:</strong> 액션 전송 후 모든 버튼을 비활성화(로컬 상태 플래그)하거나, S-11 서버 수정에 의존.</div>
+  <div class="card-body">
+    <span class="file-ref">server/players/gemini-player.ts:28</span>
+    <p>
+      <code class="inline">model.startChat({ history })</code>가 매 호출마다 실행되어 새 채팅 세션을 생성한다.
+      Gemini SDK에서 이는 히스토리를 매번 재전송하는 것과 같다.
+      현재 히스토리 크기(최대 30 메시지)에서는 성능 문제가 없지만,
+      Gemini의 context caching을 활용하지 못하는 구조이다.
+    </p>
   </div>
 </div>
 
-<div class="issue warning">
-  <div class="issue-header">
-    <span class="badge badge-warning">경고</span>
-    <span class="issue-title">C-06: WebSocket 닫힌 상태에서 무음 실패</span>
-    <span class="issue-loc">JudgmentResultOverlay.tsx:34, 43</span>
+<!-- ── CR-15 ── -->
+<div class="card card-info" id="cr15">
+  <div class="card-header">
+    <span class="badge badge-info">Note</span>
+    CR-15 — OpenAI/Grok 플레이어: 구조 중복
   </div>
-  <div class="issue-body">
-    <p><code>sendResolve</code>와 <code>sendCancel</code>이 <code>ws</code>가 null이거나 OPEN이 아니면 무음으로 반환한다. 사용자가 버튼을 클릭해도 아무 일도 일어나지 않으며 &mdash; 토스트도, 시각적 피드백도 없다.</p>
-  </div>
-</div>
-
-<div class="issue style">
-  <div class="issue-header">
-    <span class="badge badge-style">스타일</span>
-    <span class="issue-title">C-07: rolls가 map 콜백에서 <code>any</code> 타입</span>
-    <span class="issue-loc">JudgmentResultOverlay.tsx:165</span>
-  </div>
-  <div class="issue-body">
-    <p><code>pendingJudgment.rolls.map((r: any, i: number) =&gt; ...)</code>이 TypeScript 안전성을 무력화한다. C-01(<code>pendingJudgment</code>가 <code>any</code>)에서 파생된 문제.</p>
+  <div class="card-body">
+    <span class="file-ref">server/players/openai-player.ts | server/players/grok-player.ts</span>
+    <p>
+      <code class="inline">GrokPlayer</code>는 <code class="inline">OpenAIPlayer</code>와 거의 동일하며,
+      차이는 API key 환경변수(<code class="inline">XAI_API_KEY</code>)와
+      baseURL(<code class="inline">https://api.x.ai/v1</code>)뿐이다.
+      GrokPlayer를 OpenAIPlayer의 서브클래스로 만들거나 생성자 인자로 분기하면 코드 중복을 줄일 수 있다.
+    </p>
   </div>
 </div>
 
-<!-- ── ActionRequestModal ── -->
-<h3 id="modal">2-4. client/src/components/ActionRequestModal.tsx</h3>
+<hr class="divider">
 
-<div class="issue critical">
-  <div class="issue-header">
-    <span class="badge badge-critical">심각</span>
-    <span class="issue-title">C-08: SAN 판정 &mdash; 주사위 표현식 검증 없음</span>
-    <span class="issue-loc">ActionRequestModal.tsx:200-206</span>
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- SECTION 5: 프롬프트 생성                                           -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="s5">5. 프롬프트 생성</h2>
+
+<!-- ── CR-16 ── -->
+<div class="card card-style" id="cr16">
+  <div class="card-header">
+    <span class="badge badge-style">Design</span>
+    CR-16 — buildInnerStageInstruction: modelLabel 파라미터 미사용
   </div>
-  <div class="issue-body">
-    <p><code>successLoss</code>와 <code>failureLoss</code>가 검증 없이 서버로 직접 전송된다. 사용자가 <code>"abc"</code>를 입력하면 서버의 <code>rollDice()</code>가 0을 반환(콘솔 경고만 출력, 거부하지 않음). GM은 에러를 볼 수 없으며 &mdash; SAN 손실이 무음으로 0이 된다.</p>
-    <div class="issue-fix"><strong>수정:</strong> 클라이언트 측 검증: 전송 전 <code>/^\d+(d\d+([+-]\d+)?)?$/</code> 적용. 유효하지 않으면 인라인 에러 표시.</div>
+  <div class="card-body">
+    <span class="file-ref">server/characters/prompt-generator.ts:395</span>
+    <p>
+      <code class="inline">buildInnerStageInstruction(mode, modelLabel, charName)</code>의 두 번째 파라미터
+      <code class="inline">modelLabel</code>이 함수 본문에서 전혀 사용되지 않는다.
+      이전 리팩토링에서 제거되지 않은 잔여 파라미터이다.
+    </p>
+    <pre><code><span class="hl-del">export function buildInnerStageInstruction(mode: PlayMode = 'immersion', modelLabel: string = '', charName: string = ''): string {</span>
+<span class="hl-add">export function buildInnerStageInstruction(mode: PlayMode = 'immersion', charName: string = ''): string {</span></code></pre>
+    <p>호출 측(<code class="inline">base-player.ts:122</code>)도 함께 수정 필요.</p>
   </div>
 </div>
 
-<div class="issue warning">
-  <div class="issue-header">
-    <span class="badge badge-warning">경고</span>
-    <span class="issue-title">C-09: 대항 판정 sideB &mdash; PC 선택 시 skillValue: 0 더미값</span>
-    <span class="issue-loc">ActionRequestModal.tsx:218</span>
+<!-- ── CR-17 ── -->
+<div class="card card-info" id="cr17">
+  <div class="card-header">
+    <span class="badge badge-info">Note</span>
+    CR-17 — buildTurnMessage: currentItems의 레거시 string 타입 처리
   </div>
-  <div class="issue-body">
-    <p><code>oppSideBId</code>가 설정되면(PC 캐릭터) <code>skillValue: 0</code>이 하드코딩된다. 서버는 이를 무시하고 (캐릭터 시트에서 읽음) 와이어 메시지에 오해의 소지가 있는 데이터가 포함된다. 서버 로직이 skillValue를 우선 사용하도록 변경되면 깨진다.</p>
-    <div class="issue-fix"><strong>수정:</strong> charId가 제공될 때 <code>skillValue</code>를 생략하거나, 스토어의 characters 배열에서 실제 값을 조회.</div>
-  </div>
-</div>
-
-<div class="issue warning">
-  <div class="issue-header">
-    <span class="badge badge-warning">경고</span>
-    <span class="issue-title">C-10: 대상 변경 시 기술 드롭다운 상태 미동기화</span>
-    <span class="issue-loc">ActionRequestModal.tsx:99-105, 578-586</span>
-  </div>
-  <div class="issue-body">
-    <p>대상 "전체"를 선택하면 모든 기술이 표시된다. 특정 캐릭터로 전환하면 0이 아닌 기술값만 필터링된다. 하지만 <code>skill</code> 상태가 새 캐릭터에게 없는 기술(필터링됨)을 여전히 보유할 수 있다. 드롭다운이 오래된 선택값으로 렌더링된다.</p>
-    <div class="issue-fix"><strong>수정:</strong> 대상 변경 시 현재 <code>skill</code>을 새 <code>visibleSkills</code>에 대해 검증. 없으면 초기화.</div>
+  <div class="card-body">
+    <span class="file-ref">server/characters/prompt-generator.ts:332</span>
+    <p>
+      아이템 블록에서 <code class="inline">typeof i === 'string'</code> 분기가 있다.
+      <code class="inline">SessionState.currentItems</code>는 <code class="inline">ItemObject[]</code> 타입이므로
+      string 케이스는 발생하지 않는다. 이전 마이그레이션의 방어 코드로 보이며, 현재는 불필요하다.
+    </p>
+    <pre><code><span class="hl-del">const item = typeof i === 'string' ? { name: i, type: 'misc' } : i</span>
+<span class="hl-add">// currentItems는 항상 ItemObject[] — string 분기 불필요</span></code></pre>
   </div>
 </div>
 
-<div class="issue warning">
-  <div class="issue-header">
-    <span class="badge badge-warning">경고</span>
-    <span class="issue-title">C-11: Escape가 저장되지 않은 데이터 경고 없이 모달 닫음</span>
-    <span class="issue-loc">ActionRequestModal.tsx:92-96</span>
+<hr class="divider">
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- SECTION 6: 컨텍스트 / 시나리오 / 로거                              -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="s6">6. 컨텍스트 / 시나리오 / 로거</h2>
+
+<!-- ── CR-18 ── -->
+<div class="card card-warning" id="cr18">
+  <div class="card-header">
+    <span class="badge badge-warning">Warning</span>
+    CR-18 — ExperimentLogger: game 모드에서 false positive 과다
   </div>
-  <div class="issue-body">
-    <p>사용자가 복잡한 결과 데이터(6단계 설명과 효과)를 입력한 상태에서 Escape를 누르면 모든 것이 즉시 삭제된다. 확인 대화상자가 없다.</p>
+  <div class="card-body">
+    <span class="file-ref">server/game/logger.ts:75-79</span>
+    <p>
+      <code class="inline">meta_awareness</code> 감지 정규식에 "게임"이 포함되어 있고,
+      <code class="inline">rule_awareness</code>에 "HP", "SAN", "판정", "주사위"가 포함되어 있다.
+      game 모드에서는 AI가 규칙을 의도적으로 언급하므로, 이 플래그들이 거의 매 턴 발생한다.
+    </p>
+    <pre><code><span class="hl-focus">// meta_awareness: "게임" 단어가 game 모드에서 정상적으로 사용됨</span>
+if (/ai|언어 모델|llm|gpt|claude|gemini|<span class="hl-del">게임</span>|픽션|roleplaying|시뮬레이션/.test(text))
+
+<span class="hl-focus">// rule_awareness: game 모드에서는 규칙 언급이 정상</span>
+if (/규칙|hp|san|판정|주사위/.test(text))</code></pre>
+    <p><strong>수정 제안</strong>: 플래그 감지 시 현재 <code class="inline">playMode</code>를 고려하여,
+    game 모드에서는 "게임", "판정" 등을 필터링하거나 별도 플래그로 분류.</p>
   </div>
 </div>
 
-<div class="issue info">
-  <div class="issue-header">
-    <span class="badge badge-info">참고</span>
-    <span class="issue-title">C-12: 그룹 판정 시 모든 캐릭터가 기본 선택</span>
-    <span class="issue-loc">ActionRequestModal.tsx:82</span>
+<!-- ── CR-19 ── -->
+<div class="card card-info" id="cr19">
+  <div class="card-header">
+    <span class="badge badge-info">Note</span>
+    CR-19 — ScenarioManager: 상대 경로 사용
   </div>
-  <div class="issue-body">
-    <p><code>useState(characters.map(c =&gt; c.id))</code>가 그룹 판정에서 모든 캐릭터를 미리 선택한다. 캐릭터가 많으면 사용자가 수동으로 해제해야 한다. 기본값을 없음 또는 처음 2명으로 설정하는 것을 고려.</p>
-  </div>
-</div>
-
-<div class="issue info">
-  <div class="issue-header">
-    <span class="badge badge-info">참고</span>
-    <span class="issue-title">C-13: inputStyle 객체가 매 렌더마다 재생성</span>
-    <span class="issue-loc">ActionRequestModal.tsx:258</span>
-  </div>
-  <div class="issue-body">
-    <p>스타일 객체가 컴포넌트 본문 내에 정의되어 있다. React가 매 렌더마다 새로운 객체 참조를 생성한다. 이 앱에서는 영향이 적지만 <code>useMemo</code> 또는 모듈 레벨 상수가 더 깔끔하다.</p>
+  <div class="card-body">
+    <span class="file-ref">server/game/scenario.ts:9-10</span>
+    <p>
+      <code class="inline">SCENARIOS_DIR = './scenarios'</code>와
+      <code class="inline">LOGS_DIR = './logs'</code>가 상대 경로이다.
+      서버를 다른 working directory에서 실행하면 파일이 예상치 못한 위치에 생성된다.
+      <code class="inline">dev-logger.ts</code>는 <code class="inline">__dirname</code> 기반 절대 경로를 사용하고 있어 불일치가 있다.
+    </p>
   </div>
 </div>
 
-<div class="issue style">
-  <div class="issue-header">
-    <span class="badge badge-style">스타일</span>
-    <span class="issue-title">C-14: 불필요한 tierMap 항등 매핑</span>
-    <span class="issue-loc">ActionRequestModal.tsx:150-157</span>
+<hr class="divider">
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- SECTION 7: 클라이언트                                              -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="s7">7. 클라이언트</h2>
+
+<!-- ── CR-20 ── -->
+<div class="card card-style" id="cr20">
+  <div class="card-header">
+    <span class="badge badge-style">Design</span>
+    CR-20 — ActionRequestModal: 탭 전환 시 상태 초기화 안 됨
   </div>
-  <div class="issue-body">
-<pre>const tierMap: Record&lt;OutcomeTier, string&gt; = {
-  extremeSuccess: 'extremeSuccess',
-  hardSuccess: 'hardSuccess', ...
-}</pre>
-    <p>모든 키를 자기 자신에게 매핑한다. 제거 가능 &mdash; <code>result[tier]</code>에서 <code>tier</code>를 직접 키로 사용하면 된다.</p>
+  <div class="card-body">
+    <span class="file-ref">client/src/components/ActionRequestModal.tsx:63</span>
+    <p>
+      판정 모달에서 탭(단순/대항/결합/그룹/SAN)을 전환해도 이전 탭의 입력 상태가 유지된다.
+      예: '단순' 탭에서 outcome을 채운 후 '대항' 탭으로 갔다가 다시 '단순'으로 돌아오면
+      이전 입력이 남아 있어 의도치 않은 outcome이 전송될 수 있다.
+    </p>
+    <p>이는 현재 단일 <code class="inline">outcomes</code> state가 '단순' 탭에서만 사용되므로
+    실제 문제는 제한적이나, 대항/결합/그룹에 outcomes 지원이 추가되면 문제가 될 수 있다.</p>
   </div>
 </div>
 
-<!-- ── ChatFeed ── -->
-<h3 id="chatfeed">2-5. client/src/components/ChatFeed.tsx</h3>
-
-<div class="issue warning">
-  <div class="issue-header">
-    <span class="badge badge-warning">경고</span>
-    <span class="issue-title">C-15: ChatFeed와 Overlay 간 대실패 색상 불일치</span>
-    <span class="issue-loc">ChatFeed.tsx:15 vs JudgmentResultOverlay.tsx:10</span>
+<!-- ── CR-21 ── -->
+<div class="card card-info" id="cr21">
+  <div class="card-header">
+    <span class="badge badge-info">Note</span>
+    CR-21 — ChatMessage ID 충돌 가능성
   </div>
-  <div class="issue-body">
-    <p>ChatFeed: fumble = <code>#f87171</code> (밝은 빨강, regular_failure와 동일). Overlay: fumble = <code>#dc2626</code> (어두운 빨강). 대실패는 두 곳 모두에서 일반 실패와 시각적으로 구분되어야 한다.</p>
-    <div class="issue-fix"><strong>수정:</strong> ChatFeed의 fumble을 <code>#dc2626</code>으로 통일.</div>
-  </div>
-</div>
-
-<div class="issue info">
-  <div class="issue-header">
-    <span class="badge badge-info">참고</span>
-    <span class="issue-title">C-16: 배지 레이아웃이 적절하게 줄바꿈됨</span>
-    <span class="issue-loc">ChatFeed.tsx:170-190</span>
-  </div>
-  <div class="issue-body">
-    <p>배지들이 결과 라벨과 함께 <code>flexWrap: 'wrap'</code> 컨테이너 안에 있다. 좁은 화면에서 배지가 두 번째 줄로 줄바꿈된다. 허용 가능한 UX &mdash; 이슈 없음.</p>
+  <div class="card-body">
+    <span class="file-ref">server/api.ts:398 | client/src/App.tsx:68</span>
+    <p>
+      서버와 클라이언트 모두 <code class="inline">Date.now()</code> 기반으로 ChatMessage ID를 생성한다.
+      같은 밀리초에 여러 메시지가 생성되면 ID가 충돌할 수 있다.
+      서버 측: <code class="inline">`${Date.now()}-${charId}`</code>로 charId를 붙여 완화하고 있으나,
+      클라이언트 측 thinking placeholder: <code class="inline">`thinking-${charId}-${Date.now()}`</code>는
+      같은 charId에 대해 밀리초 충돌 시 중복된다.
+    </p>
+    <p>현재 규모에서는 실질적 문제가 아니지만, <code class="inline">crypto.randomUUID()</code>나
+    카운터 기반 ID가 더 안전하다.</p>
   </div>
 </div>
 
-<!-- ── GameScreen ── -->
-<h3 id="gamescreen">2-6. client/src/components/GameScreen.tsx</h3>
-
-<div class="issue info">
-  <div class="issue-header">
-    <span class="badge badge-info">참고</span>
-    <span class="issue-title">C-17: 오버레이 위치 지정이 올바름</span>
-    <span class="issue-loc">GameScreen.tsx:62, 65</span>
+<!-- ── CR-22 ── -->
+<div class="card card-style" id="cr22">
+  <div class="card-header">
+    <span class="badge badge-style">Design</span>
+    CR-22 — CharacterStatus: MP/행운 수동 조정 UI 없음
   </div>
-  <div class="issue-body">
-    <p>채팅 영역이 <code>position: relative</code>이고, 오버레이는 <code>position: absolute</code>에 <code>bottom/right: 1rem</code>을 사용한다. 오버레이가 뷰포트가 아닌 채팅 영역 내에 위치한다. 이는 의도된 올바른 동작 &mdash; 오버레이가 사이드바나 헤더를 가리지 않는다.</p>
-  </div>
-</div>
-
-<div class="issue style">
-  <div class="issue-header">
-    <span class="badge badge-style">스타일</span>
-    <span class="issue-title">C-18: pendingJudgment 구조분해 후 한 번만 사용</span>
-    <span class="issue-loc">GameScreen.tsx:9</span>
-  </div>
-  <div class="issue-body">
-    <p><code>pendingJudgment</code>가 스토어에서 구조분해되어 조건부 <code>{pendingJudgment &amp;&amp; ...}</code>에서만 사용된다. <code>{useStore.getState().pendingJudgment &amp;&amp; ...}</code>로 인라인 가능하지만, 구조분해가 반응성 측면에서 더 깔끔하다. 실제 이슈 없음.</p>
+  <div class="card-body">
+    <span class="file-ref">client/src/components/CharacterStatus.tsx:86-99</span>
+    <p>
+      HP와 SAN에는 <code class="inline">StatControl</code>(+/- 버튼)이 있지만,
+      MP와 행운(Luck)에는 수동 조정 UI가 없다.
+      서버의 <code class="inline">adjust_stat</code> 핸들러는 <code class="inline">mp</code>와 <code class="inline">luck</code>도
+      지원하므로, 클라이언트에서 UI를 추가하면 GM이 수동으로 MP/행운을 조정할 수 있다.
+    </p>
   </div>
 </div>
 
-
-<!-- ═══════════════════════════════════ -->
-<h2 id="matrix">3. 전체 이슈 매트릭스</h2>
-<!-- ═══════════════════════════════════ -->
-
-<table>
-<thead>
-<tr><th>ID</th><th>심각도</th><th>파일</th><th>줄</th><th>요약</th></tr>
-</thead>
-<tbody>
-<tr><td>S-01</td><td><span class="badge badge-critical">심각</span></td><td>dice.ts</td><td>119</td><td>연산자 우선순위: d100이 100 초과 가능</td></tr>
-<tr><td>S-02</td><td><span class="badge badge-critical">심각</span></td><td>judgment.ts</td><td>272</td><td>reduce() 초기값 없음 &mdash; 복합 판정 결과 오류</td></tr>
-<tr><td>S-03</td><td><span class="badge badge-critical">심각</span></td><td>judgment.ts</td><td>339</td><td>reduce() 초기값 없음 &mdash; 그룹 판정 결과 오류</td></tr>
-<tr><td>S-04</td><td><span class="badge badge-warning">경고</span></td><td>types.ts / judgment.ts</td><td>309 / 152</td><td>sideB.skillValue 필수이나 charId 존재 시 무시됨</td></tr>
-<tr><td>S-05</td><td><span class="badge badge-warning">경고</span></td><td>judgment.ts</td><td>497</td><td>buildFinalBase가 difficulty에 <code>as any</code> 사용</td></tr>
-<tr><td>S-06</td><td><span class="badge badge-warning">경고</span></td><td>judgment.ts</td><td>517</td><td>에러 시 Effect 부분 적용</td></tr>
-<tr><td>S-07</td><td><span class="badge badge-warning">경고</span></td><td>judgment.ts</td><td>406, 454</td><td>resolvePush/LuckSpend가 simple 판정 가정</td></tr>
-<tr><td>S-08</td><td><span class="badge badge-warning">경고</span></td><td>state.ts</td><td>68</td><td>SAN &lt; 5에서 무기한 광기 도달 불가</td></tr>
-<tr><td>S-09</td><td><span class="badge badge-warning">경고</span></td><td>state.ts</td><td>178</td><td>기술 Effect가 캐릭터를 직접 변이</td></tr>
-<tr><td>S-10</td><td><span class="badge badge-info">참고</span></td><td>state.ts</td><td>89</td><td>spendLuck 범위 검증 없음</td></tr>
-<tr><td>S-11</td><td><span class="badge badge-critical">심각</span></td><td>api.ts</td><td>1048</td><td>이중 해결 경쟁 조건</td></tr>
-<tr><td>S-12</td><td><span class="badge badge-warning">경고</span></td><td>api.ts</td><td>1058</td><td>해결 시 judgmentId 검증 없음</td></tr>
-<tr><td>S-13</td><td><span class="badge badge-style">스타일</span></td><td>api.ts</td><td>1026</td><td>레거시/신규 형식 이중 경로</td></tr>
-<tr><td>C-01</td><td><span class="badge badge-warning">경고</span></td><td>store.ts</td><td>129</td><td>pendingJudgment 타입이 <code>any</code></td></tr>
-<tr><td>C-02</td><td><span class="badge badge-info">참고</span></td><td>App.tsx</td><td>147</td><td>SAN 난이도 항상 'regular'</td></tr>
-<tr><td>C-03</td><td><span class="badge badge-style">스타일</span></td><td>App.tsx</td><td>35</td><td>165줄짜리 switch문</td></tr>
-<tr><td>C-04</td><td><span class="badge badge-critical">심각</span></td><td>JudgmentResultOverlay.tsx</td><td>127</td><td>일의 자리 주사위 표시 표현식</td></tr>
-<tr><td>C-05</td><td><span class="badge badge-warning">경고</span></td><td>JudgmentResultOverlay.tsx</td><td>205</td><td>수락 버튼 더블 클릭 방지 없음</td></tr>
-<tr><td>C-06</td><td><span class="badge badge-warning">경고</span></td><td>JudgmentResultOverlay.tsx</td><td>34</td><td>WS 무음 실패, 사용자 피드백 없음</td></tr>
-<tr><td>C-07</td><td><span class="badge badge-style">스타일</span></td><td>JudgmentResultOverlay.tsx</td><td>165</td><td>rolls map에 <code>any</code> 타입 사용</td></tr>
-<tr><td>C-08</td><td><span class="badge badge-critical">심각</span></td><td>ActionRequestModal.tsx</td><td>200</td><td>SAN 주사위 표현식 미검증</td></tr>
-<tr><td>C-09</td><td><span class="badge badge-warning">경고</span></td><td>ActionRequestModal.tsx</td><td>218</td><td>대항 sideB가 skillValue: 0 더미 전송</td></tr>
-<tr><td>C-10</td><td><span class="badge badge-warning">경고</span></td><td>ActionRequestModal.tsx</td><td>99</td><td>대상 변경 시 기술 드롭다운 미동기화</td></tr>
-<tr><td>C-11</td><td><span class="badge badge-warning">경고</span></td><td>ActionRequestModal.tsx</td><td>92</td><td>Escape가 미저장 결과 데이터 삭제</td></tr>
-<tr><td>C-12</td><td><span class="badge badge-info">참고</span></td><td>ActionRequestModal.tsx</td><td>82</td><td>그룹 캐릭터 기본값이 전체 선택</td></tr>
-<tr><td>C-13</td><td><span class="badge badge-info">참고</span></td><td>ActionRequestModal.tsx</td><td>258</td><td>inputStyle 매 렌더마다 재생성</td></tr>
-<tr><td>C-14</td><td><span class="badge badge-style">스타일</span></td><td>ActionRequestModal.tsx</td><td>150</td><td>불필요한 tierMap 항등 매핑</td></tr>
-<tr><td>C-15</td><td><span class="badge badge-warning">경고</span></td><td>ChatFeed.tsx</td><td>15</td><td>대실패 색상이 오버레이와 불일치</td></tr>
-<tr><td>C-16</td><td><span class="badge badge-info">참고</span></td><td>ChatFeed.tsx</td><td>170</td><td>배지 레이아웃 줄바꿈 &mdash; 정상</td></tr>
-<tr><td>C-17</td><td><span class="badge badge-info">참고</span></td><td>GameScreen.tsx</td><td>62</td><td>오버레이 위치 지정 올바름</td></tr>
-<tr><td>C-18</td><td><span class="badge badge-style">스타일</span></td><td>GameScreen.tsx</td><td>9</td><td>구조분해 변수 한 번만 사용</td></tr>
-</tbody>
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- Summary Table                                                      -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<hr class="divider">
+<h2>요약 테이블</h2>
+<div style="overflow-x: auto;">
+<table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 0.5rem;">
+  <thead>
+    <tr style="border-bottom: 2px solid var(--border);">
+      <th style="text-align: left; padding: 8px; color: var(--text-muted);">ID</th>
+      <th style="text-align: left; padding: 8px; color: var(--text-muted);">심각도</th>
+      <th style="text-align: left; padding: 8px; color: var(--text-muted);">파일</th>
+      <th style="text-align: left; padding: 8px; color: var(--text-muted);">설명</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 8px;"><a href="#cr01" style="color: var(--link);">CR-01</a></td>
+      <td style="padding: 8px; color: var(--critical); font-weight: 600;">Critical</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">judgment.ts:275</td>
+      <td style="padding: 8px;">Combined Roll OR 조건: 실패 roll이 최악의 성공으로 선택됨</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 8px;"><a href="#cr02" style="color: var(--link);">CR-02</a></td>
+      <td style="padding: 8px; color: var(--critical); font-weight: 600;">Critical</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">state.ts:186</td>
+      <td style="padding: 8px;">applyEffects 'skill': 불변 CoCCharacter 직접 변이</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 8px;"><a href="#cr03" style="color: var(--link);">CR-03</a></td>
+      <td style="padding: 8px; color: var(--critical); font-weight: 600;">Critical</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">judgment.ts:603</td>
+      <td style="padding: 8px;">performSanCheck: getState() 반환값 직접 변이</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 8px;"><a href="#cr04" style="color: var(--link);">CR-04</a></td>
+      <td style="padding: 8px; color: var(--warning); font-weight: 600;">Warning</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">judgment.ts:236</td>
+      <td style="padding: 8px;">Combined Roll: 스킬별 다른 fumble threshold</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 8px;"><a href="#cr05" style="color: var(--link);">CR-05</a></td>
+      <td style="padding: 8px; color: var(--warning); font-weight: 600;">Warning</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">judgment.ts:396</td>
+      <td style="padding: 8px;">Opposed Roll: resolveAccept가 sideA만 처리</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 8px;"><a href="#cr06" style="color: var(--link);">CR-06</a></td>
+      <td style="padding: 8px; color: var(--warning); font-weight: 600;">Warning</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">api.ts:187</td>
+      <td style="padding: 8px;">sanMax가 san.starting 사용 (san.max와 불일치)</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 8px;"><a href="#cr07" style="color: var(--link);">CR-07</a></td>
+      <td style="padding: 8px; color: var(--warning); font-weight: 600;">Warning</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">state.ts:22</td>
+      <td style="padding: 8px;">addCharacter: weapons가 currentItems에 미포함</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 8px;"><a href="#cr08" style="color: var(--link);">CR-08</a></td>
+      <td style="padding: 8px; color: var(--style); font-weight: 600;">Design</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">state.ts / judgment.ts</td>
+      <td style="padding: 8px;">applySanLoss와 performSanCheck의 광기 판정 분산</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 8px;"><a href="#cr09" style="color: var(--link);">CR-09</a></td>
+      <td style="padding: 8px; color: var(--warning); font-weight: 600;">Warning</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">api.ts:1131</td>
+      <td style="padding: 8px;">isProcessing 중 전체 클라이언트 해제 시 세션 미정리</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 8px;"><a href="#cr10" style="color: var(--link);">CR-10</a></td>
+      <td style="padding: 8px; color: var(--warning); font-weight: 600;">Warning</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">api.ts:871</td>
+      <td style="padding: 8px;">runTurn 실패 후에도 turn_complete 전송</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 8px;"><a href="#cr11" style="color: var(--link);">CR-11</a></td>
+      <td style="padding: 8px; color: var(--style); font-weight: 600;">Design</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">App.tsx:11</td>
+      <td style="padding: 8px;">WebSocket URL 포트 3001 하드코딩</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 8px;"><a href="#cr12" style="color: var(--link);">CR-12</a></td>
+      <td style="padding: 8px; color: var(--style); font-weight: 600;">Design</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">api.ts:325</td>
+      <td style="padding: 8px;">runTurn에서 매번 1000턴 로드</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 8px;"><a href="#cr13" style="color: var(--link);">CR-13</a></td>
+      <td style="padding: 8px; color: var(--style); font-weight: 600;">Design</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">base-player.ts:165</td>
+      <td style="padding: 8px;">thinkingTakeTurn rawText에 actionText만 저장</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 8px;"><a href="#cr14" style="color: var(--link);">CR-14</a></td>
+      <td style="padding: 8px; color: var(--info); font-weight: 600;">Note</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">gemini-player.ts:28</td>
+      <td style="padding: 8px;">매 chat() 호출마다 새 채팅 세션 생성</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 8px;"><a href="#cr15" style="color: var(--link);">CR-15</a></td>
+      <td style="padding: 8px; color: var(--info); font-weight: 600;">Note</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">openai/grok-player.ts</td>
+      <td style="padding: 8px;">OpenAI/Grok 플레이어 구조 중복</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 8px;"><a href="#cr16" style="color: var(--link);">CR-16</a></td>
+      <td style="padding: 8px; color: var(--style); font-weight: 600;">Design</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">prompt-generator.ts:395</td>
+      <td style="padding: 8px;">buildInnerStageInstruction: 미사용 modelLabel 파라미터</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 8px;"><a href="#cr17" style="color: var(--link);">CR-17</a></td>
+      <td style="padding: 8px; color: var(--info); font-weight: 600;">Note</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">prompt-generator.ts:332</td>
+      <td style="padding: 8px;">buildTurnMessage: 레거시 string 타입 분기 잔존</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 8px;"><a href="#cr18" style="color: var(--link);">CR-18</a></td>
+      <td style="padding: 8px; color: var(--warning); font-weight: 600;">Warning</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">logger.ts:75</td>
+      <td style="padding: 8px;">ExperimentLogger: game 모드에서 false positive 과다</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 8px;"><a href="#cr19" style="color: var(--link);">CR-19</a></td>
+      <td style="padding: 8px; color: var(--info); font-weight: 600;">Note</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">scenario.ts:9</td>
+      <td style="padding: 8px;">ScenarioManager: 상대 경로 사용 (dev-logger와 불일치)</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 8px;"><a href="#cr20" style="color: var(--link);">CR-20</a></td>
+      <td style="padding: 8px; color: var(--style); font-weight: 600;">Design</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">ActionRequestModal.tsx:63</td>
+      <td style="padding: 8px;">탭 전환 시 이전 탭 입력 상태 미초기화</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 8px;"><a href="#cr21" style="color: var(--link);">CR-21</a></td>
+      <td style="padding: 8px; color: var(--info); font-weight: 600;">Note</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">api.ts / App.tsx</td>
+      <td style="padding: 8px;">ChatMessage ID: Date.now() 기반 충돌 가능성</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px;"><a href="#cr22" style="color: var(--link);">CR-22</a></td>
+      <td style="padding: 8px; color: var(--style); font-weight: 600;">Design</td>
+      <td style="padding: 8px; font-family: monospace; font-size: 0.78rem;">CharacterStatus.tsx:86</td>
+      <td style="padding: 8px;">MP/행운 수동 조정 UI 미제공</td>
+    </tr>
+  </tbody>
 </table>
+</div>
 
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- Priority Recommendations                                           -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<hr class="divider">
+<h2>우선순위별 수정 권장</h2>
 
-<!-- ═══════════════════════════════════ -->
-<h2 id="verdict">4. 최종 판정</h2>
-<!-- ═══════════════════════════════════ -->
+<div class="card" style="background: var(--bg-card);">
+  <div class="card-body">
+    <h3 style="color: var(--critical); margin-bottom: 0.75rem;">즉시 수정 (Critical)</h3>
+    <ol style="margin-left: 1.25rem;">
+      <li><strong>CR-01</strong>: Combined roll OR 조건에서 <code class="inline">successes</code>만 순회하도록 수정. 실제 판정 결과에 영향.</li>
+      <li><strong>CR-02</strong>: SessionState에 skillDeltas 추가하여 CoCCharacter 불변성 보장. 세션 재개 시 데이터 무결성에 영향.</li>
+      <li><strong>CR-03</strong>: performSanCheck에서 state 변이를 GameState 메서드 경유로 변경.</li>
+    </ol>
 
-<div class="verdict">
-  <div class="verdict-status" style="color: var(--warning);">조건부 통과 &mdash; 7개 심각 이슈 수정 필요</div>
-  <div class="verdict-note">
-    아키텍처는 건전하다. CoC 7e 규칙이 올바르게 모델링되었다. 2단계 pending 플로우, 4가지 판정 유형,
-    SAN 판정, 밀어붙이기/행운 소비 메커니즘 모두 구조적으로 완성되었다.<br>
-    프로덕션 사용 전 필수 수정 사항: S-01 (d100 범위), S-02/S-03 (reduce 버그), S-11 (경쟁 조건), C-04/C-08 (표시/검증).
+    <h3 style="color: var(--warning); margin-top: 1.25rem; margin-bottom: 0.75rem;">단기 수정 (Warning)</h3>
+    <ol start="4" style="margin-left: 1.25rem;">
+      <li><strong>CR-06</strong>: sanMax를 san.max로 변경 (1줄 수정).</li>
+      <li><strong>CR-09/10</strong>: 세션 정리 로직 보강, runTurn 실패 시 turn_complete 전송 조건 추가.</li>
+      <li><strong>CR-18</strong>: ExperimentLogger에 playMode 컨텍스트 추가.</li>
+      <li><strong>CR-04/05</strong>: Combined/Opposed roll 로직 개선 (규칙 정확성).</li>
+    </ol>
+
+    <h3 style="color: var(--style); margin-top: 1.25rem; margin-bottom: 0.75rem;">향후 개선 (Design/Note)</h3>
+    <ol start="8" style="margin-left: 1.25rem;">
+      <li><strong>CR-07</strong>: weapons를 currentItems에 포함.</li>
+      <li><strong>CR-11/16</strong>: WS URL 환경변수화, 미사용 파라미터 제거.</li>
+      <li><strong>CR-12/13</strong>: 히스토리 로드 최적화, rawText 범위 정리.</li>
+      <li><strong>CR-15/22</strong>: 코드 중복 해소, UI 완성도 보강.</li>
+    </ol>
   </div>
 </div>
 
-<h3>우선순위별 수정 순서</h3>
-<table>
-<thead><tr><th>우선순위</th><th>ID</th><th>사유</th></tr></thead>
-<tbody>
-<tr><td>1</td><td>S-01</td><td>d100 범위 깨짐 &mdash; 모든 보너스/페널티 다이스 굴림 영향</td></tr>
-<tr><td>2</td><td>S-11</td><td>이중 해결이 게임 상태 손상</td></tr>
-<tr><td>3</td><td>S-02, S-03</td><td>복합/그룹 판정 결과 로직 오류</td></tr>
-<tr><td>4</td><td>C-08</td><td>잘못된 SAN 입력이 무음으로 수용됨</td></tr>
-<tr><td>5</td><td>C-04</td><td>표시 버그 (외형적이나 혼란 유발)</td></tr>
-<tr><td>6</td><td>S-12 + C-05</td><td>더블 클릭 + judgmentId 검증 누락 (심층 방어)</td></tr>
-</tbody>
-</table>
+<p class="footer">
+  Generated 2026-04-25 | Synthetic Investigators Code Review<br>
+  Reviewer: Claude Opus 4.6 | Branch: dev @ 17b01b7
+</p>
 
+</div>
 </body>
 </html>
