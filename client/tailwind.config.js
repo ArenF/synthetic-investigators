@@ -12,25 +12,22 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: {
-          base:     '#0a0e1a',
-          panel:    '#0f1526',
-          elevated: '#161d33',
-          border:   '#1e2744',
+        /* 밤바다 — 배경·패널·텍스트 */
+        sea: {
+          deep:       '#01162b',
+          panel:      '#00385a',
+          text:       '#6a90b4',
+          'text-light': '#d2dbeb',
         },
-        teal: {
-          300: '#5eead4',
-          400: '#2dd4bf',
-          500: '#14b8a6',
-          600: '#0d9488',
+        /* 보랏빛 은하수 — 인터랙티브·강조·액센트 */
+        galaxy: {
+          bg:     '#262e4c',
+          hover:  '#45538a',
+          accent: '#b199db',
+          label:  '#c9ccd3',
+          muted:  '#724972',
         },
-        slate: {
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-        },
+        /* 게임 상태 */
         hp:     '#4ade80',
         san:    '#60a5fa',
         danger: '#f87171',

@@ -66,10 +66,10 @@
             <p class="w-max">Extend Thinking 활성화 : </p>
             <CustomizableCheckbox name="extended_thinking" id="extendedThinking" bind:checked={enableThink}>
                 {#snippet display(enableThink)}
-                    <div class="align_center w-[2em] h-[2em] bg-[#262e4c] rounded-full">
+                    <div class="align_center w-[2em] h-[2em] bg-galaxy-bg rounded-full">
                         <label for="extendedThinking">
-                            {#if enableThink}<span class="text-[#b199db]">✔</span>
-                            {:else} <span class="text-[#b199db]">✖</span>
+                            {#if enableThink}<span class="text-galaxy-accent">✔</span>
+                            {:else} <span class="text-galaxy-accent">✖</span>
                             {/if}
                         </label>
                     </div>

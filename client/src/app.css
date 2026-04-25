@@ -3,14 +3,18 @@
 @tailwind utilities;
 
 :root {
-  --bg-base:     #0a0e1a;
-  --bg-panel:    #0f1526;
-  --bg-elevated: #161d33;
-  --bg-border:   #1e2744;
-  --teal:        #14b8a6;
-  --teal-light:  #2dd4bf;
-  --text-primary: #e2e8f0;
-  --text-muted:   #94a3b8;
+  /* ── 밤바다 계열: 배경·패널·텍스트 (정보 전달, 높은 가독성) ── */
+  --sea-deep:       #01162b;  /* 최하단 배경 */
+  --sea-panel:      #00385a;  /* 카드·패널 배경 */
+  --sea-text:       #6a90b4;  /* 보조 텍스트·캡션 (deep 위) */
+  --sea-text-light: #d2dbeb;  /* 본문 텍스트 (panel 위) */
+
+  /* ── 보랏빛 은하수 계열: 인터랙티브·강조·액센트 (버튼, 체크박스, 포커스) ── */
+  --galaxy-bg:      #262e4c;  /* 인터랙티브 요소 배경 */
+  --galaxy-hover:   #45538a;  /* hover·활성 상태 배경 */
+  --galaxy-accent:  #b199db;  /* 액센트·아이콘·강조 텍스트 */
+  --galaxy-label:   #c9ccd3;  /* 버튼 라벨·큰 텍스트 (hover 위) */
+  --galaxy-muted:   #724972;  /* 비활성 보라·밝은 면 위 보조 */
 }
 
 html, body {
@@ -23,16 +27,16 @@ html, body {
 }
 
 body {
-  background-color: var(--bg-base);
-  color: var(--text-primary);
+  background-color: var(--sea-deep);
+  color: var(--sea-text-light);
   font-family: 'Inter', 'Noto Sans KR', system-ui, sans-serif;
 }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--bg-base); }
-::-webkit-scrollbar-thumb { background: var(--bg-border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--teal); }
+::-webkit-scrollbar-track { background: var(--sea-deep); }
+::-webkit-scrollbar-thumb { background: var(--galaxy-bg); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--galaxy-accent); }
 
 @layer components {
   .align_center {
@@ -42,14 +46,14 @@ body {
 
 /* Input base */
 input, textarea, select {
-  background-color: var(--bg-elevated) !important;
-  border: 1px solid var(--bg-border) !important;
-  color: var(--text-primary) !important;
+  background-color: var(--galaxy-bg) !important;
+  border: 1px solid var(--galaxy-hover) !important;
+  color: var(--sea-text-light) !important;
   border-radius: 6px;
   padding: 8px 12px;
   outline: none;
   transition: border-color 0.15s;
 }
 input:focus, textarea:focus, select:focus {
-  border-color: var(--teal) !important;
+  border-color: var(--galaxy-accent) !important;
 }

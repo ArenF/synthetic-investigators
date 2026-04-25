@@ -16,9 +16,9 @@ export let onclick: () => void;
 .clickable_card {
   border: none;
   cursor: pointer;
-  background-color: #00385a;
+  background-color: var(--sea-panel);
   border-radius: 15px;
-  box-shadow: 5px 10px 5px 2px #01162b;
+  box-shadow: 5px 10px 5px 2px var(--sea-deep);
   min-width: 270px;
   min-height: 80px;
   display: flex;
@@ -33,7 +33,7 @@ export let onclick: () => void;
 }
 .clickable_card:hover {
   transition: all 0.5s ease-in-out;
-  background-color: #45538a;
+  background-color: var(--galaxy-hover);
   transform: translate(-5px, -10px);
 }
 
@@ -44,12 +44,12 @@ export let onclick: () => void;
 }
 .clickable_card p:hover {
   transition: all 0.5s ease-in;
-  color: #c9ccd3;
+  color: var(--galaxy-label);
 }
 
 .clickable_card .description {
   font-size: 12px;
-  color: #6a90b4;
+  color: var(--sea-text);
   text-align: center;
   max-width: 20rem;
 }

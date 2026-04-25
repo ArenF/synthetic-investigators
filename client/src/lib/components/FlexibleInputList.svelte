@@ -30,7 +30,7 @@
 <style>
 
 button {
-    background-color: #b199db;
+    background-color: var(--galaxy-accent);
     width: 30px;
     height: 30px;
     border-radius: 30px;

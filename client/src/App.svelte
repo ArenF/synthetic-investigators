@@ -29,7 +29,7 @@ function changePage(whichPage:PageType) {
 
 </script>
 
-<main class="min-h-screen w-full h-full align_center bg-bg-base">
+<main class="min-h-screen w-full h-full align_center bg-sea-deep">
   {#if page === 'Main'}
     <div class="main_container">
     
