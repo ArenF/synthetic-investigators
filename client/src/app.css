@@ -32,6 +32,11 @@ body {
   font-family: 'Inter', 'Noto Sans KR', system-ui, sans-serif;
 }
 
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--sea-deep); }
@@ -46,14 +51,14 @@ body {
 
 /* Input base */
 input, textarea, select {
-  background-color: var(--galaxy-bg) !important;
-  border: 1px solid var(--galaxy-hover) !important;
-  color: var(--sea-text-light) !important;
+  background-color: var(--galaxy-bg);
+  border: 1px solid var(--galaxy-hover);
+  color: var(--sea-text-light);
   border-radius: 6px;
   padding: 8px 12px;
   outline: none;
   transition: border-color 0.15s;
 }
 input:focus, textarea:focus, select:focus {
-  border-color: var(--galaxy-accent) !important;
+  border-color: var(--galaxy-accent);
 }
