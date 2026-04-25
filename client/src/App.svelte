@@ -86,8 +86,10 @@ function changePage(whichPage:PageType) {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  width: 1280px;
+  width: 100vw;
+  height: 100vh;
   justify-content: center;
+  align-items: center;
 }
 
 

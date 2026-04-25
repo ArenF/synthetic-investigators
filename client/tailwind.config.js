@@ -1,6 +1,14 @@
+import { resolve, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ['./index.html', './src/**/*.{ts,svelte}'],
+  content: [
+    resolve(__dirname, 'index.html'),
+    resolve(__dirname, 'src/**/*.{ts,svelte}'),
+  ],
   theme: {
     extend: {
       colors: {
