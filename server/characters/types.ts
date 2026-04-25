@@ -3,7 +3,7 @@
  * Based on official Call of Cthulhu 7e character sheet format
  */
 
-export type ModelProvider = 'claude' | 'gemini' | 'openai' | 'ollama'
+export type ModelProvider = 'claude' | 'gemini' | 'openai' | 'ollama' | 'grok'
 
 export interface CharacterCharacteristics {
   STR: number  // 근력
@@ -160,7 +160,6 @@ export interface ModelConfig {
   provider: ModelProvider
   model: string              // e.g. "claude-opus-4-5", "gemini-2.0-flash", "gpt-4o", "llama3.2"
   temperature?: number       // 0.0 ~ 1.0, default 0.7
-  extendedThinking?: boolean // Claude / Gemini thinking 모드 활성화 여부
 }
 
 /**
@@ -272,4 +271,140 @@ export interface ScenarioSession {
   lastUpdatedAt: string
   characters: string[]  // character IDs
   turns: TurnRecord[]
+}
+
+// ─────────────────────────────────────────
+// Judgment System — CoC 7e 다단계 판정
+// ─────────────────────────────────────────
+
+export type Difficulty = 'regular' | 'hard' | 'extreme'
+
+export type JudgmentOutcomeKey =
+  | 'extreme_success'
+  | 'hard_success'
+  | 'regular_success'
+  | 'regular_failure'
+  | 'bad_failure'
+  | 'fumble'
+
+export interface BonusPenaltyDice {
+  bonus: number   // 0~2
+  penalty: number // 0~2
+}
+
+// ── 판정 요청 유형 ──
+
+export interface SimpleCheckRequest {
+  type: 'simple'
+  charId: string
+  skill: string
+  difficulty: Difficulty
+  bonusPenalty?: BonusPenaltyDice
+  outcomes?: JudgmentOutcomes
+}
+
+export interface OpposedRollRequest {
+  type: 'opposed'
+  sideA: { charId: string; skill: string; bonusPenalty?: BonusPenaltyDice }
+  sideB: { charId?: string; npcName?: string; skillValue?: number; skill: string; bonusPenalty?: BonusPenaltyDice }
+  tieBreaker?: 'attacker' | 'defender'
+  outcomes?: JudgmentOutcomes  // optional: applied to winner's result
+}
+
+export interface CombinedRollRequest {
+  type: 'combined'
+  charId: string
+  skills: string[]         // 2+ skills to check against a single roll
+  condition: 'and' | 'or'
+  difficulty?: Difficulty
+  bonusPenalty?: BonusPenaltyDice
+  outcomes?: JudgmentOutcomes
+}
+
+export interface GroupRollRequest {
+  type: 'group'
+  charIds: string[]
+  skill: string
+  difficulty?: Difficulty
+  mode: 'cooperative' | 'all_must_succeed'
+  bonusPenalty?: BonusPenaltyDice
+  outcomes?: JudgmentOutcomes
+}
+
+export type JudgmentRequest = SimpleCheckRequest | OpposedRollRequest | CombinedRollRequest | GroupRollRequest
+
+// ── 굴림 결과 (개�� 참가자) ──
+
+export interface RollResult {
+  charId: string
+  charName: string
+  skill: string
+  baseSkill: number
+  target: number
+  roll: number
+  tensDice?: number[]  // 보��스/페널티 텐다이스 (표시용)
+  outcome: JudgmentOutcomeKey
+}
+
+// ── 중간 결과 (Effect 미적용, GM 결정 대기) ──
+
+export interface PendingJudgment {
+  id: string
+  request: JudgmentRequest
+  rolls: RollResult[]
+  outcome: JudgmentOutcomeKey
+  appliedOutcome: Outcome | null
+  canPush: boolean
+  canSpendLuck: boolean
+  luckCost: number | null    // 성공까지 필요한 행운 (null = 해당 없음)
+  currentLuck: number
+  pushed: boolean            // 이�� push된 상태?
+  timestamp: string
+}
+
+// ── GM의 후속 결정 ──
+
+export type JudgmentResolution =
+  | { action: 'accept' }
+  | { action: 'push'; pushConsequence: string }
+  | { action: 'luck_spend' }
+
+// ── 확정 결과 (Effect 적용 완료) ──
+
+export interface JudgmentFinalResult {
+  judgmentId: string
+  charId: string
+  charName: string
+  skill: string
+  difficulty: Difficulty
+  roll: number
+  target: number
+  baseSkill: number
+  outcome: JudgmentOutcomeKey
+  appliedOutcome: Outcome | null
+  effectsApplied: Effect[]
+  naturalLanguage: string
+  wasPush: boolean
+  wasLuckSpend: boolean
+  luckSpent: number
+  tensDice?: number[]
+}
+
+// ── SAN 체크 결과 (즉시 실행, pending 없음) ──
+
+export interface SanCheckResult {
+  charId: string
+  charName: string
+  sanRoll: number
+  sanTarget: number
+  sanOutcome: JudgmentOutcomeKey
+  lossRoll: string         // e.g. "1d6"
+  lossAmount: number
+  intRoll?: number
+  intTarget?: number
+  intOutcome?: JudgmentOutcomeKey
+  temporaryInsanity: boolean
+  indefiniteInsanity: boolean
+  insanityDuration?: number  // 1d10 hours
+  naturalLanguage: string
 }

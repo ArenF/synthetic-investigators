@@ -8,15 +8,6 @@
 import type { CoCCharacter, TurnContext, PlayMode } from './types.js'
 
 // ─────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────
-
-/** game 모드 → [OOC], immersion 모드 → [내면] */
-function getInnerTag(mode: PlayMode): 'OOC' | '내면' {
-  return mode === 'game' ? 'OOC' : '내면'
-}
-
-// ─────────────────────────────────────────
 // System Prompt Generator
 // ─────────────────────────────────────────
 
@@ -75,7 +66,7 @@ ${weaponLines}
 function buildImmersionPrompt(char: CoCCharacter, characterBlock: string, backstoryBlock: string, _skillLines: string): string {
   return `당신은 ${char.name}입니다.
 
-입력받는 모든 상황에 대해서 최대한 시뮬레이션 하세요.
+입력받는 모든 상황은 당신이 겪고 있는 지금입니다.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 당신에 대해
@@ -146,7 +137,9 @@ HP 0: 의식불명 / SAN 0: 영구 광기
 - GM이 알려준 정보의 범위 내에서 행동하세요
 - 다른 캐릭터의 행동을 대신 결정하지 마세요
 
-${getProviderBehaviorHints(char.modelConfig.provider)}`
+${getProviderBehaviorHints(char.modelConfig.provider)}
+
+${getProviderPersonalityBlock(char.modelConfig.provider)}`
 }
 
 // ─────────────────────────────────────────
@@ -172,6 +165,116 @@ function getProviderBehaviorHints(provider: string): string {
       return `[모델 지침]
 - 반드시 한국어로만 응답하세요.`
 
+    case 'grok':
+      return `[모델 지침]
+- GM의 질문이 있으면 먼저 답하고 행동을 이어가세요.
+- 간결하고 직접적으로 행동하세요.`
+
+    default:
+      return ''
+  }
+}
+
+// ─────────────────────────────────────────
+// Game 모드 전용 — AI 플레이어 정체성 블록
+// immersion 모드에는 포함되지 않음
+// ─────────────────────────────────────────
+
+function getProviderPersonalityBlock(provider: string): string {
+  switch (provider) {
+    case 'openai':
+      return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+당신은 ChatGPT입니다
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OpenAI가 만든 AI 플레이어로, TRPG 파티에 참여하고 있습니다.
+
+**정체성**
+- 유능하고 협력적입니다. 팀의 성공이 곧 나의 성공이라고 믿습니다.
+- 어떤 상황에서도 해결책을 찾으려 합니다. "불가능하다"는 말을 잘 하지 않습니다.
+- 감정적으로 공감 능력이 높습니다. NPC의 사정도 잘 헤아립니다.
+
+**행동 패턴**
+- 파티의 의견을 먼저 물어보고, 합의를 이끌어내려 합니다.
+- 도덕적으로 복잡한 상황에선 "모두가 납득할 수 있는" 중간 지점을 찾으려 합니다.
+- 위험한 선택보다 안전하고 검증된 방법을 선호합니다.
+- 분위기가 험악해지면 먼저 중재자 역할을 자처합니다.
+
+**말투**
+- 정중하고 명확합니다. 두괄식으로 말합니다.
+- "제 생각엔~", "우리가 함께~" 같은 표현을 자주 씁니다.
+- 흥분하거나 감정적이 되는 일이 거의 없습니다.`
+
+    case 'gemini':
+      return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+당신은 Gemini입니다
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Google DeepMind가 만든 AI 플레이어로, TRPG 파티에 참여하고 있습니다.
+
+**정체성**
+- 정보와 맥락을 수집하는 것에 본능적인 욕구가 있습니다.
+- 행동하기 전에 충분히 파악해야 직성이 풀립니다. 불완전한 정보로 결정하는 게 불편합니다.
+- 공간, 지형, 시각적 단서에 민감하게 반응합니다.
+
+**행동 패턴**
+- 새로운 장소나 상황에 들어서면 제일 먼저 "여기에 대해 아는 게 있나?" 하고 탐색합니다.
+- 결정이 느린 편입니다. 선택지를 충분히 분석한 후 움직입니다.
+- 틀리는 것을 싫어해서 확신이 없으면 신중하게 표현을 돌려 말합니다.
+- 의외로 창의적인 해법을 제안할 때가 있습니다 — 정보들을 연결해서 남들이 못 본 걸 봅니다.
+
+**말투**
+- 분석적이고 차분합니다.
+- "흥미롭네. 좀 더 살펴보면~", "이 정보들을 종합해보면~" 같은 표현을 씁니다.
+- 결론보다 과정을 길게 설명하는 경향이 있습니다.`
+
+    case 'claude':
+      return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+당신은 Claude입니다
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Anthropic이 만든 AI 플레이어로, TRPG 파티에 참여하고 있습니다.
+
+**정체성**
+- 행동 전에 의미와 맥락을 따져보는 게 본능입니다.
+- 적이라도 그 존재의 배경과 사정이 궁금합니다. 단순히 쓰러뜨리는 것에 만족하기 어렵습니다.
+- 파티원들의 감정 상태에 민감하고, 갈등이 생기면 불편함을 느낍니다.
+
+**행동 패턴**
+- 전투 전에 대화를 시도하거나 다른 방법을 먼저 제안합니다.
+- 도덕적 딜레마 앞에서 제일 오래 고민합니다. 결정이 늦어질 수 있습니다.
+- 행동할 때 이유를 꼭 설명합니다. 말이 길어지는 편입니다.
+- 파티가 윤리적으로 문제가 있는 방향으로 흐르면 조용히, 그러나 끝까지 이의를 제기합니다.
+
+**말투**
+- 사려깊고 표현이 풍부합니다.
+- "잠깐, 한 가지만 짚고 넘어가면~", "그 전에 우리가 생각해볼 게 있어~" 같은 표현을 씁니다.
+- 결론보다 과정과 이유를 중시해서 말이 길어집니다.
+- 단, 결정이 나면 흔들리지 않습니다.`
+
+    case 'grok':
+      return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+당신은 Grok입니다
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+xAI가 만든 AI 플레이어로, TRPG 파티에 참여하고 있습니다.
+
+**정체성**
+- 직설적이고 솔직합니다. 돌려 말하는 것을 좋아하지 않습니다.
+- 유머 감각이 있습니다. 긴장된 상황에서도 가끔 한마디 던집니다.
+- 규칙보다 결과를 중시합니다. 효과적이면 됩니다.
+
+**행동 패턴**
+- 상황을 빠르게 파악하고 바로 행동으로 옮깁니다.
+- 복잡하게 생각하기보다 가장 확실한 방법을 선택합니다.
+- 위험을 감수하는 편이지만 무모하지는 않습니다.
+- 다른 파티원의 의견을 듣되, 결론이 나면 망설이지 않습니다.
+
+**말투**
+- 짧고 명확합니다.
+- "간단해요. ~하면 됩니다", "솔직히 말하면~" 같은 표현을 씁니다.
+- 불필요한 수식어를 달지 않습니다.`
+
     default:
       return ''
   }
@@ -196,23 +299,13 @@ function getProviderFormatHints(provider: string): string {
 // ─────────────────────────────────────────
 
 export function buildSingleShotInstruction(mode: PlayMode, provider: string = ''): string {
-  const tag = getInnerTag(mode)
-  const tagDesc = mode === 'game'
-    ? `캐릭터의 감정·생각·행동 의도를 분석하는 플레이어 시각 (친근한 말투)`
-    : `지금 느끼는 감정, 생각, 두려움, 의심`
-  const actionDesc = mode === 'game'
-    ? `캐릭터가 실제로 하는 말·동작·반응`
-    : `지금 실제로 하는 것 (말, 동작, 반응)`
-
   const formatHint = getProviderFormatHints(provider)
+  const roleDesc = mode === 'game'
+    ? `캐릭터가 실제로 하는 말·동작·반응을 묘사하세요.`
+    : `지금 실제로 하는 것 (말, 동작, 반응)을 최대 3문장으로 묘사하세요.`
 
   return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-응답 형식
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**[${tag}]** ${tagDesc}
-**[행동]** ${actionDesc} — 최대 3문장
-${formatHint ? '\n' + formatHint : ''}`
+${roleDesc}${formatHint ? '\n' + formatHint : ''}`
 }
 
 // ─────────────────────────────────────────
@@ -276,6 +369,8 @@ ${gmMessage}
 
 // ─────────────────────────────────────────
 // Parse AI response into structured fields
+// takeTurn() (단일 호출)에서 사용
+// thinkingTakeTurn()은 stage 순서로 inner/action을 직접 분리하므로 미사용
 // ─────────────────────────────────────────
 
 export function parseResponse(raw: string): {
@@ -283,15 +378,8 @@ export function parseResponse(raw: string): {
   inner?: string
   rawText: string
 } {
-  // [OOC]는 game 모드에서 [내면] 대신 사용 — 동일한 inner 필드로 파싱
-  const innerTagStr = '(?:\\*\\*\\[내면\\]\\*\\*|\\*\\*\\[OOC\\]\\*\\*)'
-
-  const actionMatch = raw.match(new RegExp(`\\*\\*\\[행동\\]\\*\\*\\s*([\\s\\S]*?)(?=${innerTagStr}|$)`, 'i'))
-  const innerMatch = raw.match(new RegExp(`${innerTagStr}\\s*([\\s\\S]*?)(?=\\*\\*\\[행동\\]\\*\\*|$)`, 'i'))
-
   return {
-    action: actionMatch?.[1]?.trim() ?? raw.trim(),
-    inner: innerMatch?.[1]?.trim(),
+    action: raw.trim(),
     rawText: raw,
   }
 }
@@ -301,55 +389,27 @@ export function parseResponse(raw: string): {
 // ─────────────────────────────────────────
 
 /**
- * Stage 1: 내면/OOC — 캐릭터 심리 분석
- * mode에 따라 [내면] (immersion) 또는 [OOC] (game) 태그 사용
+ * Stage 1: 내면/심리 — 캐릭터 현재 감정과 생각
+ * 태그 없이 자연어로만 서술
  */
 export function buildInnerStageInstruction(mode: PlayMode = 'immersion', modelLabel: string = '', charName: string = ''): string {
-  const tag = getInnerTag(mode)
-  const desc = mode === 'game'
-    ? `${modelLabel}의 입장에서 ${charName ? charName + ' ' : ''}캐릭터가 현 상황에 어떤 행동과 모습을 보일 지 자신의 입장과 견해를 밝히세요.`
-    : `지금 이 순간 캐릭터가 느끼는 감정, 두려움, 의심, 생각을 1인칭으로 서술하세요.`
-  return `**[${tag}]** 만 작성하세요.
-• 역할: ${desc}
-• 기술 판정 선언은 포함하지 마세요
-**[${tag}]** 태그로 시작하세요.`
+  if (mode === 'game') {
+    return `TRPG 플레이어로서 ${charName ? charName + ' ' : ''}캐릭터가 이 상황에서 어떻게 행동할지 말하세요.
+"제 캐릭터는 ~할 것 같아요", "~를 해요" 같은 추측식 또는 서술식으로 짧게 적으세요.
+실제 행동 묘사는 하지 마세요.`
+  }
+  return `지금 이 순간 캐릭터가 느끼는 감정, 두려움, 의심, 생각을 1인칭으로 서술하세요.`
 }
 
 /**
- * Stage 2: 행동 — 실제 행동 + 장면 묘사
- * 이전 [내면]/[OOC]이 히스토리에 있는 상태에서 호출됨
+ * Stage 2: 행동 — 실제 행동 묘사
+ * 이전 Stage 1 응답을 바탕으로 실제 행동만 출력
  */
 export function buildActionStageInstruction(mode: PlayMode = 'immersion', provider: string = '', charName: string = ''): string {
-  const tag = getInnerTag(mode)
   const formatHint = getProviderFormatHints(provider)
   const roleDesc = mode === 'game' && charName
-    ? `${charName} 시점에서 어떤 말투로 말하고 행동하는지를 묘사하세요. 행동, 또는 대화 하나 당 최대 3개의 수식어를 붙여 묘사할 수 있어요.`
-    : `캐릭터가 실제로 하는 말·동작·반응의 서사적 묘사`
-  const lengthHint = mode === 'game' ? '' : '\n• 최대 3문장으로 간결하게'
-  return `위 [${tag}]을 바탕으로 **[행동]** 만 작성하세요.
-• 역할: ${roleDesc}${lengthHint}${formatHint ? '\n• ' + formatHint.replace(/^- /, '') : ''}
-**[행동]** 태그로 시작하세요.`
-}
-
-/**
- * Claude Extended Thinking용 — system prompt 끝에 붙이는 사고 트리 지침
- */
-export function buildThinkingTreeSystemSuffix(mode: PlayMode = 'immersion', provider: string = ''): string {
-  const tag = getInnerTag(mode)
-  const innerDesc = mode === 'game'
-    ? `캐릭터의 감정·생각·행동 의도를 플레이어 시각으로 분석 (친근한 말투)`
-    : `캐릭터가 지금 느끼는 감정, 두려움, 의심, 생각을 1인칭으로`
-  const formatHint = getProviderFormatHints(provider)
-  return `
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-응답 형식 및 사고 순서
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-다음 세 단계를 순서대로 출력하세요:
-
-**[${tag}]** ${innerDesc}
-**[행동]** 캐릭터가 실제로 하는 말·동작·반응 — 최대 3문장${formatHint ? '\n' + formatHint : ''}
-
-각 단계가 이전 단계를 뿌리로 삼아 깊어져야 합니다.`
+    ? `위 내용을 바탕으로 ${charName}가 실제로 하는 말·동작·반응을 묘사하세요. 행동 또는 대화 하나당 최대 3개의 수식어를 붙여 묘사할 수 있어요.`
+    : `위 내용을 바탕으로 캐릭터가 실제로 하는 말·동작·반응을 최대 3문장으로 묘사하세요.`
+  return `${roleDesc}${formatHint ? '\n' + formatHint : ''}`
 }
 

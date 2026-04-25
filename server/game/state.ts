@@ -50,23 +50,29 @@ export class GameState {
     state.injuries.push(`${amount} 피해 받음`)
   }
 
-  /** Apply SAN loss */
+  /**
+   * Apply SAN loss.
+   * Only deducts SAN and tracks cumulative loss.
+   * Temporary insanity (5+ loss → INT roll) is handled by performSanCheck() in judgment.ts.
+   * Indefinite insanity is checked against current SAN / 5 (CoC 7e).
+   */
   applySanLoss(charId: string, amount: number): void {
     if (amount <= 0) return
     const state = this.getState(charId)
-    const char = this.getCharacter(charId)
     state.san = Math.max(0, state.san - amount)
 
     // Track cumulative session SAN loss
     state.sessionSanLoss = (state.sessionSanLoss ?? 0) + amount
 
-    // Check for temporary insanity (lose 5+ SAN in one round)
-    if (amount >= 5) {
-      state.temporaryInsanity = true
+    // SAN 0 도달 시 무기한 광기 자동 발동 (CoC 7e)
+    if (state.san === 0) {
+      state.indefiniteInsanity = true
+      return
     }
 
-    // Check for indefinite insanity (lose 1/5 of max SAN in one session, cumulative)
-    const threshold = Math.floor(char.derived.san.max / 5)
+    // Check for indefinite insanity: cumulative session loss ≥ startingSAN / 5 (CoC 7e)
+    const char = this.getCharacter(charId)
+    const threshold = Math.max(1, Math.floor(char.derived.san.starting / 5))
     if (state.sessionSanLoss >= threshold) {
       state.indefiniteInsanity = true
     }
@@ -176,7 +182,13 @@ export class GameState {
           state[effect.status] = effect.value
           break
         }
-        // 'skill' effects: not tracked in session state (would require separate skill delta tracking)
+        case 'skill': {
+          // 의도적: CoC 7e에서 기술 변경은 영구적이므로 CoCCharacter 직접 변이
+          const char = this.getCharacter(charId)
+          const current = char.skills[effect.skill] ?? 0
+          char.skills[effect.skill] = Math.max(0, Math.min(99, current + effect.delta))
+          break
+        }
       }
     }
   }

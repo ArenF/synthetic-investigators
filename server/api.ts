@@ -16,9 +16,8 @@ import { createPlayer, type BasePlayer } from './players/index.js'
 import { GameState } from './game/state.js'
 import { ScenarioManager } from './game/scenario.js'
 import { ExperimentLogger } from './game/logger.js'
-import { skillCheck } from './game/dice.js'
-import { performJudgment } from './game/judgment.js'
-import type { JudgmentOutcomes } from './characters/types.js'
+import { rollJudgment, resolveJudgment, performSanCheck } from './game/judgment.js'
+import type { JudgmentOutcomes, PendingJudgment, JudgmentRequest, JudgmentResolution } from './characters/types.js'
 import { buildContextMessages } from './game/context.js'
 import { log, logApiKeyStatus, testOllamaConnection } from './game/dev-logger.js'
 
@@ -92,6 +91,7 @@ export interface GameSession {
   turnQueue: QueuedTurn[]
   pendingStatsBefore: Map<string, { hp: number; san: number; luck: number }> | null
   pendingDiceResults: { charId: string; charName: string; skill: string; outcome: string; resultText: string }[]
+  pendingJudgment: PendingJudgment | null
   playMode: PlayMode
 }
 
@@ -103,6 +103,9 @@ export interface ChatMessage {
   charName?: string
   npcName?: string
   text: string
+  innerText?: string   // Stage 1 — 심리/OOC (서버 내부 처리 후 구조화 전송)
+  actionText?: string  // Stage 2 — 행동 (프론트 표시용)
+  playMode?: string    // 메시지 생성 시점의 모드 (내면/OOC 레이블 결정)
   timestamp: string
   done?: boolean
   diceData?: {
@@ -112,6 +115,10 @@ export interface ChatMessage {
     target: number
     outcome: string
     resultText: string
+    wasPush?: boolean
+    wasLuckSpend?: boolean
+    luckSpent?: number
+    tensDice?: number[]
   }
 }
 
@@ -253,6 +260,7 @@ function createSession(sessionId: string, setup: SessionSetupData): GameSession 
     turnQueue: [],
     pendingStatsBefore: null,
     pendingDiceResults: [],
+    pendingJudgment: null,
     playMode: setup.playMode ?? 'game',
   }
 
@@ -362,13 +370,18 @@ async function runTurn(
     record.statsAfter = { hp: afterState.hp, san: afterState.san, luck: afterState.luck }
 
     const responseText = record.response.rawText
+    const innerText = record.response.inner ?? ''
+    const actionText = record.response.action ?? responseText
 
-    // Send complete response
+    // Send complete response with structured inner/action fields
     broadcast(session, {
       type: 'ai_response',
       charId,
       charName: char.name,
       text: responseText,
+      innerText,
+      actionText,
+      playMode: session.playMode,
       done: true,
     })
 
@@ -388,6 +401,9 @@ async function runTurn(
       charId,
       charName: char.name,
       text: responseText,
+      innerText,
+      actionText,
+      playMode: session.playMode,
       timestamp: new Date().toISOString(),
       done: true,
     }
@@ -672,6 +688,11 @@ const KNOWN_MODELS: Record<string, string[]> = {
     'gpt-4o-mini',
     'o3-mini',
   ],
+  grok: [
+    'grok-3',
+    'grok-3-mini',
+    'grok-2-1212',
+  ],
 }
 
 app.get('/api/models', async (_req, res) => {
@@ -895,63 +916,6 @@ wss.on('connection', (ws, req) => {
         break
       }
 
-      case 'dice_roll': {
-        if (!currentSession) break
-        const { charId, skill, difficulty } = msg
-        const sess = currentSession
-        const char = sess.characters.get(charId)
-        if (!char) {
-          ws.send(JSON.stringify({ type: 'error', message: `캐릭터를 찾을 수 없습니다: ${charId}` }))
-          break
-        }
-
-        const baseVal = char.skills[skill] ?? 0
-        const { roll, target, outcome } = skillCheck(baseVal, skill, difficulty ?? 'regular')
-
-        const resultData = {
-          type: 'dice_result',
-          charId,
-          charName: char.name,
-          skill,
-          difficulty,
-          roll,
-          target,
-          outcome,
-          resultText: (outcome === 'extreme_success' || outcome === 'hard_success' || outcome === 'regular_success')
-            ? (msg.successText ?? '')
-            : (msg.failureText ?? ''),
-        }
-        broadcast(sess, resultData)
-
-        // Store for next send_turn: AI will receive the result text
-        sess.pendingDiceResults.push({
-          charId,
-          charName: char.name,
-          skill,
-          outcome,
-          resultText: resultData.resultText,
-        })
-
-        // Add to chat log
-        const diceMsg: ChatMessage = {
-          id: `dice-${Date.now()}`,
-          type: 'dice_result',
-          charId,
-          charName: char.name,
-          text: `${char.name} — ${skill} 판정 (목표: ${target}) → ${roll} = ${outcome}`,
-          timestamp: new Date().toISOString(),
-          diceData: {
-            skill,
-            difficulty,
-            roll,
-            target,
-            outcome,
-            resultText: resultData.resultText,
-          },
-        }
-        sess.chatLog.push(diceMsg)
-        break
-      }
 
       case 'npc_speak': {
         if (!currentSession) break
@@ -994,73 +958,165 @@ wss.on('connection', (ws, req) => {
 
       case 'judgment_request': {
         if (!currentSession) break
-        const { charId, skill, difficulty, outcomes } = msg as {
-          charId: string
-          skill: string
-          difficulty: 'regular' | 'hard' | 'extreme'
-          outcomes: JudgmentOutcomes
-        }
         const sess = currentSession
-        const char = sess.characters.get(charId)
-        if (!char) {
-          ws.send(JSON.stringify({ type: 'error', message: `캐릭터를 찾을 수 없습니다: ${charId}` }))
+        if (sess.pendingJudgment) {
+          ws.send(JSON.stringify({ type: 'error', message: '이미 진행 중인 판정이 있습니다. 수락/취소 후 다시 시도하세요.' }))
           break
         }
 
         try {
-          const result = performJudgment(sess, charId, skill, difficulty, outcomes ?? {})
-
-          // Build and broadcast judgment_result
-          const resultMsg = {
-            type: 'judgment_result',
-            charId,
-            charName: result.charName,
-            skill,
-            difficulty,
-            roll: result.roll,
-            target: result.target,
-            outcome: result.outcome,
-            outcomeDesc: result.appliedOutcome?.desc ?? '',
-            effectsApplied: result.effectsApplied,
-            naturalLanguage: result.naturalLanguage,
+          // Accept either legacy format (flat fields) or new format (request object)
+          let request: JudgmentRequest
+          if (msg.request) {
+            request = msg.request as JudgmentRequest
+          } else {
+            // Legacy: flat fields for simple check
+            const { charId, skill, difficulty, outcomes, bonusPenalty } = msg as {
+              charId: string; skill: string; difficulty: 'regular' | 'hard' | 'extreme'
+              outcomes: JudgmentOutcomes; bonusPenalty?: { bonus: number; penalty: number }
+            }
+            request = { type: 'simple', charId, skill, difficulty, bonusPenalty, outcomes: outcomes ?? {} }
           }
-          broadcast(sess, resultMsg)
 
-          // Store for next send_turn: AI receives natural language summary
+          const pending = rollJudgment(sess, request)
+          sess.pendingJudgment = pending
+          broadcast(sess, { type: 'judgment_pending', ...pending })
+        } catch (err: any) {
+          ws.send(JSON.stringify({ type: 'error', message: err.message }))
+        }
+        break
+      }
+
+      case 'judgment_resolve': {
+        if (!currentSession) break
+        const sess = currentSession
+        if (!sess.pendingJudgment) {
+          ws.send(JSON.stringify({ type: 'error', message: '진행 중인 판정이 없습니다.' }))
+          break
+        }
+
+        const pending = sess.pendingJudgment
+        if (msg.judgmentId && msg.judgmentId !== pending.id) {
+          ws.send(JSON.stringify({ type: 'error', message: '판정 ID가 일치하지 않습니다.' }))
+          break
+        }
+        sess.pendingJudgment = null  // 즉시 클리어 — 레이스 방지
+        const { resolution } = msg as { resolution: JudgmentResolution }
+        try {
+          const final = resolveJudgment(sess, pending, resolution)
+
+          broadcast(sess, { type: 'judgment_final', ...final })
+
+          // Store for next AI turn
           sess.pendingDiceResults.push({
-            charId,
-            charName: result.charName,
-            skill,
-            outcome: result.outcome,
-            resultText: result.naturalLanguage,
+            charId: final.charId,
+            charName: final.charName,
+            skill: final.skill,
+            outcome: final.outcome,
+            resultText: final.naturalLanguage,
           })
 
-          // Add to chat log as dice_result
+          // Add to chat log
           const diceMsg: ChatMessage = {
             id: `judgment-${Date.now()}`,
             type: 'dice_result',
-            charId,
-            charName: result.charName,
-            text: `${result.charName} — ${skill} 판정 (목표: ${result.target}) → ${result.roll} = ${result.outcome}`,
+            charId: final.charId,
+            charName: final.charName,
+            text: `${final.charName} — ${final.skill} 판정 (목표: ${final.target}) → ${final.roll} = ${final.outcome}`,
             timestamp: new Date().toISOString(),
             diceData: {
-              skill,
-              difficulty,
-              roll: result.roll,
-              target: result.target,
-              outcome: result.outcome,
-              resultText: result.appliedOutcome?.desc ?? '',
+              skill: final.skill,
+              difficulty: final.difficulty,
+              roll: final.roll,
+              target: final.target,
+              outcome: final.outcome,
+              resultText: final.appliedOutcome?.desc ?? '',
+              wasPush: final.wasPush,
+              wasLuckSpend: final.wasLuckSpend,
+              luckSpent: final.luckSpent,
+              tensDice: final.tensDice,
             },
           }
           sess.chatLog.push(diceMsg)
 
-          // Broadcast updated character states (effects may have changed stats)
-          if (result.effectsApplied.length > 0) {
+          // Broadcast state if effects changed stats
+          if (final.effectsApplied.length > 0) {
             broadcast(sess, {
               type: 'state_update',
               characters: getCharacterStates(sess),
             })
           }
+        } catch (err: any) {
+          ws.send(JSON.stringify({ type: 'error', message: err.message }))
+        }
+        break
+      }
+
+      case 'judgment_cancel': {
+        if (!currentSession) break
+        const sess = currentSession
+        if (sess.pendingJudgment) {
+          if (msg.judgmentId && msg.judgmentId !== sess.pendingJudgment.id) {
+            ws.send(JSON.stringify({ type: 'error', message: '판정 ID가 일치하지 않습니다.' }))
+            break
+          }
+          const judgmentId = sess.pendingJudgment.id
+          sess.pendingJudgment = null
+          broadcast(sess, { type: 'judgment_cancelled', judgmentId })
+        }
+        break
+      }
+
+      case 'san_check': {
+        if (!currentSession) break
+        const sess = currentSession
+        const { charId, successLoss, failureLoss } = msg as {
+          charId: string
+          successLoss: string
+          failureLoss: string
+        }
+        const DICE_EXPR = /^(\d+|\d+[dD]\d+)$/
+        if (!DICE_EXPR.test(successLoss) || !DICE_EXPR.test(failureLoss)) {
+          ws.send(JSON.stringify({ type: 'error', message: '잘못된 주사위 표현식입니다. (예: 0, 1, 1d6, 2d10)' }))
+          break
+        }
+        try {
+          const result = performSanCheck(sess, charId, successLoss, failureLoss)
+          broadcast(sess, { type: 'san_check_result', ...result })
+
+          // Store for next AI turn
+          sess.pendingDiceResults.push({
+            charId: result.charId,
+            charName: result.charName,
+            skill: 'SAN',
+            outcome: result.sanOutcome,
+            resultText: result.naturalLanguage,
+          })
+
+          // Add to chat log
+          const sanMsg: ChatMessage = {
+            id: `san-${Date.now()}`,
+            type: 'dice_result',
+            charId: result.charId,
+            charName: result.charName,
+            text: `${result.charName} — SAN 체크`,
+            timestamp: new Date().toISOString(),
+            diceData: {
+              skill: 'SAN',
+              difficulty: 'regular',
+              roll: result.sanRoll,
+              target: result.sanTarget,
+              outcome: result.sanOutcome,
+              resultText: result.naturalLanguage,
+            },
+          }
+          sess.chatLog.push(sanMsg)
+
+          // Broadcast state update (SAN changed)
+          broadcast(sess, {
+            type: 'state_update',
+            characters: getCharacterStates(sess),
+          })
         } catch (err: any) {
           ws.send(JSON.stringify({ type: 'error', message: err.message }))
         }
