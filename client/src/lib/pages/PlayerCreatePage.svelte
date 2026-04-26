@@ -56,8 +56,8 @@
 
 </script>
 
-<main>
-    <form action="method" class="align_center flex-col w-[320px] h-screen">
+<main class="w-full self-start max-h-screen overflow-y-auto flex justify-center">
+    <form action="method" class="align_center justify-start flex-col w-[320px] py-8">
         <div class="align_center flex-row w-full relative py-[15px] px-[30px] gap-[50px]">
             <div class="align_center flex-col relative gap-[5px]">
                 <NameTagInput
@@ -108,8 +108,7 @@
 
 .attribute_container {
     position: relative;
-    min-width: max-content;
-    max-height: 25rem;
+    max-height: 20rem;
     display: flex;
     flex-wrap: wrap;
     flex-direction: column;
@@ -121,15 +120,20 @@
     align-items: center;
     justify-content: center;
     width: fit-content;
-    border: 1px solid red;
+    border: 2px solid var(--galaxy-hover);
+    border-radius: 0.5em;
+    padding: 0.5em;
 }
 
 .skill_title {
     background-color: black;
     color: white;
     width: 100%;
-    border: 1px solid red;
+    border-radius: 0.5em;
     text-align: center;
+    font-size: x-large;
+    font-weight: bold;
+    margin-bottom: 0.5em;
 }
 
 .skill_list {
