@@ -27,9 +27,8 @@ div {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
-    justify-content: center;
+    justify-content: left;
     align-items: center;
-    max-width: max-content;
     gap: 0.1em;
     padding: 0.2em;
     break-inside: avoid;
@@ -41,9 +40,11 @@ div * {
 
 .name {
     color: var(--sea-text);
+    min-width: 8em; /* 가장 긴 스킬명에 맞춤 */
+    text-align: right;
+    white-space: nowrap;
     font-weight: bold;
     font-size: large;
-    text-align: center;
 }
 
 input[type="number"] {
