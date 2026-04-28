@@ -1,8 +1,11 @@
 <script lang="ts">
-    let { name, value, defaultVal = 0 }:{
+    import type { ChangeEventHandler } from "svelte/elements";
+
+    let { name, value, defaultVal = 0, onChange = () => {} }:{
         name:string,
         value:number,
         defaultVal?:number,
+        onChange?:ChangeEventHandler<HTMLInputElement>,
     } = $props();
     
     let realVal:number = $derived(defaultVal + value);
@@ -14,7 +17,7 @@
 <div>
     <p class="name">{name} :</p>
     <p class="display display_default">{defaultVal}</p>
-    <input type="number" name="cell-{name}" bind:value={value}/>
+    <input type="number" name="cell-{name}" bind:value={value} onchange={onChange}/>
     <input type="number" disabled bind:value={realVal}/>
     <p class="display display_harder">{harder}</p>
     <p class="display display_extreme">{extreme}</p>

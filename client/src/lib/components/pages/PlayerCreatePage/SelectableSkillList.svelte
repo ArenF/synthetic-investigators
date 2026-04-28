@@ -42,13 +42,11 @@
 
     const { points }:{ points:number } = $props();
 
-
-    // 기초 및 기본값들
-    const AttrFactory = (name:string, number:number, value:number = 0):AttrType => {
-        return {'name':name, 'defaultVal':number, 'value':value };
+    const AttrFactory = (name:string, defaultVal:number, value:number = 0):AttrType => {
+        return { name, defaultVal, value }
     };
 
-    const attributes:AttrType[] = [
+    let attributes:AttrType[] = $state([
         AttrFactory('감정',  5),
         AttrFactory('고고학', 1),
         AttrFactory('관찰력', 25),
@@ -90,7 +88,23 @@
         AttrFactory('항법', 10),
         AttrFactory('회계', 5),
         AttrFactory('회피', 0)
-    ];
+    ]);
+
+    let spent:number = $derived(attributes.reduce((s, a) => a.value, 0));
+    let remaining:number = $derived(points - spent);
+
+
+    function addAttributes(value:number, key:string) {
+        attributes = attributes.map((item) => {
+            if (item.name !== key)
+                return item;
+            item.value = value;
+            return item;
+        });
+
+        spent = spent - value;
+    }
+
 </script>
 
 <div>
@@ -103,6 +117,9 @@
                     name={attr.name}
                     value={attr.value}
                     defaultVal={attr.defaultVal}
+                    onChange={(e:Event) => {
+                        
+                    }}
                 />
             {/each}
         </div>
