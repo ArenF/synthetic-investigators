@@ -1,5 +1,6 @@
 
 <script lang="ts">
+	import BattleTable from './../components/pages/PlayerCreatePage/BattleTable.svelte';
 	import NameTagInput from './../components/NameTagInput.svelte';
 	import AISelectableInput from '../components/AISelectableInput.svelte';
     import CharacteristicCell from '../components/CharacteristicCell.svelte';
@@ -42,7 +43,22 @@
         <SelectableSkillList
             points={10}
         />
-        
+    
+        <BattleTable
+            weaponData={[
+                {
+                    name:'권총',
+                    skill:'근접전(격투)',
+                    roll:'1d6',
+                    applyDamage:1,
+                    distance:0,
+                    frequency:1,
+                    leftBullet:0,
+                    broken:false,
+                }
+            ]}
+        />
+
     </form>
 </main>
 

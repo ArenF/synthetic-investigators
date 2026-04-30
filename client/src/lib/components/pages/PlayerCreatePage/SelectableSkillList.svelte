@@ -90,19 +90,16 @@
         AttrFactory('회피', 0)
     ]);
 
-    let spent:number = $derived(attributes.reduce((s, a) => a.value, 0));
+    let spent:number = $derived(attributes.reduce((s, a) => s + a.value, 0));
     let remaining:number = $derived(points - spent);
 
 
     function addAttributes(value:number, key:string) {
         attributes = attributes.map((item) => {
-            if (item.name !== key)
-                return item;
-            item.value = value;
+            if (item.name === key)
+                item.value = value;
             return item;
         });
-
-        spent = spent - value;
     }
 
 </script>
@@ -110,7 +107,7 @@
 <div>
     <div class="skill_container">
         <p class="skill_title">스킬 선택</p>
-        <p>남은 스킬 포인트 : {points}</p>
+        <p>남은 스킬 포인트 : {remaining}</p>
         <div class="skill_list">
             {#each attributes as attr}
                 <CharacterFuncitonCell
@@ -118,7 +115,19 @@
                     value={attr.value}
                     defaultVal={attr.defaultVal}
                     onChange={(e:Event) => {
+                        const target = e.target as HTMLInputElement;
+                        let value:number = Number(target.value);
+
+                        // 값이 음수이면 0으로 수정
+                        if (value < 0) value = 0;
+
+                        // diff는 수정된 값과 기존 값을 뺌.
+                        // remaining 비교 후 속성 내부의 value값과 remaining을 통해 값 개선.
+                        const diff = value - attr.value;
+                        if (diff > remaining) value = attr.value + remaining;
                         
+                        target.value = String(value);
+                        addAttributes(value, attr.name);
                     }}
                 />
             {/each}

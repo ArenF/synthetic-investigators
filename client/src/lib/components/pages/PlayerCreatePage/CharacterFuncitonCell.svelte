@@ -5,7 +5,7 @@
         name:string,
         value:number,
         defaultVal?:number,
-        onChange?:ChangeEventHandler<HTMLInputElement>,
+        onChange?:ChangeEventHandler<HTMLInputElement>
     } = $props();
     
     let realVal:number = $derived(defaultVal + value);
