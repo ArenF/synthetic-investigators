@@ -9,7 +9,7 @@
 </script>
 
 <main class="w-full self-start max-h-screen overflow-y-auto flex justify-center">
-    <form action="method" class="align_center justify-start flex-col w-[320px] py-8">
+    <div class="align_center justify-start flex-col w-[320px] py-8">
         <div class="align_center flex-row w-full relative py-[15px] px-[30px] gap-[50px]">
             <div class="align_center flex-col relative gap-[5px]">
                 <NameTagInput
@@ -45,7 +45,8 @@
         />
     
         <BattleTable
-            weaponData={[
+        // defaultWeapon에 값을 넣을 때는 bind를 포함할 것.
+            defaultWeapon={[
                 {
                     name:'권총',
                     skill:'근접전(격투)',
@@ -58,8 +59,7 @@
                 }
             ]}
         />
-
-    </form>
+    </div>
 </main>
 
 <style>

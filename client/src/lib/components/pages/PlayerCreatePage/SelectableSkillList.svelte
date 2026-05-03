@@ -37,7 +37,7 @@
         - defaultVal은 건드리지 않음, value는 순수 추가분
 -->
 <script lang="ts">
-    import CharacterFuncitonCell from "./CharacterFuncitonCell.svelte";
+	import CharacterFunctionCell from './CharacterFunctionCell.svelte';
     import type { AttrType } from "../../../types/types";
 
     const { points }:{ points:number } = $props();
@@ -47,47 +47,20 @@
     };
 
     let attributes:AttrType[] = $state([
-        AttrFactory('감정',  5),
-        AttrFactory('고고학', 1),
-        AttrFactory('관찰력', 25),
-        AttrFactory('근접전(격투)', 25),
-        AttrFactory('기계수리', 10),
-        AttrFactory('도약', 20),
-        AttrFactory('듣기', 20),
-        AttrFactory('말재주', 5),
-        AttrFactory('매혹', 15),
-        AttrFactory('법률', 5),
-        AttrFactory('변장', 5),
-        AttrFactory('사격(권총)', 20),
-        AttrFactory('사격(라/산)', 25),
-        AttrFactory('설득', 10),
-        AttrFactory('손놀림', 10),
-        AttrFactory('수영', 20),
-        AttrFactory('승마', 5),
-        AttrFactory('심리학', 10),
-        AttrFactory('언어(모국어)', 0),
-        AttrFactory('역사', 5),
-        AttrFactory('열쇠공', 1),
-        AttrFactory('오르기', 20),
-        AttrFactory('오컬트', 5),
-        AttrFactory('위협', 15),
-        AttrFactory('은밀행동', 20),
-        AttrFactory('응급처치', 20),
-        AttrFactory('의료', 1),
-        AttrFactory('인류학', 1),
-        AttrFactory('자동차 운전', 20),
-        AttrFactory('자료조사', 20),
-        AttrFactory('자연', 10),
-        AttrFactory('재력', 0),
-        AttrFactory('전기수리', 10),
-        AttrFactory('정신분석', 1),
-        AttrFactory('중장비 조작', 1),
-        AttrFactory('추적', 10),
-        AttrFactory('크툴루 신화', 0),
-        AttrFactory('투척', 20),
-        AttrFactory('항법', 10),
-        AttrFactory('회계', 5),
-        AttrFactory('회피', 0)
+        AttrFactory('감정',  5), AttrFactory('고고학', 1), AttrFactory('관찰력', 25),
+        AttrFactory('근접전(격투)', 25), AttrFactory('기계수리', 10), AttrFactory('도약', 20),
+        AttrFactory('듣기', 20), AttrFactory('말재주', 5), AttrFactory('매혹', 15), 
+        AttrFactory('법률', 5), AttrFactory('변장', 5), AttrFactory('사격(권총)', 20),
+        AttrFactory('사격(라/산)', 25), AttrFactory('설득', 10), AttrFactory('손놀림', 10),
+        AttrFactory('수영', 20), AttrFactory('승마', 5), AttrFactory('심리학', 10),
+        AttrFactory('언어(모국어)', 0), AttrFactory('역사', 5), AttrFactory('열쇠공', 1),
+        AttrFactory('오르기', 20), AttrFactory('오컬트', 5), AttrFactory('위협', 15),
+        AttrFactory('은밀행동', 20), AttrFactory('응급처치', 20), AttrFactory('의료', 1),
+        AttrFactory('인류학', 1), AttrFactory('자동차 운전', 20), AttrFactory('자료조사', 20),
+        AttrFactory('자연', 10), AttrFactory('재력', 0), AttrFactory('전기수리', 10),
+        AttrFactory('정신분석', 1), AttrFactory('중장비 조작', 1), AttrFactory('추적', 10),
+        AttrFactory('크툴루 신화', 0), AttrFactory('투척', 20), AttrFactory('항법', 10),
+        AttrFactory('회계', 5), AttrFactory('회피', 0)
     ]);
 
     let spent:number = $derived(attributes.reduce((s, a) => s + a.value, 0));
@@ -110,7 +83,7 @@
         <p>남은 스킬 포인트 : {remaining}</p>
         <div class="skill_list">
             {#each attributes as attr}
-                <CharacterFuncitonCell
+                <CharacterFunctionCell
                     name={attr.name}
                     value={attr.value}
                     defaultVal={attr.defaultVal}

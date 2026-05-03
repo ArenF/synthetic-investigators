@@ -1,12 +1,23 @@
 <script lang="ts">
+	import BooleanInput from './../../BooleanInput.svelte';
     import type { WeaponDataType } from "../../../types/types";
 
-    const { weaponData }:{
-        weaponData:WeaponDataType[]
+    let { defaultWeapon = $bindable() }:{
+        defaultWeapon:WeaponDataType[]
     } = $props();
     
-    const onClick = () => {
-        
+    const addWeaponTable = () => {
+        defaultWeapon.push({
+            name:'',
+            skill:'근접전(격투)',
+            roll:'',
+            applyDamage:0,
+            distance:0,
+            frequency:0,
+            leftBullet:0,
+            broken: false
+        });
+        defaultWeapon = defaultWeapon;
     };
 
 </script>
@@ -27,7 +38,7 @@
             </tr>
         </thead>
         <tbody>
-            {#each weaponData as item}
+            {#each defaultWeapon as item}
                 <tr>
                     <td><input type="text" value={item.name}/></td>
                     <td><input type="text" value={item.skill}/></td>
@@ -36,12 +47,12 @@
                     <td><input type="text" value={item.distance}/></td>
                     <td><input type="text" value={item.frequency}/></td>
                     <td><input type="text" value={item.leftBullet}/></td>
-                    <td><input type="text" value={item.broken}/></td>   
+                    <td><BooleanInput value={item.broken} /></td>
                 </tr>
             {/each}
         </tbody>
     </table>
-    <button>+</button>
+    <button type="button" onclick={(e) => {addWeaponTable()}}>+</button>
 </div>
 
 <style>
@@ -70,15 +81,16 @@ thead tr td {
 
 tbody tr td {
     border: 2px solid var(--galaxy-hover);
+    background-color: var(--galaxy-bg);
     padding: 0;
+    height: 1px; /* height: 100% 자식이 참조할 수 있도록 */
 }
 
 tbody tr td input {
     border: none;
     border-radius: 0;
-    background-color: transparent;
     width: 100%;
-    background-color: var(--galaxy-bg);
+    background-color: transparent;
     text-align: center;
 }
 
